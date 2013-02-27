@@ -1,0 +1,202 @@
+1.1.8c
+Chenged My Files and Season Search (context) method drill down to archived files. Now uses Furk API which improves speed.
+
+1.1.8b
+Changed xbmc player from DVDPLAYER to AUTO to fix issues when using an external player
+Added context search on tv episode for 1x01 format instead of default s01e01
+
+1.1.8a
+Furk - Search: File name now passed to xbmc.player instead of search string.
+
+1.1.8
+Added "Search Season Files" to seaon list context menu
+Changed My Files - Archives now returned with option to explore or manage (protect/remove etc.)
+Added count of video files contained in archive to My Files.
+
+1.1.7f
+Fixed one-click play option
+
+1.1.7e
+Rolled back. Removed restriction on urls
+
+1.1.7c
+Rolled back to 1.1.7 version
+
+1.1.7b
+Limited playlist urls to http://16abu2...... or http://suq2.........
+Other urls have speed issues when scraping for tracks
+
+1.1.7a
+Improved status message when adding and/or protecting My Files
+
+1.1.7
+Add Movies & TV Episodes to My Files through context menu
+Manage My Files: Protect, Unprotect, Remove or Play options added
+
+1.1.6
+Fixed movie search of EasyNews
+Added TV Episode search of Easynews
+Added TV & Movie search of 1Channel
+
+1.1.5
+You can now search WTF from within EasyNews! thanks to mikey1234
+Added function to search for movies in EasyNews directly from WTF (tv episodes will be added in next update)
+Added new quality list when searching
+Fixed file size being shown incorrectly when in an archive
+
+1.1.4c
+Fallback now only applies to one-click play
+
+1.1.4b
+Fixed error when searching for hyphenated movies
+Added option to set minimum file size for movies (default = 0 or off)
+Added fallback when searching for custom quality. If no files found search will be extended to any file.
+
+1.1.4
+Added "one-click" option to search and play files with selecting from a list
+Fixed furk searches opening "My Files"
+
+1.1.3
+Added Furk option to query My Files before searching furk.net
+
+1.1.2
+Fixed "days left unti bandwidth reset" for premium users
+
+1.1.1
+Show file size by default...removed option to toggle on/off
+Improved speed of Furk results
+
+1.1.0
+Added TV Show meta information
+
+1.0.9c
+Added some account info for non-premium users
+
+1.0.9b
+Blue text not the easiest to read!
+
+1.0.9a
+Fixed script error on Account Info is using a free account
+
+1.0.9
+Add different file size restriction for TV Shows and Movies (set in settings.furk)
+Added 'My Files' at furk.net
+Added Furk account information (remaining bandwidth, reset date etc.)
+Re-arranged main menu.
+
+1.0.8d
+Added option to limit returned Furk results by breaking search once limit is reached (rather than rely on furks api limit call which doesn't work)
+Changed size calculation for "Restrict File Size" option. Results now faster, but "show file size" still slows query down.
+Added option to [Maintenance] to clear all Furk and IMDB search list entries at once
+
+1.0.8c
+Added option to show file-format prefix
+Added option to show file size in MB or GB
+Moved *Delete Cache" to Maintenance menu
+Added function to delete meta zip file downloads
+Renamed Furk option to "Extend TV Episode search to playlists"
+Tidied code - furk queries should now return results a bit faster (showing and/or restricting file size slows this down)
+note: all changes to furk queries now have a toggle in Settings......by disabling 
+      all these options you can return Furk searches to v1.0.4
+      (Menu items since v1.0.4 relate to imdb searches and do not affect Furk queries)
+
+1.0.8b
+Added option to turn off Furk playlist search
+Added ability to delete cache files from WTF menu
+
+1.0.8a
+Changed IMDB language option from "Location based" to "Original"
+File sizes now shown in GigaBytes
+Fixed file-size calculation issue resulting in script error
+Recompiled Furk tracks to show file type at start of string ([mkv] for example)
+Added Furk option to restrict returned tracks by file size
+
+1.0.8
+Added IMDB setting for default language
+Added IMDB setting to show unaired tv episodes
+Added "Scene Releases" menu
+
+1.0.7f
+Fix to return tv shows classified by IMDB as "Mini Series"
+
+1.0.7e
+Fixed dialog close issue on Android devices
+
+1.0.7d
+Move WtF fanart to new art folder
+
+1.0.7c
+Changed WtF fanart image
+
+1.0.7b
+Schoolboy error, left degug on when scraping, filling up xbmc.log
+
+1.0.7a
+Added BluRay at Amazon IMDB list
+
+1.0.7
+Added Bluray at Amazon IMDB list
+
+1.0.6
+Added Imdb Lists
+Moved To Kinkin Repo
+
+1.0.5
+Fixed problem with autoview
+added XBMCHUB.com to everything
+
+1.0.4
+Added All XBMC VIEWS
+ADDED "Auto View"
+Set preferred movie quality
+Set preferred tv show quality
+Sort Furk results by - "cached|relevance|size|date"
+Filter Furk results by - "all|cached" (default is cached. "all")
+
+1.0.3
+ Fixed problem with spaces in IMDB searches.
+ Fixed the bug which made some menu folders show no content.
+ Fixed a bug which made a debug message show up once every 10 seconds
+ Made a workaround to a Furk.net bug (?) where newly cached movie and TV shows weren't correctly marked as cached.
+ Added auto update options to the addon.
+
+1.0.2
+ Removed square brackets from episode names to fix a problem where the names didn't show up.
+ Made the automatic metadata download an option.
+ Corrected a bug where meta quality wasn't set to the correct value after downloading a metadata package.
+ Fix a bug which made filters always use the default value.
+ Added an option to switch between unicode indicators and non unicode indicators. Some skins support unicode characters others don't.
+ Fixed a bug where the addon failed to remove movie strm-files.
+ Made some changes to addapt to Furk Open API changes.
+ Fixed a problem where canceling a search actually never canceled the search.
+ Removed the demand of a successfull anti-virus check.
+ Changed IMDB query to return 250 results instead of 100.
+ Added the a context menu item to remove earlier search queries.
+ Added IMDB search functionality.
+ Added the possibility to sort movies and TV shows.
+ Fixed the bug which added year suffix to TV show subscriptions. 
+ Added a setting to show file sizes when listing files.
+ Fixed a bug which made a lot of results unplayable.
+ Reworked the way subscriptions works.
+ Fixed a bug which made WtF send a faulty referer parameter when creating new accounts.
+ Cleaned up some the code a little bit.
+ Made some structure changes in the menu structure.
+ Added "Oscar winning Movies" as a new menu item.
+ Removed some unnecessary debug messages written to XBMC log.
+ Made Furk searches have an adult filter turned on by default with an option to turn it of.
+ Made a few changes to the filters used in the IMDB queries.
+ Fixed a bug which made the file counter (shown when doing Furk searches) count files not added to the result set.
+ Fixed a bug which made episode names invisible in some XBMC builds.
+ Added the option to choose non-unicode indicators.
+
+1.0.1
+ Fixed a problem with skins which uses the title field of the metadata when listing menu items.
+ Fixed a bug where manual searches failed when no search.list was found.
+ Changed location of the meta download packages to allow non-premium members download the packages.
+ Fixed a bug where the posters and fanart toggle in addon-settings did nothing.
+ Made movie and TV show information show in the context menu when not in library mode as well.
+ Fixed a problem where the subscription service denied XBMC from completely shutting down.
+ Added an error message when the user fails to login to Furk.net.
+ Added the option to list up to 1000 movies or TV shows in each category.
+1.0.0
+ First release!

@@ -1,0 +1,81 @@
+1.0.7e
+Fixed dialog close issue on Android devices
+
+1.0.7d
+Moved WtF fanart to new art folder
+
+1.0.7c
+Changed WtF fanart image
+
+1.0.7b
+Schoolboy error, left degug on when scraping, filling up xbmc.log
+
+1.0.7a
+Added BluRay at Amazon IMDB list
+
+1.0.7
+Added Bluray at Amazon IMDB list
+
+1.0.6
+Added Imdb Lists
+Moved To Kinkin Repo
+
+1.0.5
+Fixed problem with autoview
+added XBMCHUB.com to everything
+
+1.0.4
+Added All XBMC VIEWS
+ADDED "Auto View"
+Set preferred movie quality
+Set preferred tv show quality
+Sort Furk results by - "cached|relevance|size|date"
+Filter Furk results by - "all|cached" (default is cached. "all")
+
+1.0.3
+ Fixed problem with spaces in IMDB searches.
+ Fixed the bug which made some menu folders show no content.
+ Fixed a bug which made a debug message show up once every 10 seconds
+ Made a workaround to a Furk.net bug (?) where newly cached movie and TV shows weren't correctly marked as cached.
+ Added auto update options to the addon.
+
+1.0.2
+ Removed square brackets from episode names to fix a problem where the names didn't show up.
+ Made the automatic metadata download an option.
+ Corrected a bug where meta quality wasn't set to the correct value after downloading a metadata package.
+ Fix a bug which made filters always use the default value.
+ Added an option to switch between unicode indicators and non unicode indicators. Some skins support unicode characters others don't.
+ Fixed a bug where the addon failed to remove movie strm-files.
+ Made some changes to addapt to Furk Open API changes.
+ Fixed a problem where canceling a search actually never canceled the search.
+ Removed the demand of a successfull anti-virus check.
+ Changed IMDB query to return 250 results instead of 100.
+ Added the a context menu item to remove earlier search queries.
+ Added IMDB search functionality.
+ Added the possibility to sort movies and TV shows.
+ Fixed the bug which added year suffix to TV show subscriptions. 
+ Added a setting to show file sizes when listing files.
+ Fixed a bug which made a lot of results unplayable.
+ Reworked the way subscriptions works.
+ Fixed a bug which made WtF send a faulty referer parameter when creating new accounts.
+ Cleaned up some the code a little bit.
+ Made some structure changes in the menu structure.
+ Added "Oscar winning Movies" as a new menu item.
+ Removed some unnecessary debug messages written to XBMC log.
+ Made Furk searches have an adult filter turned on by default with an option to turn it of.
+ Made a few changes to the filters used in the IMDB queries.
+ Fixed a bug which made the file counter (shown when doing Furk searches) count files not added to the result set.
+ Fixed a bug which made episode names invisible in some XBMC builds.
+ Added the option to choose non-unicode indicators.
+
+1.0.1
+ Fixed a problem with skins which uses the title field of the metadata when listing menu items.
+ Fixed a bug where manual searches failed when no search.list was found.
+ Changed location of the meta download packages to allow non-premium members download the packages.
+ Fixed a bug where the posters and fanart toggle in addon-settings did nothing.
+ Made movie and TV show information show in the context menu when not in library mode as well.
+ Fixed a problem where the subscription service denied XBMC from completely shutting down.
+ Added an error message when the user fails to login to Furk.net.
+ Added the option to list up to 1000 movies or TV shows in each category.
+1.0.0
+ First release!

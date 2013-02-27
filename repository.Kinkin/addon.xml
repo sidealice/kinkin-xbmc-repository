@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8" standalone="yes"?>
+<addon id="repository.Kinkin" name="Kinkins REPO" version="1.2" provider-name="Kinkin">
+	<extension point="xbmc.addon.repository" name="Kinkin Addon Repository">
+		<info compressed="false">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml</info>
+		<checksum>http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml.md5</checksum>
+		<datadir zip="true">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips</datadir>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary>Install Kinkins Addons</summary>
+		<description>Download and install addons suppported by Kinkin.......Thanks to Batch for a great addon......For official support visit xbmchub.com</description>
+		<platform>all</platform>
+	</extension>
+</addon>
+

@@ -1,0 +1,115 @@
+<strings>
+	<!-- Options -->
+	<string id="30100">Meta data</string>
+	<string id="30101">Download metadata while browsing</string>
+	<string id="30102">Use posters</string>
+	<string id="30103">Use fanart</string>
+	<string id="30104">Image quality</string>
+    <string id="30113">Other</string>
+    <string id="30114">Show setup next time What the Furk is run</string>	
+    <!-- Filters -->
+    <string id="30199">General</string>
+    <string id="30200">Number of menu items</string>
+    <string id="30201">Release date</string>
+    <string id="30202">Use filter</string>
+    <string id="30203">    From</string>
+    <string id="30204">    To</string>
+    <string id="30205">User rating</string>
+    <string id="30206">Use filter</string>
+    <string id="30207">    Min</string>
+    <string id="30208">    Max</string>
+    <string id="30209">Number of votes</string>
+    <string id="30210">Use filter</string>
+    <string id="30211">    Min</string>
+    <string id="30212">    Max</string>
+    <string id="30213">New Movies Menu</string>
+    <string id="30214">New Movies released in previous x days</string>
+    <string id="30215">IMDB Region</string>
+    <string id="30216">Set your preferred language for IMDB</string>
+    <string id="30217">TV Listings</string>
+    <string id="30218">Show unaired episodes in TV Show listings</string>
+    <!-- Download -->
+	<string id="30800">Download path - Movies</string>
+	<string id="30801">Download path - TV Shows</string>
+    <!-- IMDB Lists -->
+    <string id="30700">My IMDB User Code</string>
+    <string id="30701">IMDB User Code</string>
+    <string id="30702">Custom list 1</string>
+    <string id="30703">Menu Name</string>
+    <string id="30704">List Code</string>
+    <string id="30705">Custom list 2</string>
+    <string id="30706">Menu Name</string>
+    <string id="30707">List Code</string>
+    <string id="30708">Custom list 3</string>
+    <string id="30709">Menu Name</string>
+    <string id="30710">List Code</string>
+    <string id="30711">Custom list 4</string>
+    <string id="30712">Menu Name</string>
+    <string id="30713">List Code</string>
+    <string id="30714">Custom list 5</string>
+    <string id="30715">Menu Name</string>
+    <string id="30716">List Code</string>
+    <string id="30717">Custom list 6</string>
+    <string id="30718">Menu Name</string>
+    <string id="30719">List Code</string>
+    <string id="30720">Custom list 7</string>
+    <string id="30721">Menu Name</string>
+    <string id="30722">List Code</string>
+    <string id="30723">Custom list 8</string>
+    <string id="30724">Menu Name</string>
+    <string id="30725">List Code</string>
+    <string id="30726">Custom list 9</string>
+    <string id="30727">Menu Name</string>
+    <string id="30728">List Code</string>
+    <string id="30729">Custom list 10</string>
+    <string id="30730">Menu Name</string>
+    <string id="30731">List Code</string>
+	<!-- Furk -->
+	<string id="30300">Furk account</string>
+	<string id="30301">    Username</string>
+    <string id="30302">    Password</string>
+    <string id="30319">One-Click Play - Furk Search</string>
+    <string id="30303">Adult filter</string>
+    <string id="30305">Set preferred movie quality</string>
+    <string id="30306">Set preferred tv show quality</string>
+    <string id="30307">Sort Furk results by</string>
+    <string id="30308">Filter Furk results</string>
+    <string id="30311">Extend TV Episode search to playlists</string>
+    <string id="30313">Show file-format prefix</string>
+    <string id="30309">Restrict Movie File Sizes</string>
+    <string id="30310">    Show only file sizes up to</string>
+    <string id="30315">Restrict TV Show File Sizes</string>
+    <string id="30316">    Show only file sizes up to</string>
+    <string id="30314">Limit Furk Results</string>
+    <!-- Library -->
+    <string id="30402">Activate subscriptions</string>
+    <string id="30403">    Update interval</string> 
+    <string id="30410">Use film/search name</string>	
+    <string id="30404">One folder per movie</string>
+	<string id="30405">Use custom TV-show directory</string>
+    <string id="30406">    TV-show directory</string>	
+    <string id="30407">Use custom  movie directory</string>
+    <string id="30408">    Movie directory</string>	
+    <string id="30409">Use unicode indicators</string>
+    
+	<!-- Sort (desc) -->
+    <string id="30500">Top Movies</string>
+	<string id="30501">Movies by Genre</string>
+	<string id="30502">Movies by Group</string>
+	<string id="30503">Movies by Studio</string>
+	<string id="30504">New Movies</string>
+	<string id="30505">Top TV Shows</string>
+	<string id="30506">TV Shows by Genre</string>
+	<string id="30507">TV Shows by Group</string>
+	<string id="30508">Active TV Shows</string>
+	<string id="30509">IMDB Search</string>
+    <string id="30510">Blu-ray at Amazon</string>
+	<string id="30511">Enable built in XBMC Sort</string>
+	    <!-- Auto View -->
+    <string id="30600">Enable Automatic View</string>
+    <string id="30601">Movies View</string>
+    <string id="30602">TV Shows View</string>
+    <string id="30603">Seasons View</string>
+    <string id="30604">Episodes View</string>
+    <string id="30605">Default View</string>
+</strings>

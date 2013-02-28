@@ -1,7 +1,7 @@
 '''
 Created on 6 feb 2012
 
-@author: Batch
+@author: Batch, kinkin
 '''
 
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin
@@ -187,11 +187,11 @@ def account_info():
 def download_play(name, url, type):
     WAITING_TIME = 7
     if type == "tv":
-        data_path = os.path.join(DOWNLOAD_TV, name)
+        data_path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThreadTV(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS_TV
     else:
-        data_path = os.path.join(DOWNLOAD_MOV, name)
+        data_path = os.path.join(DOWNLOAD_MOV, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThread(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS
     dlThread.start()
@@ -211,11 +211,11 @@ def download_only(name, url, type):
 
     WAITING_TIME = 5
     if type == "tv":
-        data_path = os.path.join(DOWNLOAD_TV, name)
+        data_path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThreadTV(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS_TV
     else:
-        data_path = os.path.join(DOWNLOAD_MOV, name)
+        data_path = os.path.join(DOWNLOAD_MOV, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThread(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS
     dlThread.start()
@@ -2375,6 +2375,7 @@ iconimage = None
 
 def create_movie_list_item(name, imdb_id):
     contextMenuItems = []
+    name = clean_file_name(name, use_blanks=False)
     contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
         name2 = name[:len(data)-7].replace("The ","")
@@ -2594,9 +2595,9 @@ class DownloadFileThread(Thread):
         Thread.__init__(self)
 
     def run(self):
-        path = os.path.join(DOWNLOAD_MOV, name)
+        path = os.path.join(DOWNLOAD_MOV, clean_file_name(name, use_blanks=False))
         urllib.urlretrieve(data, path)
-        notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',name,'5000)')
+        notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'5000)')
         xbmc.executebuiltin(notify)
 		
 class DownloadFileThreadTV(Thread):
@@ -2606,9 +2607,9 @@ class DownloadFileThreadTV(Thread):
         Thread.__init__(self)
 
     def run(self):
-        path = os.path.join(DOWNLOAD_TV, name)
+        path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
         urllib.urlretrieve(data, path)
-        notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',name,'5000)')
+        notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'5000)')
         xbmc.executebuiltin(notify)
 
 

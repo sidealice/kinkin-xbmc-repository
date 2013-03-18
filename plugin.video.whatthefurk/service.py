@@ -27,6 +27,7 @@ class AutoUpdater:
                             xbmc.executebuiltin('UpdateLibrary(video)')
                             time.sleep(1)
                             self.last_run = now
+                            xbmc.executebuiltin('RunPlugin(plugin://plugin.video.whatthefurk/?mode=wishlist%20search)') 
                     else:
                         xbmc.log("[What the Furk] Player is running, waiting until finished")
                     xbmc.log("[What the Furk] Next update is scheduled to run in " + str(hours) + "h")

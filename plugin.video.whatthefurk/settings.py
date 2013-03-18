@@ -34,6 +34,12 @@ def downloads_file():
 	
 def downloads_file_tv():
     return create_file(DATA_PATH, "active_downloads_tv.list")
+	
+def wishlist():
+    return create_file(DATA_PATH, "wishlist.list")
+	
+def wishlist_finished():
+    return create_file(DATA_PATH, "wishlist_finished.list")
 
 def furk_search_file():
     return create_file(DATA_PATH, "furk_search.list")

@@ -4,11 +4,11 @@ Created on 6 feb 2012
 @author: Batch, kinkin
 '''
 
-import xbmc, xbmcaddon, xbmcgui, xbmcplugin
+import xbmc, xbmcaddon, xbmcgui, xbmcplugin, gzip
 import settings
 from common import notification, get_url, regex_get_all, regex_from_to, create_directory, write_to_file, read_from_file, clean_file_name, get_file_size, wait, wait_dl_only
 from datetime import date, timedelta
-import urllib, os, sys, re
+import urllib, os, sys, re, urllib2
 import shutil
 from furk import FurkAPI
 from mediahandler import play, download, download_and_play, set_resolved_url
@@ -108,6 +108,8 @@ DOWNLOAD_TV = settings.tv_download_directory()
 ACTIVE_DOWNLOADS = settings.downloads_file()
 ACTIVE_DOWNLOADS_TV = settings.downloads_file_tv()
 LIBRARY_FORMAT = settings.lib_format()
+WISHLIST = settings.wishlist()
+WISHLIST_FINISHED = settings.wishlist_finished()
 
 
 fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
@@ -208,6 +210,9 @@ def download_play(name, url, type):
         xbmcgui.Dialog().ok('Download failed', name)
 	
 def download_only(name, url, type):
+    print name
+    print url
+    print type
 
     WAITING_TIME = 5
     if type == "tv":
@@ -219,19 +224,105 @@ def download_only(name, url, type):
         dlThread = DownloadFileThread(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS
     dlThread.start()
-    wait_dl_only(WAITING_TIME, "Starting Download")
-    if os.path.exists(data_path):
-        notify = "%s,%s,%s" % ('XBMC.Notification(Download started',name,'4000)')
-        xbmc.executebuiltin(notify)
-        scan_library()
-        notify = 'XBMC.Notification(Added to Library,You can play from library now,4000)'
-        xbmc.executebuiltin(notify)
-        size = get_file_size(url)
-        list_data = "%s<|>%s" % (name, data_path)
-        add_search_query(list_data, download_list)
+    if mode != "wishlist search":
+        wait_dl_only(WAITING_TIME, "Starting Download")
+        if os.path.exists(data_path):
+            notify = "%s,%s,%s" % ('XBMC.Notification(Download started',name,'4000)')
+            xbmc.executebuiltin(notify)
+            scan_library()
+            notify = 'XBMC.Notification(Added to Library,You can play from library now,4000)'
+            xbmc.executebuiltin(notify)
+            size = get_file_size(url)
+            list_data = "%s<|>%s" % (name, data_path)
+            add_search_query(list_data, download_list)
 
+        else:
+            xbmcgui.Dialog().ok('Download failed', name)
     else:
-        xbmcgui.Dialog().ok('Download failed', name)
+        time.sleep(6)
+        if os.path.exists(data_path):
+            list_data = "%s<|>%s" % (name, data_path)
+            add_search_query(list_data, download_list)
+
+def download_kat(queryname, episode):
+    menu_texts = []
+    menu_data = []
+    menu_url = []
+    menu_page_url = []
+    dialog = xbmcgui.Dialog()
+    episode1 = episode.replace("dummy", "")
+    list_name = queryname
+    queryname = queryname.replace(" any", "")
+
+    data_url = "http://kat.ph/hourlydump.txt.gz"
+    data_path = os.path.join(DOWNLOAD_PATH, "kat.gz")
+    if not os.path.exists(data_path):
+        print "[What the Furk...XBMCHUB.COM].........daily torrent file does not exist, downloading"
+        urllib.urlretrieve(data_url, data_path)
+    else:
+        currenttime = time.time()
+        filetime = os.path.getmtime(data_path)
+        diff = currenttime - filetime
+        if diff > 3600:
+            print "[What the Furk...XBMCHUB.COM].........over 1 hour since last torrent file, downloading"
+            urllib.urlretrieve(data_url, data_path)
+        else:
+            print "[What the Furk...XBMCHUB.COM].........less than 1 hour since last torrent file, use current file"
+    kat_list = gzip.open(data_path)
+    kat_list = kat_list.read()
+    search_list = kat_list.split('\n')
+    for list in search_list:
+        if list != '':
+            list = list.split('|')
+            info_hash = list[0]
+            name = list[1]
+            type = list[2]
+            page_url = list[3]
+            url_dl = list[4]
+			
+            if queryname.find(" ")>0:
+                filename = queryname.lower().split(" ")
+                if  filename[0] in name.lower() and filename[1] in name.lower() and episode1.lower() in name.lower() and (type == "Movies" or type == "TV"):#  and queryname[1] in name.lower() and queryepisode in name.lower()
+                    menu_texts.append(name)
+                    menu_data.append(info_hash)
+                    menu_url.append(url_dl)
+                    menu_page_url.append(page_url)
+            else:
+                filename = queryname.lower()
+                if  filename in name.lower() and episode1.lower() in name.lower() and (type == "Movies" or type == "TV"):
+                    menu_texts.append(name)
+                    menu_data.append(info_hash)
+                    menu_url.append(url_dl)
+                    menu_page_url.append(page_url)
+			
+    if len(menu_data) == 0:
+        if mode != "wishlist search":
+            dialog = xbmcgui.Dialog()
+            dialog.ok("No torrents found", "The search was unable to find any torrents", "%s %s" % (queryname, episode))
+            return (None, None)
+    else:
+        if mode == "wishlist search":
+            if len(menu_data) == 0:
+                return (None, None)
+            else:
+                menu_id = 0
+                info_hash = str(menu_data[menu_id])
+                name = str(menu_texts[menu_id])
+                add_download(name, info_hash)
+                action = "newtorrents"
+                list_data = "%s<|>%s<|>%s" % (list_name, action, episode)
+                remove_search_query(list_data, WISHLIST)
+                add_search_query(list_data, WISHLIST_FINISHED)
+        else:
+            menu_id = dialog.select('Select Torrent', menu_texts)
+            if(menu_id < 0):
+                return (None, None)
+                dialog.close()
+            else:	
+                info_hash = str(menu_data[menu_id])
+                name = str(menu_texts[menu_id])
+                add_download(name, info_hash)
+
 		
 def download_meta_zip():
     menu_data = ["",
@@ -380,6 +471,17 @@ def find_search_query(query, search_file):
         return index
     except:
         return -1 #Not found
+
+def daily_torrents():
+    search_file = os.path.join(DOWNLOAD_PATH, "hourlydump.txt")
+    try:
+        content = read_from_file(search_file) 
+        lines = content.split('\n')
+        #index = lines.index(query)
+        print lines
+        return lines
+    except:
+        return -1
     
 def add_search_query(query, search_file):
     if find_search_query(query, search_file) >= 0:
@@ -439,6 +541,7 @@ def create_tv_show_strm_files(name, imdb_id, mode, dir_path):
                     data = '%s<|>%s<|>%d<|>%d' % (name, episode_name, season_number, episode_number)
                     season_path = create_directory(tv_show_path, str(season_number))
                     create_strm_file(display, data, imdb_id, mode, season_path)
+					
 
 def remove_strm_file(name, dir_path):
     try:
@@ -596,7 +699,15 @@ def deletesearchlists():
     if dialog.yesno("Delete Furk search list", "Do you want to clear the list?"):
         fo=open(FURK_SEARCH_FILE,"wb")
 		
-#Scrape
+def deletewishlists():
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Delete Pending Wishlist", "Do you want to clear the list?"):
+        fo=open(WISHLIST,"wb")
+		
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Delete Finished Wishlist", "Do you want to clear the list?"):
+        fo=open(WISHLIST_FINISHED,"wb")
+		
 
 
 
@@ -645,6 +756,7 @@ def search_imdb(params):
             movies.extend(get_imdb_search_result(body))
         except:
             xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out") 
+        
         count = count + 250
         if len(movies) < count:
             return movies
@@ -658,7 +770,7 @@ def title_search(params, start="1"):
     params["start"] = start
     params["count"] = COUNT
     url = "%s%s" % (IMDB_TITLE_SEARCH, urllib.urlencode(params))
-    print url
+    #print url
     body = get_url(url, cache=CACHE_PATH)
     return body
     
@@ -765,6 +877,16 @@ def get_customlist_result(body):
         movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes}),
     return movies
 	
+def search_btloft():
+    url = "http://www.sumotorrent.com/en/search/walking-dead-s03e13"  # "http://www.scrapetorrent.com/Search/index.php?search=walking%20dead%20s03e13&sort=seed&cat=x" #"http://kat.ph/torrents/usearch/?q=walking+dead+s03e13"
+    print url
+    body = get_url(url, cache=CACHE_PATH)
+    try:
+        print body
+    except:
+        pass
+    return body
+	
 def scrape_xspf(body, id):
     all_track = regex_get_all(body, '<track>', '</track>')
     tracks = []
@@ -847,7 +969,6 @@ def main_menu():
     items.append(create_directory_tuple('FURK - My Files', 'my files directory menu'))
     items.append(create_directory_tuple('FURK - Search', 'furk search menu'))
     items.append(create_directory_tuple('FURK - Account Info', 'account info'))
-    items.append(create_directory_tuple('WTF  - Downloads', 'download menu'))
     items.append(create_directory_tuple('WTF  - Maintenance', 'maintenance menu'))
     return items
 
@@ -858,29 +979,30 @@ def maintenance():
     items.append(create_directory_tuple('Delete Cache Files', 'delete cache'))
     items.append(create_directory_tuple('Delete Meta Zip Files', 'delete meta zip'))
     items.append(create_directory_tuple('Clear Search Lists', 'delete search lists'))
+    items.append(create_directory_tuple('Clear Wishlists', 'delete wishlists'))
     return items
 	
 def myfiles_directory():
     items = []
-    items.append(create_directory_tuple('Finished', 'my files menu'))
-    items.append(create_directory_tuple('Deleted', 'my files deleted menu'))
+    items.append(create_directory_tuple('My Files - Finished', 'my files menu'))
+    items.append(create_directory_tuple('My Files - Deleted', 'my files deleted menu'))
+    items.append(create_directory_tuple('Wishlist - Pending', 'wishlist pending menu'))
+    items.append(create_directory_tuple('Wishlist - Finished', 'wishlist finished menu'))
+    items.append(create_directory_tuple('[COLOR gold]' + ">> Run Wishlist Search <<" + '[/COLOR]', 'wishlist search'))
+    items.append(create_directory_tuple('Downloaded - Movies', 'download movies menu'))
+    items.append(create_directory_tuple('Downloaded - TV Episodes', 'download episodes menu'))
     items.append(create_directory_tuple('Active Downloads', 'active download menu'))
     items.append(create_directory_tuple('Failed Downloads', 'failed download menu'))
     return items
 	
-def downloads():
-    items = []
-    items.append(create_directory_tuple('Movies', 'download movies menu'))
-    items.append(create_directory_tuple('TV Episodes', 'download episodes menu'))
-    return items
 
 def imdb_menu():
     items = []
-    items.append(create_movie_directory_tuple('Top Movies', 'all movies menu'))  
+    items.append(create_movie_directory_tuple('Top Movies', 'all movies menu')) 
+    items.append(create_movie_directory_tuple('New Movies', 'new movies menu'))	
     items.append(create_directory_tuple('Movies by Genre', 'movie genres menu')) 
     items.append(create_directory_tuple('Movies by Group', 'movie groups menu'))
     items.append(create_directory_tuple('Movies by Studio', 'movie studios menu'))	
-    items.append(create_movie_directory_tuple('New Movies', 'new movies menu'))
     items.append(create_movie_directory_tuple('Blu-Ray at Amazon', 'blu-ray menu'))
     items.append(create_directory_tuple('Top TV Shows', 'all tv shows menu'))  
     items.append(create_directory_tuple('TV shows by Genre', 'tv show genres menu'))
@@ -1351,6 +1473,38 @@ def download_episodes_menu():
 
     return items
 	
+def wishlist_pending_menu():
+    items = []
+    
+    if os.path.isfile(WISHLIST):
+        s = read_from_file(WISHLIST)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list = list.split('<|>')
+                name = "%s | %s | %s" % (list[0], list[1], list[2])
+                action = list[1]
+                type = 'movie'
+                items.append(create_download_file_tuple(name, action, type))
+
+    return items
+	
+def wishlist_finished_menu():
+    items = []
+    
+    if os.path.isfile(WISHLIST_FINISHED):
+        s = read_from_file(WISHLIST_FINISHED)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list = list.split('<|>')
+                name = "%s | %s | %s" % (list[0], list[1], list[2])
+                action = list[1]
+                type = 'movie'
+                items.append(create_download_file_tuple(name, action, type))
+
+    return items
+	
 def delete_download(name, data, type):
     if type == "tv":
         data_path = os.path.join(DOWNLOAD_TV, name)
@@ -1359,7 +1513,6 @@ def delete_download(name, data, type):
         data_path = os.path.join(DOWNLOAD_MOV, name)
         download_list = ACTIVE_DOWNLOADS
     list_data = "%s<|>%s" % (name, data_path)
-    print list_data
     if os.path.exists(data):
         try:
             os.remove(data)
@@ -1604,14 +1757,40 @@ def t_file_dialog_tv(xbmcname, id, strm=False):
 			
 def add_download(name, info_hash):
     dialog = xbmcgui.Dialog()
-    if dialog.yesno("Add Download", "Download this file to your Furk account?", "Success depends on number of seeders"):
-        response = FURK.dl_add(info_hash)
-        if response['status'] == 'ok':
-            notify = 'XBMC.Notification(Download added to Furk account,Check status in My Files,3000)'
-            xbmc.executebuiltin(notify)
-        else:
-            notify = 'XBMC.Notification(Error,Unable to add download,3000)'
-            xbmc.executebuiltin(notify)
+    if mode == "wishlist search":
+        FURK.dl_add(info_hash)
+    else:
+        if dialog.yesno("Add Download", "Download this file to your Furk account?", "Success depends on number of seeders"):
+            response = FURK.dl_add(info_hash)
+            if response['status'] == 'ok':
+                notify = 'XBMC.Notification(Download added to Furk account,Check status in My Files,3000)'
+                xbmc.executebuiltin(notify)
+            else:
+                notify = 'XBMC.Notification(Error,Unable to add download,3000)'
+                xbmc.executebuiltin(notify)
+			
+def add_wishlist(name, type):
+    name = name.replace("(","").replace(")","")
+    dialog = xbmcgui.Dialog()
+    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_id = dialog.select("Select your preferred quality", quality_list)
+    quality = quality_list_return[quality_id]
+    if(quality_id < 0):
+        return (None, None)
+        dialog.close()
+		
+    action_list = ["Download","Add Stream", "Add to My Files", "Check for new torrents"]
+    action_list_return = ["download","stream", "myfiles", "newtorrents"]
+    action_id = dialog.select("What would you like to do?", action_list)
+    action = action_list_return[action_id]
+    if(action_id < 0):
+        return (None, None)
+        dialog.close()
+	
+    episode = type
+    list_data = "%s %s<|>%s<|>%s" % (name, quality, action, episode)
+    add_search_query(list_data, WISHLIST)
 
 def movie_dialog(data, imdb_id=None, strm=False):
     items = []
@@ -1634,7 +1813,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
     files = search_furk(searchstring)
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
-        dialog.ok("File Search", 'No files found for:', searchstring) 
+        dialog.ok("File Search", 'No files found for:', searchstring)
     if FURK_LIM_FS:
         fs_limit = FURK_LIM_FS_NUM
     else:
@@ -2000,6 +2179,76 @@ def furksearch_dialog(query, imdb_id=None, strm=False):
             items.append(archive_tuple)
             setView('movies', 'movies-view')
     return items;
+	
+def one_click_download():
+    open_playlists = True
+    if os.path.isfile(WISHLIST):
+        notify = 'XBMC.Notification(Wishlist,Searching,5000)'
+        xbmc.executebuiltin(notify)
+        s = read_from_file(WISHLIST)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list = list.split('<|>')
+                action = list[1]
+                episode = list[2]
+                if episode == "dummy":
+                    searchname1 = list[0]
+                else:
+                    searchname1 = "%s %s" % (list[0], list[2])
+                searchname = searchname1.replace(" any","")
+	
+                files = []
+                files = search_furk(str(searchname))
+                if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                    if mode != "wishlist search":
+                        notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                        xbmc.executebuiltin(notify)
+                else:        
+                    tracks = []
+                    count = 0
+                    for f in files:
+                        if f.type == "video" and f.url_dl != None:
+                            if FURK_LIM_FS:
+                                if int(f.size)/1073741824 < FURK_LIM_FS_NUM:
+                                    new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
+                                    tracks.extend(new_tracks)
+					
+                            else:
+                                new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
+                                tracks.extend(new_tracks)
+                    try:
+                        (url, name, id) = track_dialog(tracks)
+                        if LIBRARY_FORMAT:
+                            name = "%s.%s" % (str(searchname.lower()),name.lower()[len(name)-3:])
+                        else:
+                            name = name.lower()
+                        if action == "download":
+                            if episode == "dummy":
+                                type = "movie"
+                            else:
+                                type = "tv"
+                            download_only(name, url, type)
+                        if action == "stream":
+                            if episode == "dummy":
+                                path = MOVIES_PATH
+                            else:
+                                path = TV_SHOWS_PATH
+                            create_strm_file(name, url, id, "strm file dialog", path)
+                        if action == "myfiles":
+                            FURK.file_link(id)
+                        name = list[0]
+                        list_data = "%s<|>%s<|>%s" % (name, action, episode)
+                        remove_search_query(list_data, WISHLIST)
+                        add_search_query(list_data, WISHLIST_FINISHED)
+                    except:
+                        pass
+						
+                if action == "newtorrents":
+                    name = list[0]
+                    download_kat(name, episode)
+					
+                scan_library() # scan library when finished
             
 def set_resolved_to_dummy():
     listitem = xbmcgui.ListItem('Dummy data to avoid error message', path=DUMMY_PATH)
@@ -2017,18 +2266,21 @@ def track_dialog(tracks):
         menu_linkid.append(track['id'])
 
     if len(menu_data) == 0:
-        builtin = 'XBMC.Notification(No files found,The search was unable to find any files,3000)'
-        xbmc.executebuiltin(builtin)
+        if mode != "wishlist search":
+            builtin = 'XBMC.Notification(No files found,The search was unable to find any files,3000)'
+            xbmc.executebuiltin(builtin)
         return (None, None)
 
     menu_id = 0
-    notify = 'XBMC.Notification(Starting stream,Be patient.......,5000)'
-    xbmc.executebuiltin(notify)
+    if mode != "wishlist search":
+        notify = 'XBMC.Notification(Starting stream,Be patient.......,5000)'
+        xbmc.executebuiltin(notify)
 		
     url = menu_data[menu_id]
     name = menu_texts[menu_id]
+    id = menu_linkid[menu_id]
     
-    return (url, name)
+    return (url, name, id)
 
 
 def search_furk(query, sort='cached', filter=FURK_RESULTS, moderated=FURK_MODERATED):
@@ -2213,8 +2465,6 @@ def make_string_comparable(s):
 
 def get_playlist_tracks(playlist_file, open_playlists=False):
     tracks = []
-    #prefix = []
-    #mf_status = []
     size = float(playlist_file.size)/1073741824
     id = playlist_file.id
  		
@@ -2389,12 +2639,20 @@ def create_movie_list_item(name, imdb_id):
     else:
         add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add movie strm' % (sys.argv[0], urllib.quote(name), urllib.quote(name), imdb_id)
         contextMenuItems.append(('Add movie to XBMC library', 'XBMC.RunPlugin(%s)' % add_url))
+    name_kat = name[:len(name)-7].replace("The ","")
+    data_kat = "dummy"
+    kat_url = '%s?name=%s&data=%s&imdb_id=%s&mode=search kat daily' % (sys.argv[0], urllib.quote(name_kat), data_kat, imdb_id)
+    contextMenuItems.append(('Search latest torrents', 'XBMC.RunPlugin(%s)' % kat_url))
+	
+    type = "dummy"
+    wishlist_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add wishlist' % (sys.argv[0], urllib.quote(name), type, imdb_id)
+    contextMenuItems.append(('Add to Wishlist', 'XBMC.RunPlugin(%s)' % wishlist_url))
     
     li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
     li = set_movie_meta(li, imdb_id, META_PATH)
     
-    return li  
+    return li
 
        
 def create_tv_show_list_item(name, imdb_id):
@@ -2488,9 +2746,21 @@ def create_file_list_item(xbmcname, text, name, url, size, poster, type):
 	
 def create_download_file_list_item(name, path, type):
     contextMenuItems = []
-    delete_file = '%s?name=%s&data=%s&imdb_id=%s&mode=delete download' % (sys.argv[0], urllib.quote(name), path, type)  
-    contextMenuItems.append(('Delete File', 'XBMC.RunPlugin(%s)' % delete_file))
-    li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
+    print mode
+    if mode != "wishlist pending menu" and mode != "wishlist finished menu":
+        delete_file = '%s?name=%s&data=%s&imdb_id=%s&mode=delete download' % (sys.argv[0], urllib.quote(name), path, type)  
+        contextMenuItems.append(('Delete File', 'XBMC.RunPlugin(%s)' % delete_file))
+    if mode == "wishlist pending menu" or mode == "wishlist finished menu":
+        if mode == "wishlist pending menu":
+            list_path = WISHLIST
+        else:
+            list_path = WISHLIST_FINISHED
+        list_data = name.replace(" | ", "<|>")
+        print list_data
+        print list_path
+        remove_url = '%s?name=%s&data=%s&mode=remove wishlist search' % (sys.argv[0], urllib.quote(list_data), list_path)
+        contextMenuItems.append(('Remove', 'XBMC.RunPlugin(%s)' % remove_url))
+    li = xbmcgui.ListItem(clean_file_name(name.replace("dummy", ""), use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=True)
     return li
 
@@ -2500,6 +2770,12 @@ blank = None
     
 def create_episode_list_item(name, data, imdb_id, poster, title, year, overview, rating, premiered, genre, fanart, easyname):
     contextMenuItems = []
+    data_split = data.split('<|>')
+    tv_show_name = data_split[0].replace(" Mini-Series","").replace(" TV Series","").replace("The ","")
+    season_number = int(data_split[2])
+    episode_number = int(data_split[3])
+    season_episode = "s%.2de%.2d" % (season_number, episode_number)
+	
     contextMenuItems.append(('TV Show information', 'XBMC.Action(Info)'))
     data1 = str(data).replace('<|>', '$')
 	
@@ -2508,9 +2784,14 @@ def create_episode_list_item(name, data, imdb_id, poster, title, year, overview,
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
         data = data.split('<|>')
         tv_show_name = data[0].replace(" Mini-Series","")
-
         contextMenuItems.append(('@Search Tv 1Channel', 'XBMC.Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
 
+    name_kat = tv_show_name.replace("The ","")
+    data_kat = season_episode
+    kat_url = '%s?name=%s&data=%s&imdb_id=%s&mode=search kat daily' % (sys.argv[0], urllib.quote(name_kat), data_kat, imdb_id)
+    contextMenuItems.append(('Search latest torrents', 'XBMC.RunPlugin(%s)' % kat_url))
+    wishlist_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add wishlist' % (sys.argv[0], urllib.quote(name_kat), data_kat, imdb_id)
+    contextMenuItems.append(('Add to Wishlist', 'XBMC.RunPlugin(%s)' % wishlist_url))
     li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
     li.setProperty("Video", "true")
@@ -2595,7 +2876,8 @@ class DownloadFileThread(Thread):
         Thread.__init__(self)
 
     def run(self):
-        path = os.path.join(DOWNLOAD_MOV, clean_file_name(name, use_blanks=False))
+        path = self.path
+        data = self.data
         urllib.urlretrieve(data, path)
         notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'5000)')
         xbmc.executebuiltin(notify)
@@ -2607,7 +2889,8 @@ class DownloadFileThreadTV(Thread):
         Thread.__init__(self)
 
     def run(self):
-        path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
+        path = self.path
+        data = self.data
         urllib.urlretrieve(data, path)
         notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'5000)')
         xbmc.executebuiltin(notify)
@@ -2749,7 +3032,11 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "download movies menu": #all menu
         items = download_movies_menu()
     elif mode == "download episodes menu": #all menu
-        items = download_episodes_menu()
+        items = download_episodes_menu()#
+    elif mode == "wishlist pending menu": #all menu
+        items = wishlist_pending_menu()
+    elif mode == "wishlist finished menu": #all menu
+        items = wishlist_finished_menu()
     elif mode == "nzbweek menu": 
         items, missing_meta = nzbweek_menu()
         get_missing_meta(missing_meta, 'movies')
@@ -2996,6 +3283,10 @@ elif mode == "remove furk search":
 elif mode == "remove imdb search":
     remove_search_query(name, IMDB_SEARCH_FILE)
     xbmc.executebuiltin("Container.Refresh")
+	
+elif mode == "remove wishlist search":
+    remove_search_query(name, data)
+    xbmc.executebuiltin("Container.Refresh")
 
 elif mode == "subscribe":
     subscribe(name, data)
@@ -3006,6 +3297,8 @@ elif mode == "delete meta zip":
     deletemetazip()
 elif mode == "delete search lists":
     deletesearchlists()
+elif mode == "delete wishlists":
+    deletewishlists()
 elif mode == "account info":
     account_info()
 
@@ -3093,8 +3386,14 @@ elif mode == "delete download":
 elif mode == "scan library":
     scan_library()
 	
-elif mode == "search btloft":
-    search_btloft()
+elif mode == "search kat daily":
+    download_kat(name, data)
+	
+elif mode == "wishlist search":
+    one_click_download()
+	
+elif mode == "add wishlist":
+    add_wishlist(name, data)
 	
 
 

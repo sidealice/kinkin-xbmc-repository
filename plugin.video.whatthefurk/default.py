@@ -2182,6 +2182,7 @@ def furksearch_dialog(query, imdb_id=None, strm=False):
 	
 def one_click_download():
     open_playlists = True
+    sleep = 10
     if os.path.isfile(WISHLIST):
         notify = 'XBMC.Notification(Wishlist,Searching,5000)'
         xbmc.executebuiltin(notify)
@@ -2247,8 +2248,12 @@ def one_click_download():
                 if action == "newtorrents":
                     name = list[0]
                     download_kat(name, episode)
-					
-                scan_library() # scan library when finished
+				
+                
+                sleep = sleep + 1				
+                time.sleep(sleep) #sleep for 10+ seconds to get around furk api call limit. 
+                print "What the Furk......sleeping for " + str(sleep) + " seconds"
+        scan_library() # scan library when finished
             
 def set_resolved_to_dummy():
     listitem = xbmcgui.ListItem('Dummy data to avoid error message', path=DUMMY_PATH)

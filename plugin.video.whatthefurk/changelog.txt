@@ -1,3 +1,6 @@
+1.3.1a
+Wishlist: no need to sleep when searching for new torrents. 
+
 1.3.1
 Added increasing delay to watchlist search to get round furk api limits
 

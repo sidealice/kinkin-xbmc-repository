@@ -279,7 +279,6 @@ def download_kat(queryname, episode):
             type = list[2]
             page_url = list[3]
             url_dl = list[4]
-			
             if queryname.find(" ")>0:
                 filename = queryname.lower().split(" ")
                 if  filename[0] in name.lower() and filename[1] in name.lower() and episode1.lower() in name.lower() and (type == "Movies" or type == "TV"):#  and queryname[1] in name.lower() and queryepisode in name.lower()
@@ -311,6 +310,7 @@ def download_kat(queryname, episode):
                 add_download(name, info_hash)
                 action = "newtorrents"
                 list_data = "%s<|>%s<|>%s" % (list_name, action, episode)
+                print list_data
                 remove_search_query(list_data, WISHLIST)
                 add_search_query(list_data, WISHLIST_FINISHED)
         else:
@@ -2199,60 +2199,59 @@ def one_click_download():
                     searchname1 = "%s %s" % (list[0], list[2])
                 searchname = searchname1.replace(" any","")
 	
-                files = []
-                files = search_furk(str(searchname))
-                if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
-                    if mode != "wishlist search":
-                        notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
-                        xbmc.executebuiltin(notify)
-                else:        
-                    tracks = []
-                    count = 0
-                    for f in files:
-                        if f.type == "video" and f.url_dl != None:
-                            if FURK_LIM_FS:
-                                if int(f.size)/1073741824 < FURK_LIM_FS_NUM:
-                                    new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
-                                    tracks.extend(new_tracks)
-					
-                            else:
-                                new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
-                                tracks.extend(new_tracks)
-                    try:
-                        (url, name, id) = track_dialog(tracks)
-                        if LIBRARY_FORMAT:
-                            name = "%s.%s" % (str(searchname.lower()),name.lower()[len(name)-3:])
-                        else:
-                            name = name.lower()
-                        if action == "download":
-                            if episode == "dummy":
-                                type = "movie"
-                            else:
-                                type = "tv"
-                            download_only(name, url, type)
-                        if action == "stream":
-                            if episode == "dummy":
-                                path = MOVIES_PATH
-                            else:
-                                path = TV_SHOWS_PATH
-                            create_strm_file(name, url, id, "strm file dialog", path)
-                        if action == "myfiles":
-                            FURK.file_link(id)
-                        name = list[0]
-                        list_data = "%s<|>%s<|>%s" % (name, action, episode)
-                        remove_search_query(list_data, WISHLIST)
-                        add_search_query(list_data, WISHLIST_FINISHED)
-                    except:
-                        pass
-						
                 if action == "newtorrents":
                     name = list[0]
                     download_kat(name, episode)
-				
-                
-                sleep = sleep + 1				
-                time.sleep(sleep) #sleep for 10+ seconds to get around furk api call limit. 
-                print "What the Furk......sleeping for " + str(sleep) + " seconds"
+                else:	
+                    files = []
+                    files = search_furk(str(searchname))
+                    if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                        if mode != "wishlist search":
+                            notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                            xbmc.executebuiltin(notify)
+                    else:        
+                        tracks = []
+                        count = 0
+                        for f in files:
+                            if f.type == "video" and f.url_dl != None:
+                                if FURK_LIM_FS:
+                                    if int(f.size)/1073741824 < FURK_LIM_FS_NUM:
+                                        new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
+                                        tracks.extend(new_tracks)
+					
+                                else:
+                                    new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
+                                    tracks.extend(new_tracks)
+                        try:
+                            (url, name, id) = track_dialog(tracks)
+                            if LIBRARY_FORMAT:
+                                name = "%s.%s" % (str(searchname.lower()),name.lower()[len(name)-3:])
+                            else:
+                                name = name.lower()
+                            if action == "download":
+                                if episode == "dummy":
+                                    type = "movie"
+                                else:
+                                    type = "tv"
+                                download_only(name, url, type)
+                            if action == "stream":
+                                if episode == "dummy":
+                                    path = MOVIES_PATH
+                                else:
+                                    path = TV_SHOWS_PATH
+                                create_strm_file(name, url, id, "strm file dialog", path)
+                            if action == "myfiles":
+                                FURK.file_link(id)
+                            name = list[0]
+                            list_data = "%s<|>%s<|>%s" % (name, action, episode)
+                            remove_search_query(list_data, WISHLIST)
+                            add_search_query(list_data, WISHLIST_FINISHED)
+                        except:
+                            pass
+
+                    sleep = sleep + 1				
+                    time.sleep(sleep) #sleep for 10+ seconds to get around furk api call limit. 
+                    print "What the Furk......sleeping for " + str(sleep) + " seconds"
         scan_library() # scan library when finished
             
 def set_resolved_to_dummy():

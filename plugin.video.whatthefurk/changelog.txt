@@ -1,3 +1,6 @@
+1.3.1
+Added increasing delay to watchlist search to get round furk api limits
+
 1.3.0
 Moved WTF Downloads to My Files menu
 Moved New Movies to top of browse list

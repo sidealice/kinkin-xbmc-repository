@@ -1462,8 +1462,9 @@ def download_movies_menu():
                         pct = '[COLOR yellow]' + ("[%.0f%%/%s]" % (pct, fmt_size)) + '[/COLOR]'
                 except:
                     pct = '[COLOR green]' + ("[%.0f%%]" % (100.0/1)) + '[/COLOR]'
+                    size = ""
                 type = 'movie'
-                items.append(create_download_file_tuple(name, path, type, pct))
+                items.append(create_download_file_tuple(name, path, type, pct, size))
 
     return items
 	
@@ -1490,8 +1491,9 @@ def download_episodes_menu():
                         pct = '[COLOR yellow]' + ("[%.0f%%/%s]" % (pct, fmt_size)) + '[/COLOR]'
                 except:
                     pct = '[COLOR green]' + ("[%.0f%%]" % (100.0/1)) + '[/COLOR]'
+                    size = ""
                 type = 'tv'
-                items.append(create_download_file_tuple(name, path, type, pct))
+                items.append(create_download_file_tuple(name, path, type, pct, size))
 
     return items
 	
@@ -1508,7 +1510,8 @@ def wishlist_pending_menu():
                 action = list[1]
                 pct = ""
                 type = 'movie'
-                items.append(create_download_file_tuple(name, action, type, pct))
+                size = ""
+                items.append(create_download_file_tuple(name, action, type, pct, size))
 
     return items
 	
@@ -1525,7 +1528,8 @@ def wishlist_finished_menu():
                 action = list[1]
                 pct = ""
                 type = 'movie'
-                items.append(create_download_file_tuple(name, action, type, pct))
+                size = ""
+                items.append(create_download_file_tuple(name, action, type, pct, size))
 
     return items
 	
@@ -1536,10 +1540,12 @@ def delete_download(name, data, type):
     else:
         data_path = os.path.join(DOWNLOAD_MOV, name)
         download_list = ACTIVE_DOWNLOADS
-    list_data = "%s<|>%s" % (name, data_path)
-    if os.path.exists(data):
+    list_data = "%s<|>%s<|>%s" % (name, data_path, data)
+    print list_data
+    print data_path
+    if os.path.exists(data_path):
         try:
-            os.remove(data)
+            os.remove(data_path)
             remove_search_query(list_data, download_list)
             xbmc.executebuiltin("Container.Refresh")
         except:
@@ -2064,7 +2070,7 @@ def one_click_movie(name, imdb_id, strm=False):
                 new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
                 tracks.extend(new_tracks)
 
-    (url, name) = track_dialog(tracks)
+    (url, name, id) = track_dialog(tracks)
     pDialog.close()
      
     if not url or not name:
@@ -2144,7 +2150,7 @@ def one_click_episode(data, imdb_id, strm=False):
                 new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
                 tracks.extend(new_tracks)
 
-    (url, name) = track_dialog(tracks)
+    (url, name, id) = track_dialog(tracks)
     pDialog.close()
      
     if not url or not name:
@@ -2605,9 +2611,9 @@ def create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type):
     file_list_tuple = (file_list_url, file_list_item, True)
     return file_list_tuple
 	
-def create_download_file_tuple(name, path, type, pct):
+def create_download_file_tuple(name, path, type, pct, size):
     download_file_url = create_url(name, "play local", path, "")
-    download_file_item = create_download_file_list_item(name, path, type, pct);
+    download_file_item = create_download_file_list_item(name, path, type, pct, size);
     download_file_tuple = (download_file_url, download_file_item, True)
     return download_file_tuple
 	
@@ -2772,10 +2778,10 @@ def create_file_list_item(xbmcname, text, name, url, size, poster, type):
     li.setThumbnailImage(poster)
     return li
 	
-def create_download_file_list_item(name, path, type, pct):
+def create_download_file_list_item(name, path, type, pct, size):
     contextMenuItems = []
     if mode != "wishlist pending menu" and mode != "wishlist finished menu":
-        delete_file = '%s?name=%s&data=%s&imdb_id=%s&mode=delete download' % (sys.argv[0], urllib.quote(name), path, type)  
+        delete_file = '%s?name=%s&data=%s&imdb_id=%s&mode=delete download' % (sys.argv[0], urllib.quote(name), size, type)  
         contextMenuItems.append(('Delete File', 'XBMC.RunPlugin(%s)' % delete_file))
     if mode == "wishlist pending menu" or mode == "wishlist finished menu":
         if mode == "wishlist pending menu":
@@ -2783,8 +2789,6 @@ def create_download_file_list_item(name, path, type, pct):
         else:
             list_path = WISHLIST_FINISHED
         list_data = name.replace(" | ", "<|>")
-        print list_data
-        print list_path
         remove_url = '%s?name=%s&data=%s&mode=remove wishlist search' % (sys.argv[0], urllib.quote(list_data), list_path)
         contextMenuItems.append(('Remove', 'XBMC.RunPlugin(%s)' % remove_url))
     li = xbmcgui.ListItem("%s %s" % (clean_file_name(name.replace("dummy", ""), use_blanks=False), pct))

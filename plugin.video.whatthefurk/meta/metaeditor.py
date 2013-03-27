@@ -94,7 +94,7 @@ def download_movie_meta(imdb_id, path):
             overview = info.overview()
     
             try:
-                duration = "%d:%02d" % (int(info.runtime()) / 60, int(info.runtime()) % 60)
+                duration = int(info.runtime())#"%d:%02d" % (int(info.runtime()) / 60, int(info.runtime()) % 60)
             except:
                 duration = ""
             

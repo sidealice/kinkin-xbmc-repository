@@ -69,6 +69,12 @@ def furk_moderated():
     #else:
         #return "MB"
 		
+def download_subtitles():
+    if ADDON.getSetting('download_subtitles') == "true":
+        return True
+    else:
+        return False
+		
 def oneclick_myfiles():
     if ADDON.getSetting('oneclick_myfiles') == "true":
         return True

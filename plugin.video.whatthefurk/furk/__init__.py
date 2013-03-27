@@ -17,7 +17,7 @@ class FurkAPI(object):
         
     #search for torrents
     def search(self, query, filter, limit="25", match="all",
-               moderated="yes", offset="0", sort="cached"):#="all"
+               moderated="yes", offset="0", sort="cached,size"):#="all"
         params = {"q": query, "filter": filter, "match": match,
                   "moderated": moderated, "offset": offset, "sort": sort}
         #"limit" argument does not seem to work

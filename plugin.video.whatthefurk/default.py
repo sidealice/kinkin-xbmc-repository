@@ -15,9 +15,18 @@ from mediahandler import play, download, download_and_play, set_resolved_url
 from meta import TheTVDBInfo, set_movie_meta, download_movie_meta, set_tv_show_meta, download_tv_show_meta, meta_exist
 from threading import Thread
 import time
-
+import datetime
 
 ADDON = settings.addon()
+if ADDON.getSetting('visitor_ga')=='':
+    from random import randint
+    ADDON.setSetting('visitor_ga',str(randint(0, 0x7fffffff)))
+    
+PATH = "XBMC_WHATTHEFURK"  #<---- PLUGIN NAME MINUS THE "plugin.video"          
+UATRACK = "UA-39563241-1" #<---- GOOGLE ANALYTICS UA NUMBER   
+VERSION = "1.3.2j" #<---- PLUGIN VERSION
+
+
 DATA_PATH = settings.data_path()
 CACHE_PATH = settings.cache_path()
 COOKIE_JAR = settings.cookie_jar()
@@ -105,16 +114,195 @@ ONECLICK_SEARCH = settings.oneclick_search()
 QUALITYSTYLE = settings.qualitystyle()
 DOWNLOAD_MOV = settings.movies_download_directory()
 DOWNLOAD_TV = settings.tv_download_directory()
+DOWNLOAD_SUB = settings.download_subtitles()
 ACTIVE_DOWNLOADS = settings.downloads_file()
 ACTIVE_DOWNLOADS_TV = settings.downloads_file_tv()
 LIBRARY_FORMAT = settings.lib_format()
 WISHLIST = settings.wishlist()
 WISHLIST_FINISHED = settings.wishlist_finished()
 
+###....................G.A...............................................###
 
+
+def parseDate(dateString):
+    try:
+        return datetime.datetime.fromtimestamp(time.mktime(time.strptime(dateString.encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
+    except:
+        return datetime.datetime.today() - datetime.timedelta(days = 1) #force update
+
+
+def checkGA():
+
+    secsInHour = 60 * 60
+    threshold  = 2 * secsInHour
+
+    now   = datetime.datetime.today()
+    prev  = parseDate(ADDON.getSetting('ga_time'))
+    delta = now - prev
+    nDays = delta.days
+    nSecs = delta.seconds
+
+    doUpdate = (nDays > 0) or (nSecs > threshold)
+    if not doUpdate:
+        return
+
+    ADDON.setSetting('ga_time', str(now).split('.')[0])
+    APP_LAUNCH()    
+    
+                    
+def send_request_to_google_analytics(utm_url):
+    ua='Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
+    import urllib2
+    try:
+        req = urllib2.Request(utm_url, None,
+                                    {'User-Agent':ua}
+                                     )
+        response = urllib2.urlopen(req).read()
+    except:
+        print ("GA fail: %s" % utm_url)         
+    return response
+       
+def GA(group,name):
+        try:
+            try:
+                from hashlib import md5
+            except:
+                from md5 import md5
+            from random import randint
+            import time
+            from urllib import unquote, quote
+            from os import environ
+            from hashlib import sha1
+            VISITOR = ADDON.getSetting('visitor_ga')
+            utm_gif_location = "http://www.google-analytics.com/__utm.gif"
+            if not group=="None":
+                    utm_track = utm_gif_location + "?" + \
+                            "utmwv=" + VERSION + \
+                            "&utmn=" + str(randint(0, 0x7fffffff)) + \
+                            "&utmt=" + "event" + \
+                            "&utme="+ quote("5("+PATH+"*"+group+"*"+name+")")+\
+                            "&utmp=" + quote(PATH) + \
+                            "&utmac=" + UATRACK + \
+                            "&utmcc=__utma=%s" % ".".join(["1", VISITOR, VISITOR, VISITOR,VISITOR,"2"])
+                    try:
+                        print "============================ POSTING TRACK EVENT ============================"
+                        send_request_to_google_analytics(utm_track)
+                    except:
+                        print "============================  CANNOT POST TRACK EVENT ============================" 
+            if name=="None":
+                    utm_url = utm_gif_location + "?" + \
+                            "utmwv=" + VERSION + \
+                            "&utmn=" + str(randint(0, 0x7fffffff)) + \
+                            "&utmp=" + quote(PATH) + \
+                            "&utmac=" + UATRACK + \
+                            "&utmcc=__utma=%s" % ".".join(["1", VISITOR, VISITOR, VISITOR, VISITOR,"2"])
+            else:
+                if group=="None":
+                       utm_url = utm_gif_location + "?" + \
+                                "utmwv=" + VERSION + \
+                                "&utmn=" + str(randint(0, 0x7fffffff)) + \
+                                "&utmp=" + quote(PATH+"/"+name) + \
+                                "&utmac=" + UATRACK + \
+                                "&utmcc=__utma=%s" % ".".join(["1", VISITOR, VISITOR, VISITOR, VISITOR,"2"])
+                else:
+                       utm_url = utm_gif_location + "?" + \
+                                "utmwv=" + VERSION + \
+                                "&utmn=" + str(randint(0, 0x7fffffff)) + \
+                                "&utmp=" + quote(PATH+"/"+group+"/"+name) + \
+                                "&utmac=" + UATRACK + \
+                                "&utmcc=__utma=%s" % ".".join(["1", VISITOR, VISITOR, VISITOR, VISITOR,"2"])
+                                
+            print "============================ POSTING ANALYTICS ============================"
+            send_request_to_google_analytics(utm_url)
+            
+        except:
+            print "================  CANNOT POST TO ANALYTICS  ================" 
+            
+            
+def APP_LAUNCH():
+        versionNumber = int(xbmc.getInfoLabel("System.BuildVersion" )[0:2])
+        if versionNumber < 12:
+            if xbmc.getCondVisibility('system.platform.osx'):
+                if xbmc.getCondVisibility('system.platform.atv2'):
+                    log_path = '/var/mobile/Library/Preferences'
+                else:
+                    log_path = os.path.join(os.path.expanduser('~'), 'Library/Logs')
+            elif xbmc.getCondVisibility('system.platform.ios'):
+                log_path = '/var/mobile/Library/Preferences'
+            elif xbmc.getCondVisibility('system.platform.windows'):
+                log_path = xbmc.translatePath('special://home')
+                log = os.path.join(log_path, 'xbmc.log')
+                logfile = open(log, 'r').read()
+            elif xbmc.getCondVisibility('system.platform.linux'):
+                log_path = xbmc.translatePath('special://home/temp')
+            else:
+                log_path = xbmc.translatePath('special://logpath')
+            log = os.path.join(log_path, 'xbmc.log')
+            logfile = open(log, 'r').read()
+            match=re.compile('Starting XBMC \((.+?) Git:.+?Platform: (.+?)\. Built.+?').findall(logfile)
+        elif versionNumber > 11:
+            print '======================= more than ===================='
+            log_path = xbmc.translatePath('special://logpath')
+            log = os.path.join(log_path, 'xbmc.log')
+            logfile = open(log, 'r').read()
+            match=re.compile('Starting XBMC \((.+?) Git:.+?Platform: (.+?)\. Built.+?').findall(logfile)
+        else:
+            logfile='Starting XBMC (Unknown Git:.+?Platform: Unknown. Built.+?'
+            match=re.compile('Starting XBMC \((.+?) Git:.+?Platform: (.+?)\. Built.+?').findall(logfile)
+        print '==========================   '+PATH+' '+VERSION+'  =========================='
+        try:
+            from hashlib import md5
+        except:
+            from md5 import md5
+        from random import randint
+        import time
+        from urllib import unquote, quote
+        from os import environ
+        from hashlib import sha1
+        import platform
+        VISITOR = ADDON.getSetting('visitor_ga')
+        for build, PLATFORM in match:
+            if re.search('12',build[0:2],re.IGNORECASE): 
+                build="Frodo" 
+            if re.search('11',build[0:2],re.IGNORECASE): 
+                build="Eden" 
+            if re.search('13',build[0:2],re.IGNORECASE): 
+                build="Gotham" 
+            print build
+            print PLATFORM
+            utm_gif_location = "http://www.google-analytics.com/__utm.gif"
+            utm_track = utm_gif_location + "?" + \
+                    "utmwv=" + VERSION + \
+                    "&utmn=" + str(randint(0, 0x7fffffff)) + \
+                    "&utmt=" + "event" + \
+                    "&utme="+ quote("5(APP LAUNCH*"+build+"*"+PLATFORM+")")+\
+                    "&utmp=" + quote(PATH) + \
+                    "&utmac=" + UATRACK + \
+                    "&utmcc=__utma=%s" % ".".join(["1", VISITOR, VISITOR, VISITOR,VISITOR,"2"])
+            try:
+                print "============================ POSTING APP LAUNCH TRACK EVENT ============================"
+                send_request_to_google_analytics(utm_track)
+            except:
+                print "============================  CANNOT POST APP LAUNCH TRACK EVENT ============================" 
+checkGA()
+
+###..................end G>A.............................................###
 fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
+######################## DEV MESSAGE ###########################################################################################
+def dev_message():
+    if ADDON.getSetting('dev_message')=="true":
+        dialog = xbmcgui.Dialog()
+        if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
+            deletemetafiles()
+        else:
+            dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
+        dialog.ok("Changes in this version:","New setting (Download tab) to view & download subtitles","Subtitles will download to your defined download path", "Fixed runtime calculation for new meta text files")
+        dialog.ok("Changes in this version....continued:","Added option to search latest torrents if no files are found", "You can now add any WTF directory to xbmc favourites", "Added startup message for version changes")
+        ADDON.setSetting('dev_message', value='false') 
 
+######################## DEV MESSAGE ###########################################################################################
+		
 def login_at_furk():
     if FURK_ACCOUNT:
         if FURK.login(FURK_USER, FURK_PASS):
@@ -221,26 +409,27 @@ def download_only(name, url, type):
         dlThread = DownloadFileThread(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS
     dlThread.start()
-    if mode != "wishlist search":
-        wait_dl_only(WAITING_TIME, "Starting Download")
-        if os.path.exists(data_path):
-            notify = "%s,%s,%s" % ('XBMC.Notification(Download started',name,'4000)')
-            xbmc.executebuiltin(notify)
-            scan_library()
-            notify = 'XBMC.Notification(Added to Library,You can play from library now,4000)'
-            xbmc.executebuiltin(notify)
-            size = get_file_size(url)
-            list_data = "%s<|>%s<|>%s" % (name, data_path, size)
-            add_search_query(list_data, download_list)
+    if not name.endswith("srt"):
+        if mode != "wishlist search":
+            wait_dl_only(WAITING_TIME, "Starting Download")
+            if os.path.exists(data_path):
+                notify = "%s,%s,%s" % ('XBMC.Notification(Download started',name,'4000)')
+                xbmc.executebuiltin(notify)
+                scan_library()
+                notify = 'XBMC.Notification(Added to Library,You can play from library now,4000)'
+                xbmc.executebuiltin(notify)
+                size = get_file_size(url)
+                list_data = "%s<|>%s<|>%s" % (name, data_path, size)
+                add_search_query(list_data, download_list)
 
+            else:
+                xbmcgui.Dialog().ok('Download failed', name)
         else:
-            xbmcgui.Dialog().ok('Download failed', name)
-    else:
-        time.sleep(6)
-        if os.path.exists(data_path):
-            size = get_file_size(url)
-            list_data = "%s<|>%s<|>%s" % (name, data_path, size)
-            add_search_query(list_data, download_list)
+            time.sleep(6)
+            if os.path.exists(data_path):
+                size = get_file_size(url)
+                list_data = "%s<|>%s<|>%s" % (name, data_path, size)
+                add_search_query(list_data, download_list)
 
 def download_kat(queryname, episode):
     menu_texts = []
@@ -251,6 +440,7 @@ def download_kat(queryname, episode):
     episode1 = episode.replace("dummy", "")
     list_name = queryname
     queryname = queryname.replace(" any", "")
+    GA("Context","Search KAT")
 
     data_url = "http://kat.ph/hourlydump.txt.gz"
     data_path = os.path.join(DOWNLOAD_PATH, "kat.gz")
@@ -295,7 +485,7 @@ def download_kat(queryname, episode):
     if len(menu_data) == 0:
         if mode != "wishlist search":
             dialog = xbmcgui.Dialog()
-            dialog.ok("No torrents found", "The search was unable to find any torrents", "%s %s" % (queryname, episode))
+            dialog.ok("No torrents found", "The search was unable to find any torrents", "%s %s" % (queryname, episode1))
             return (None, None)
     else:
         if mode == "wishlist search":
@@ -520,6 +710,7 @@ def create_strm_file(name, data, imdb_id, mode, dir_path):
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] Error while creating strm file for : " + name)
 
+	
 def create_tv_show_strm_files(name, imdb_id, mode, dir_path):
     info = TheTVDBInfo(imdb_id)
     episodes = info.episodes()
@@ -706,8 +897,21 @@ def deletewishlists():
     if dialog.yesno("Delete Finished Wishlist", "Do you want to clear the list?"):
         fo=open(WISHLIST_FINISHED,"wb")
 		
-
-
+def deletemetafiles():
+	# Set path to What the Furk meta files
+    wtf_meta_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.whatthefurk/meta'), '')
+    import glob
+    os.chdir(wtf_meta_path)
+    files=glob.glob('*.dat')
+    file_count = len(files)
+    if file_count > 0:
+        dialog = xbmcgui.Dialog()
+        if dialog.yesno("Delete WTF Meta Files", str(file_count) + " files found", "Do you want to delete them?"):
+            for filename in files:
+                os.unlink(filename)	
+    else:
+        dialog = xbmcgui.Dialog()
+        dialog.ok("Delete WTF Meta Files", "There are no meta files to delete")
 
 def search_nzbmovie(params):
     movies = []
@@ -875,15 +1079,6 @@ def get_customlist_result(body):
         movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes}),
     return movies
 	
-def search_btloft():
-    url = "http://www.sumotorrent.com/en/search/walking-dead-s03e13"  # "http://www.scrapetorrent.com/Search/index.php?search=walking%20dead%20s03e13&sort=seed&cat=x" #"http://kat.ph/torrents/usearch/?q=walking+dead+s03e13"
-    print url
-    body = get_url(url, cache=CACHE_PATH)
-    try:
-        print body
-    except:
-        pass
-    return body
 	
 def scrape_xspf(body, id):
     all_track = regex_get_all(body, '<track>', '</track>')
@@ -901,7 +1096,8 @@ def execute_video(name, url, list_item, strm=False):
         if mode == "strm file dialog" or strm:
             set_resolved_url(int(sys.argv[1]), name, url) 
         else:
-            play(name, url, list_item) 
+            play(name, url, list_item)
+        GA("Streaming", name)			
     elif PLAY_MODE == 'download and play':
         if strm:
             download_and_play(name, url, play=True, handle=int(sys.argv[1]))
@@ -968,6 +1164,7 @@ def main_menu():
     items.append(create_directory_tuple('FURK - Search', 'furk search menu'))
     items.append(create_directory_tuple('FURK - Account Info', 'account info'))
     items.append(create_directory_tuple('WTF  - Maintenance', 'maintenance menu'))
+    items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
     return items
 
 def maintenance():
@@ -975,6 +1172,7 @@ def maintenance():
     items.append(create_directory_tuple('Update Subscriptions', 'get subscriptions'))
     items.append(create_directory_tuple('Update Library', 'scan library'))
     items.append(create_directory_tuple('Delete Cache Files', 'delete cache'))
+    items.append(create_directory_tuple('Delete Meta Files', 'delete metafiles'))
     items.append(create_directory_tuple('Delete Meta Zip Files', 'delete meta zip'))
     items.append(create_directory_tuple('Clear Search Lists', 'delete search lists'))
     items.append(create_directory_tuple('Clear Wishlists', 'delete wishlists'))
@@ -1614,6 +1812,11 @@ def episode_dialog(data, imdb_id=None, strm=False):
     
     quality_id = dialog.select("Select your preferred option", quality_list)
     quality = quality_list_return[quality_id]
+    if quality == "":
+        ga_quality = "Any"
+    else:
+        ga_quality = quality
+    GA("Quality-TV", ga_quality)
     
     if(quality_id == 0):
         searchstring = tv_show_name
@@ -1633,8 +1836,12 @@ def episode_dialog(data, imdb_id=None, strm=False):
     files = search_furk(searchstring)
 	
     if len(files) == 0:
-        dialog.ok("File Search", 'No files found for:', searchstring)
-        return (None, None)		
+        if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+            download_kat(tv_show_name, season_episode)
+            return (None, None)
+        else:
+            return (None, None)
+		
     if FURK_LIM_FS_TV:
         fs_limit = FURK_LIM_FS_NUM_TV
     else:
@@ -1705,6 +1912,11 @@ def strm_episode_dialog(data, imdb_id, strm=False):
     
         quality_id = dialog.select("Select your preferred option", quality_list)
         quality = quality_list_return[quality_id]
+        if quality == "":
+            ga_quality = "Any"
+        else:
+            ga_quality = quality
+        GA("Quality-TV", ga_quality)
     
         if(quality_id == 0):
             searchstring = tv_show_name
@@ -1741,8 +1953,13 @@ def strm_episode_dialog(data, imdb_id, strm=False):
 			
         if len(menu_data) == 0:
             dialog = xbmcgui.Dialog()
-            dialog.ok("No files found", "The search was unable to find any files", searchstring)
-            return (None, None)
+            if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+                download_kat(tv_show_name, season_episode)
+                return (None, None)
+            else:
+                return (None, None)
+            #dialog.ok("No files found", "The search was unable to find any files", searchstring)
+            #return (None, None)
 
         menu_id = dialog.select('Select Archive', menu_texts)
         if(menu_id < 0):
@@ -1778,7 +1995,7 @@ def t_file_dialog_tv(xbmcname, id, strm=False):
         size = "[%.2fGB]" % size
         text = "[%s] %s %s" %(format, size, name)
 
-        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv')):
+        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
             mode = "execute video"
             file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type)
             items.append(file_list_tuple)
@@ -1817,7 +2034,7 @@ def add_wishlist(name, type):
     if(action_id < 0):
         return (None, None)
         dialog.close()
-	
+    GA("Wishlist",action_id)
     episode = type
     list_data = "%s %s<|>%s<|>%s" % (name, quality, action, episode)
     add_search_query(list_data, WISHLIST)
@@ -1836,6 +2053,11 @@ def movie_dialog(data, imdb_id=None, strm=False):
     if(quality_id < 0):
         return (None, None)
         dialog.close()
+    if quality == "":
+        ga_quality = "Any"
+    else:
+        ga_quality = quality
+    GA("Quality-Movie", ga_quality)
     if(quality_id == 0):
         searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     else:
@@ -1843,7 +2065,12 @@ def movie_dialog(data, imdb_id=None, strm=False):
     files = search_furk(searchstring)
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
-        dialog.ok("File Search", 'No files found for:', searchstring)
+        if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+            download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), "dummy")
+            return (None, None)
+        else:
+            return (None, None)
+
     if FURK_LIM_FS:
         fs_limit = FURK_LIM_FS_NUM
     else:
@@ -1900,6 +2127,11 @@ def strm_movie_dialog(name, imdb_id, strm=False):
         if(quality_id < 0):
             return (None, None)
             dialog.close()
+        if quality == "":
+            ga_quality = "Any"
+        else:
+            ga_quality = quality
+        GA("Quality-Movie", ga_quality)
         if(quality_id == 0):
             searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
             keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
@@ -1930,8 +2162,11 @@ def strm_movie_dialog(name, imdb_id, strm=False):
 			
         if len(menu_data) == 0:
             dialog = xbmcgui.Dialog()
-            dialog.ok("No files found", "The search was unable to find any files", searchstring)
-            return (None, None)
+            if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+                download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), "dummy")
+                return (None, None)
+            else:
+                return (None, None)
 
         menu_id = dialog.select('Select Archive', menu_texts)
         if(menu_id < 0):
@@ -1966,7 +2201,7 @@ def t_file_dialog_movie(xbmcname, id, strm=False):
         size = "[%.2fGB]" % size
         text = "[%s] %s %s" %(format, size, name)
 
-        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv')):
+        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
             mode = "execute video"
             type = "movie"
             file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type)
@@ -2080,6 +2315,7 @@ def one_click_movie(name, imdb_id, strm=False):
 	
     li = xbmcgui.ListItem(clean_file_name(data))
     execute_video(name, url, li, strm)
+    GA("One-Click","Movies")
 	
 def one_click_episode(data, imdb_id, strm=False):
     open_playlists = True
@@ -2160,6 +2396,7 @@ def one_click_episode(data, imdb_id, strm=False):
 	
     li = xbmcgui.ListItem(clean_file_name(data))
     execute_video(name, url, li, strm)
+    GA("One-Click","TV Shows")
 
 
 def furksearch_dialog(query, imdb_id=None, strm=False):
@@ -2383,7 +2620,7 @@ def myfiles_add(name, id):
 def get_downloads(dl_status):
     downloads = str(FURK.dl_get(dl_status))
     dls_all = regex_from_to(str(downloads), "dls': ", ", u'found_dls")
-    all_dls = regex_get_all(dls_all, '{', '}')
+    all_dls = regex_get_all(dls_all, '{', 'None}')
     
     items = []
     for dls in all_dls:
@@ -2756,22 +2993,24 @@ def create_archive_list_item(xbmcname, text, name, url, id, size, poster):
     return li
 	
 def create_file_list_item(xbmcname, text, name, url, size, poster, type):
+    contextMenuItems = []
     if LIBRARY_FORMAT:
         filename = "%s.%s" % (xbmcname,name[len(name)-3:])
     else:
         filename = name
-    contextMenuItems = []
-    download_play = '%s?name=%s&data=%s&imdb_id=%s&mode=download play' % (sys.argv[0], urllib.quote(filename), url, type)  
-    contextMenuItems.append(('Download and Play', 'XBMC.RunPlugin(%s)' % download_play))
+    if name.endswith("srt"):
+        text = '[COLOR cyan]' + text + '[/COLOR]'
+ 
+    if not name.endswith("srt"): 
+        download_play = '%s?name=%s&data=%s&imdb_id=%s&mode=download play' % (sys.argv[0], urllib.quote(filename), url, type)  
+        contextMenuItems.append(('Download and Play', 'XBMC.RunPlugin(%s)' % download_play))
+        if type == "movie":
+            add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add moviefile strm' % (sys.argv[0], urllib.quote(filename), url, imdb_id)
+        else:
+            add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add episode strm' % (sys.argv[0], urllib.quote(filename), url, imdb_id)
+            contextMenuItems.append(('Add stream to XBMC library', 'XBMC.RunPlugin(%s)' % add_url))
     download_only = '%s?name=%s&data=%s&imdb_id=%s&mode=download only' % (sys.argv[0], urllib.quote(filename), url, type)  
     contextMenuItems.append(('Download File', 'XBMC.RunPlugin(%s)' % download_only))
-    if type == "movie":
-        add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add moviefile strm' % (sys.argv[0], urllib.quote(filename), url, imdb_id)
-    #else:
-        #add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add episode strm' % (sys.argv[0], urllib.quote(name), url, imdb_id)
-        contextMenuItems.append(('Add stream to XBMC library', 'XBMC.RunPlugin(%s)' % add_url))
-		
-    #icon = os.path.join(ADDON.getAddonInfo('path'),'art','mkv.jpg')
 
     li = xbmcgui.ListItem(clean_file_name(text, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
@@ -2856,7 +3095,7 @@ def create_movie_directory_list_item(name, mode):
 
     li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False) + suffix, thumbnailImage=os.path.join(ADDON.getAddonInfo('path'),'art',mode + '.png'))
     li.setProperty('fanart_image', fanart)
-    li.addContextMenuItems(contextMenuItems, True)
+    li.addContextMenuItems(contextMenuItems, replaceItems=False)
     
     return li
 
@@ -3051,15 +3290,19 @@ def get_menu_items(name, mode, data, imdb_id):
         items = main_menu()
     elif mode == "imdb menu":
         items = imdb_menu()
+        GA("None","IMDB Browse")
     elif mode == "imdb list menu":
         items = imdb_list_menu()
+        GA("None","IMDB Watchlist")
     elif mode == "nzbmovie menu":
         items = nzbmovie_menu()
+        GA("None","Scene Releases")
     elif mode == "all movies menu": #all menu
         items, missing_meta = movies_all_menu()
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+        GA("IMDB Browse","Top Movies")
     elif mode == "download movies menu": #all menu
         items = download_movies_menu()
     elif mode == "download episodes menu": #all menu
@@ -3073,25 +3316,30 @@ def get_menu_items(name, mode, data, imdb_id):
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+        GA("Scene Releases","This Week")
     elif mode == "nzbmonth menu": 
         items, missing_meta = nzbmonth_menu()
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+        GA("Scene Releases","This Month")
     elif mode == "nzbyear menu":
         items, missing_meta = nzbyear_menu()
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+        GA("Scene Releases","This Year")
 		
     elif mode == "nzbwatchlist menu": 
         items, missing_meta = nzbwatchlist_menu()
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+        GA("Scene Releases","Most Requested")
 		
     elif mode == "maintenance menu":
         items = maintenance()
+        GA("None","Maintenance")
 		
     elif mode == "download menu":
         items = downloads()
@@ -3101,6 +3349,7 @@ def get_menu_items(name, mode, data, imdb_id):
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+        GA("IMDB Watchlist", "User Watchlist")
     elif mode == "list1 menu": #all menu
         items, missing_meta = list1_menu()
         get_missing_meta(missing_meta, 'movies')
@@ -3158,56 +3407,70 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "movie genres menu": #Genres menu
         items = movies_genres_menu()
+        GA("IMDB Browse", "Movie Genres")
     elif mode == "movie genre menu": #Genre menu
         items, missing_meta = movies_genre_menu(str(name).lower())
+        GA("Movie Genres", name)
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "movie groups menu": #Groups menu
         items = movies_groups_menu()
+        GA("IMDB Browse", "Movie Groups")
     elif mode == "movie group menu": #Group menu
         items, missing_meta = movies_group_menu(str(name).lower())
+        GA("Movie Groups", name)
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "movie studios menu": #Studios menu
         items = movies_studios_menu()
+        GA("IMDB Browse", "Movie Studios")
     elif mode == "movie studio menu": #Studio menu
         items, missing_meta = movies_studio_menu(str(name).lower())
+        GA("Movie Studios", name)
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "new movies menu": #New movies menu
         items, missing_meta = movies_new_menu()
+        GA("IMDB Browse", "New Movies")
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "blu-ray menu": #blu-ray
         items, missing_meta = blu_ray_menu()
+        GA("IMDB Browse", "Blu-Ray Amazon")
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "all tv shows menu": #all menu
         items, missing_meta = tv_shows_all_menu()
+        GA("IMDB Browse", "Top TV Shows")
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
     elif mode == "tv show genres menu": #Genres menu
         items = tv_shows_genres_menu()
+        GA("IMDB Browse", "TV Show Genres")
     elif mode == "tv show genre menu": #Genre menu
         items, missing_meta = tv_shows_genre_menu(str(name).lower())
+        GA("TV Show Genres", name)
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
     elif mode == "tv show groups menu": #Groups menu
         items = tv_shows_groups_menu()
+        GA("IMDB Browse", "TV Show Groups")
     elif mode == "tv show group menu": #Group menu
         items, missing_meta = tv_shows_group_menu(str(name).lower())
+        GA("TV Show Groups", name)
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
     elif mode == "active tv shows menu": #New movies menu
         items, missing_meta = tv_shows_active_menu()
+        GA("IMDB Browse", "Active TV Shows")
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
@@ -3218,10 +3481,13 @@ def get_menu_items(name, mode, data, imdb_id):
         items = tv_shows_seasons_menu(name, imdb_id)
     elif mode == "my files directory menu":
         items = myfiles_directory()
+        GA("None", "My Files")
     elif mode == "my files menu":
         items = myfiles(unlinked='0')
+        GA("My files", "My Files Finished")
     elif mode == "my files deleted menu":
         items = myfiles(unlinked='1')
+        GA("My files", "My Files Deleted")
     elif mode == "movie dialog menu":
         items = movie_dialog(name, imdb_id)
     elif mode == "episode dialog menu":
@@ -3234,8 +3500,10 @@ def get_menu_items(name, mode, data, imdb_id):
         items = subscription_menu()
     elif mode == "furk search menu": #Search menu
         items = furk_search_menu()
+        GA("None", "Furk Search")
     elif mode == "imdb search menu": #Search menu
         items = imdb_search_menu()
+        GA("None", "IMDB Search")
     elif mode == "imdb result menu":
         items, missing_meta = imdb_result_menu(data)
     elif mode == "strm movie dialog":
@@ -3296,9 +3564,13 @@ xbmc.log("[What the Furk...XBMCHUB.COM] mode=%s     name=%s     data=%s     imdb
 
 if mode.endswith('menu'):
     items = get_menu_items(name, mode, data, imdb_id)
-    xbmcplugin.addDirectoryItems(int(sys.argv[1]), items, len(items))
+    try:
+        xbmcplugin.addDirectoryItems(int(sys.argv[1]), items, len(items))
+    except:
+        pass
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
     setup()
+    dev_message()
 elif mode == "strm file dialog":
     li = xbmcgui.ListItem(name)
     execute_video(name, data, li, strm=True)
@@ -3324,14 +3596,22 @@ elif mode == "subscribe":
     xbmc.executebuiltin("Container.Refresh")
 elif mode == "delete cache":
     deletecachefiles()
+    GA("Maintenance","Delete Cache")
 elif mode == "delete meta zip":
     deletemetazip()
+    GA("Maintenance","Delete Meta Zip")
 elif mode == "delete search lists":
     deletesearchlists()
+    GA("Maintenance","Delete Search")
 elif mode == "delete wishlists":
     deletewishlists()
+    GA("Maintenance","Delete Wishlists")
+elif mode == "delete metafiles":
+    deletemetafiles()
+    GA("Maintenance","Delete Meta Files")
 elif mode == "account info":
     account_info()
+    GA("None","Account Info")
 
 elif mode == "unsubscribe":
     if name.find('[') >= 0:
@@ -3346,6 +3626,7 @@ elif mode == "add moviefile strm":
     create_strm_file(name, data, imdb_id, "strm file dialog", MOVIES_PATH)
     scan_library()
 elif mode == "add episode strm":
+    #data = clean_file_name(data.split('(')[0][:-1])
     create_strm_file(name, data, imdb_id, "strm file dialog", TV_SHOWS_PATH)
     #list_data = "%s<|>%s" % (name, data_path)
     #add_search_query(list_data, download_list)
@@ -3398,9 +3679,11 @@ elif mode == "mf unprotect":
 	
 elif mode == "download play":
     download_play(name, data, imdb_id)
+    GA("Context","Download and Play")
 
 elif mode == "download only":
     download_only(name, data, imdb_id)
+    GA("Context","Download only")
 	
 elif mode == "execute video":
     execute_video(name, data, "", strm=False)
@@ -3425,6 +3708,11 @@ elif mode == "wishlist search":
 	
 elif mode == "add wishlist":
     add_wishlist(name, data)
+    GA("Context","Wishlist")
+	
+elif mode == "dev message":
+    ADDON.setSetting('dev_message', value='true')
+    dev_message()
 
 elif mode == "refresh list":
     xbmc.executebuiltin("Container.Refresh")

@@ -31,6 +31,7 @@
     <!-- Download -->
 	<string id="30800">Download path - Movies</string>
 	<string id="30801">Download path - TV Shows</string>
+    <string id="30802">Download subtitles</string>
     <!-- IMDB Lists -->
     <string id="30700">My IMDB User Code</string>
     <string id="30701">IMDB User Code</string>

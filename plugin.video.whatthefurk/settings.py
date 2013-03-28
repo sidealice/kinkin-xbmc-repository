@@ -138,9 +138,9 @@ def imdb_filter_status():
 def qualitystyle():
     style = ADDON.getSetting('qualitystyle')
     if style == '0':
-        return "old"
+        return "preferred"
     else:
-        return "new"
+        return "full list"
 	
 def furk_limit_result():
     limit = ADDON.getSetting('furk_limit_result')

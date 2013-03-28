@@ -291,15 +291,15 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')=="true":
+    if ADDON.getSetting('dev_message')!="skip":
         dialog = xbmcgui.Dialog()
         if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             deletemetafiles()
         else:
             dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","New setting (Download tab) to view & download subtitles","Subtitles will download to your defined download path", "Fixed runtime calculation for new meta text files")
-        dialog.ok("Changes in this version....continued:","Added option to search latest torrents if no files are found", "You can now add any WTF directory to xbmc favourites", "Added startup message for version changes")
-        ADDON.setSetting('dev_message', value='false') 
+        dialog.ok("Changes in this version:","New setting (Furk tab) to set your quality list style","Added custom option to wishlist")
+        #dialog.ok("Changes in this version....continued:","Added option to search latest torrents if no files are found", "You can now add any WTF directory to xbmc favourites", "Added startup message for version changes")
+        ADDON.setSetting('dev_message', value='skip') 
 
 ######################## DEV MESSAGE ###########################################################################################
 		
@@ -1810,29 +1810,37 @@ def episode_dialog(data, imdb_id=None, strm=False):
     xbmcname = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))	
     files = []
     
-    quality_id = dialog.select("Select your preferred option", quality_list)
-    quality = quality_list_return[quality_id]
-    if quality == "":
-        ga_quality = "Any"
+    if QUALITYSTYLE == "preferred":
+        if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", TVCUSTOMQUALITY):
+            searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
+            GA("Quality-TV", TVCUSTOMQUALITY)
+        else:
+            searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
+            GA("Quality-TV", "Any")
     else:
-        ga_quality = quality
-    GA("Quality-TV", ga_quality)
+        quality_id = dialog.select("Select your preferred option", quality_list)
+        quality = quality_list_return[quality_id]
+        if quality == "":
+            ga_quality = "Any"
+        else:
+            ga_quality = quality
+        GA("Quality-TV", ga_quality)
     
-    if(quality_id == 0):
-        searchstring = tv_show_name
-        keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
-        keyboard.doModal()
-        if keyboard.isConfirmed():
-            searchstring = keyboard.getText()
-    elif(quality_id == 2):
-        searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
-    elif(quality_id == 1):
-        searchstring = str(season_episode3)
-    else:            
-        searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), quality)
-    if(quality_id < 0):
-        return (None, None)
-        dialog.close()
+        if(quality_id == 0):
+            searchstring = tv_show_name
+            keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
+            keyboard.doModal()
+            if keyboard.isConfirmed():
+                searchstring = keyboard.getText()
+        elif(quality_id == 2):
+            searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
+        elif(quality_id == 1):
+            searchstring = str(season_episode3)
+        else:            
+            searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), quality)
+        if(quality_id < 0):
+            return (None, None)
+            dialog.close()
     files = search_furk(searchstring)
 	
     if len(files) == 0:
@@ -1909,33 +1917,41 @@ def strm_episode_dialog(data, imdb_id, strm=False):
             return []
 		
         files = []
-    
-        quality_id = dialog.select("Select your preferred option", quality_list)
-        quality = quality_list_return[quality_id]
-        if quality == "":
-            ga_quality = "Any"
+
+        if QUALITYSTYLE == "preferred":
+            if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", TVCUSTOMQUALITY):
+                searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
+                GA("Quality-TV", TVCUSTOMQUALITY)
+            else:
+                searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
+                GA("Quality-TV", "Any")
         else:
-            ga_quality = quality
-        GA("Quality-TV", ga_quality)
+            quality_id = dialog.select("Select your preferred option", quality_list)
+            quality = quality_list_return[quality_id]
+            if quality == "":
+                ga_quality = "Any"
+            else:
+                ga_quality = quality
+            GA("Quality-TV", ga_quality)
     
-        if(quality_id == 0):
-            searchstring = tv_show_name
-            keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
-            keyboard.doModal()
-            if keyboard.isConfirmed():
-                searchstring = keyboard.getText()
-        elif(quality_id == 2):
-            searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":",""))
-        elif(quality_id == 1):
-            searchstring = str(season_episode3)
-        else:            
-            searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":",""), quality)
-        if(quality_id < 0):
-            return (None, None)
-            dialog.close()
+            if(quality_id == 0):
+                searchstring = tv_show_name
+                keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
+                keyboard.doModal()
+                if keyboard.isConfirmed():
+                    searchstring = keyboard.getText()
+            elif(quality_id == 2):
+                searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":",""))
+            elif(quality_id == 1):
+                searchstring = str(season_episode3)
+            else:            
+                searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":",""), quality)
+            if(quality_id < 0):
+                return (None, None)
+                dialog.close()
         files = search_furk(searchstring)
 
-        if FURK_LIM_FS_TV and (quality_id != 1):
+        if QUALITYSTYLE == "preferred" or (FURK_LIM_FS_TV and (quality_id != 1)):
             fs_limit = FURK_LIM_FS_NUM_TV
         else:
             fs_limit = 50
@@ -2019,10 +2035,17 @@ def add_download(name, info_hash):
 def add_wishlist(name, type):
     name = name.replace("(","").replace(")","")
     dialog = xbmcgui.Dialog()
-    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_list_return = ["any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list = ["Custom","Any", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["custom", "any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     quality_id = dialog.select("Select your preferred quality", quality_list)
-    quality = quality_list_return[quality_id]
+    if(quality_id == 0):
+        quality = name
+        keyboard = xbmc.Keyboard(quality, 'Custom Search')
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            quality = keyboard.getText()
+    else:
+        quality = quality_list_return[quality_id]
     if(quality_id < 0):
         return (None, None)
         dialog.close()
@@ -2047,21 +2070,28 @@ def movie_dialog(data, imdb_id=None, strm=False):
     quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     
-    
-    quality_id = dialog.select("Select your preferred option", quality_list)
-    quality = quality_list_return[quality_id]
-    if(quality_id < 0):
-        return (None, None)
-        dialog.close()
-    if quality == "":
-        ga_quality = "Any"
+    if QUALITYSTYLE == "preferred":
+        if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", CUSTOMQUALITY):
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
+            GA("Quality-Movie", CUSTOMQUALITY)
+        else:
+            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
+            GA("Quality-Movie", "Any")
     else:
-        ga_quality = quality
-    GA("Quality-Movie", ga_quality)
-    if(quality_id == 0):
-        searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
-    else:
-        searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), quality)
+        quality_id = dialog.select("Select your preferred option", quality_list)
+        quality = quality_list_return[quality_id]
+        if(quality_id < 0):
+            return (None, None)
+            dialog.close()
+        if quality == "":
+            ga_quality = "Any"
+        else:
+            ga_quality = quality
+        GA("Quality-Movie", ga_quality)
+        if(quality_id == 0):
+            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
+        else:
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), quality)
     files = search_furk(searchstring)
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
@@ -2122,26 +2152,34 @@ def strm_movie_dialog(name, imdb_id, strm=False):
             return []
 		
         files = []
-        quality_id = dialog.select("Select your preferred option", quality_list)
-        quality = quality_list_return[quality_id]
-        if(quality_id < 0):
-            return (None, None)
-            dialog.close()
-        if quality == "":
-            ga_quality = "Any"
-        else:
-            ga_quality = quality
-        GA("Quality-Movie", ga_quality)
-        if(quality_id == 0):
-            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
-            keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
-            keyboard.doModal()
-            if keyboard.isConfirmed():
-                searchstring = keyboard.getText()
-        elif(quality_id == 1):
-            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
-        else:
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
+        if QUALITYSTYLE == "preferred":
+            if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", CUSTOMQUALITY):
+                searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
+                GA("Quality-Movie", CUSTOMQUALITY)
+            else:
+                searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
+                GA("Quality-Movie", "Any")
+        else:		
+            quality_id = dialog.select("Select your preferred option", quality_list)
+            quality = quality_list_return[quality_id]
+            if(quality_id < 0):
+                return (None, None)
+                dialog.close()
+            if quality == "":
+                ga_quality = "Any"
+            else:
+                ga_quality = quality
+            GA("Quality-Movie", ga_quality)
+            if(quality_id == 0):
+                searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
+                keyboard = xbmc.Keyboard(searchstring, 'Custom Search')
+                keyboard.doModal()
+                if keyboard.isConfirmed():
+                    searchstring = keyboard.getText()
+            elif(quality_id == 1):
+                searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
+            else:
+                searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
         files = search_furk(searchstring)
     
         if FURK_LIM_FS:
@@ -3711,7 +3749,7 @@ elif mode == "add wishlist":
     GA("Context","Wishlist")
 	
 elif mode == "dev message":
-    ADDON.setSetting('dev_message', value='true')
+    ADDON.setSetting('dev_message', value='run')
     dev_message()
 
 elif mode == "refresh list":

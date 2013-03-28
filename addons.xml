@@ -2,7 +2,7 @@
 <addons>
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.3.3"
+       version="1.3.3a"
        provider-name="Batch,Kinkin,Mikey1234">
     <requires>
         <import addon="xbmc.python" version="2.0"/>

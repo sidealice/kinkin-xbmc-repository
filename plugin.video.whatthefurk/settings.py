@@ -28,6 +28,9 @@ def subscription_file():
 
 def imdb_search_file():
     return create_file(DATA_PATH, "imdb_search.list")
+	
+def imdb_actor_file():
+    return create_file(DATA_PATH, "imdb_actors.list")
 
 def downloads_file():
     return create_file(DATA_PATH, "active_downloads.list")
@@ -37,6 +40,9 @@ def downloads_file_tv():
 	
 def wishlist():
     return create_file(DATA_PATH, "wishlist.list")
+	
+def people_list():
+    return create_file(DATA_PATH, "people_list.list")
 	
 def wishlist_finished():
     return create_file(DATA_PATH, "wishlist_finished.list")
@@ -108,6 +114,13 @@ def show_unaired():
 def nzvmovie_url():
     return "http://www.nzbmovieseeker.com/"
   
+def imdb_actors_url():
+    region = ADDON.getSetting('imdb_region')
+    #if region == '0':
+        #return "http://akas.imdb.com/search/name?"
+    #else:
+    return "http://m.imdb.com/search/name?"
+		
 def imdb_search_url():
     region = ADDON.getSetting('imdb_region')
     if region == '0':

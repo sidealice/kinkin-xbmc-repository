@@ -24,7 +24,7 @@ if ADDON.getSetting('visitor_ga')=='':
     
 PATH = "XBMC_WHATTHEFURK"  #<---- PLUGIN NAME MINUS THE "plugin.video"          
 UATRACK = "UA-39563241-1" #<---- GOOGLE ANALYTICS UA NUMBER   
-VERSION = "1.3.2j" #<---- PLUGIN VERSION
+VERSION = "1.3.4" #<---- PLUGIN VERSION
 
 
 DATA_PATH = settings.data_path()
@@ -32,6 +32,7 @@ CACHE_PATH = settings.cache_path()
 COOKIE_JAR = settings.cookie_jar()
 SUBSCRIPTION_FILE = settings.subscription_file()
 IMDB_SEARCH_FILE = settings.imdb_search_file()
+IMDB_ACTOR_FILE = settings.imdb_actor_file()
 FURK_SEARCH_FILE = settings.furk_search_file()
 DUMMY_PATH = settings.dummy_path()
 DOWNLOAD_PATH = settings.download_path()
@@ -40,6 +41,7 @@ FURK_MODERATED = settings.furk_moderated()
 #FURK_SHOW_FILE_SIZE = settings.furk_file_size()
 #FURK_FILE_SIZE_UNIT = settings.furk_file_size_unit()
 IMDB_TITLE_SEARCH = settings.imdb_search_url()
+IMDB_ACTOR_SEARCH = settings.imdb_actors_url()
 COUNT = settings.imdb_filter_count()
 PRODUCTION_STATUS = settings.imdb_filter_status()
 VIEW = settings.imdb_filter_view()
@@ -120,6 +122,7 @@ ACTIVE_DOWNLOADS_TV = settings.downloads_file_tv()
 LIBRARY_FORMAT = settings.lib_format()
 WISHLIST = settings.wishlist()
 WISHLIST_FINISHED = settings.wishlist_finished()
+PEOPLE_LIST = settings.people_list()
 
 ###....................G.A...............................................###
 
@@ -291,17 +294,27 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip":
+    if ADDON.getSetting('dev_message')!="skip2":
         dialog = xbmcgui.Dialog()
-        if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
-            deletemetafiles()
-        else:
-            dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","New setting (Furk tab) to set your quality list style","Added custom option to wishlist")
-        #dialog.ok("Changes in this version....continued:","Added option to search latest torrents if no files are found", "You can now add any WTF directory to xbmc favourites", "Added startup message for version changes")
-        ADDON.setSetting('dev_message', value='skip') 
+        #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
+            #deletemetafiles()
+        #else:
+            #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
+        dialog.ok("Changes in this version:","Home menu re-arranged","Added one-click toggle to Maintenance menu", "add toggle to favourites for easy access")
+        dialog.ok("Changes in this version....continued:","Added People Search", "Search for any actor/writer/director", "Add your favourites to 'My People'")
+        ADDON.setSetting('dev_message', value='skip2') 
 
 ######################## DEV MESSAGE ###########################################################################################
+
+def toggle_one_click():
+    if ONECLICK_SEARCH:
+        ADDON.setSetting('oneclick_search', value='false')
+        notification("WTF - One-Click Search", "TURNED OFF")
+    else:
+        ADDON.setSetting('oneclick_search', value='true')
+        notification("WTF - One-Click Search", "TURNED ON")
+    if mode != "mainenance menu":
+        xbmc.executebuiltin('xbmc.activatewindow(0)')
 		
 def login_at_furk():
     if FURK_ACCOUNT:
@@ -888,6 +901,10 @@ def deletesearchlists():
     if dialog.yesno("Delete Furk search list", "Do you want to clear the list?"):
         fo=open(FURK_SEARCH_FILE,"wb")
 		
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Delete Furk search list", "Do you want to clear the list?"):
+        fo=open(IMDB_ACTOR_FILE,"wb")
+		
 def deletewishlists():
     dialog = xbmcgui.Dialog()
     if dialog.yesno("Delete Pending Wishlist", "Do you want to clear the list?"):
@@ -1079,7 +1096,30 @@ def get_customlist_result(body):
         movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes}),
     return movies
 	
-	
+def search_actors(params):
+    actors = []
+    body = []
+    url = "%s%s" % (IMDB_ACTOR_SEARCH, urllib.urlencode(params))
+    print url
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out") 
+		
+    all_tr = regex_get_all(body, '<tr class=', '</tr>')
+    for tr in all_tr:
+        all_td = regex_get_all(tr, '<td', '</td>')
+        imdb_id = regex_from_to(all_td[2], 'href="/name/', '/')
+        name = regex_from_to(all_td[2], '/">', '</a>')
+        try:
+            profession = regex_from_to(all_td[2], 'description">', ', <a href')
+        except:
+            profession = ""
+        photo = regex_from_to(all_td[1], '<img src="', '" ')
+        photo = photo.replace("54", "214").replace("74", "314").replace("CR1", "CR12")
+        actors.append({'name': name, 'imdb_id': imdb_id, 'photo': photo, 'profession': profession})
+    return actors
+
 def scrape_xspf(body, id):
     all_track = regex_get_all(body, '<track>', '</track>')
     tracks = []
@@ -1097,7 +1137,7 @@ def execute_video(name, url, list_item, strm=False):
             set_resolved_url(int(sys.argv[1]), name, url) 
         else:
             play(name, url, list_item)
-        GA("Streaming", name)			
+        GA("None", "Streaming")			
     elif PLAY_MODE == 'download and play':
         if strm:
             download_and_play(name, url, play=True, handle=int(sys.argv[1]))
@@ -1155,18 +1195,25 @@ def setup():
 	
 def main_menu():
     items = []
-    items.append(create_directory_tuple('IMDB - Browse', 'imdb menu'))
-    items.append(create_directory_tuple('IMDB - Watchlists', 'imdb list menu'))
-    items.append(create_directory_tuple('IMDB - Search', 'imdb search menu'))
-    items.append(create_directory_tuple('IMDB - Subscriptions', 'subscription menu'))
-    items.append(create_directory_tuple('FILM - Scene Releases', 'nzbmovie menu'))
-    items.append(create_directory_tuple('FURK - My Files', 'my files directory menu'))
-    items.append(create_directory_tuple('FURK - Search', 'furk search menu'))
-    items.append(create_directory_tuple('FURK - Account Info', 'account info'))
-    items.append(create_directory_tuple('WTF  - Maintenance', 'maintenance menu'))
+    items.append(create_directory_tuple('Movies', 'imdb menu'))
+    items.append(create_directory_tuple('TV Shows', 'imdb tv menu'))
+    items.append(create_directory_tuple('Search', 'search menu'))
+    items.append(create_directory_tuple('My Files', 'my files directory menu'))
+    items.append(create_directory_tuple('My People', 'people list menu'))
+    items.append(create_directory_tuple('Watchlists', 'imdb list menu'))
+    items.append(create_directory_tuple('Subscriptions', 'subscription menu'))
+    items.append(create_directory_tuple('Account Info', 'account info'))
+    items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
     return items
 
+def search_menu():
+    items = []
+    items.append(create_directory_tuple('Search IMDB', 'imdb search menu'))
+    items.append(create_directory_tuple('Search Furk', 'furk search menu'))
+    items.append(create_directory_tuple('Search People', 'imdb actor menu'))
+    return items
+	
 def maintenance():
     items = []
     items.append(create_directory_tuple('Update Subscriptions', 'get subscriptions'))
@@ -1176,6 +1223,7 @@ def maintenance():
     items.append(create_directory_tuple('Delete Meta Zip Files', 'delete meta zip'))
     items.append(create_directory_tuple('Clear Search Lists', 'delete search lists'))
     items.append(create_directory_tuple('Clear Wishlists', 'delete wishlists'))
+    items.append(create_directory_tuple('Toggle One-Click', 'toggle one-click'))
     return items
 	
 def myfiles_directory():
@@ -1198,8 +1246,13 @@ def imdb_menu():
     items.append(create_movie_directory_tuple('New Movies', 'new movies menu'))	
     items.append(create_directory_tuple('Movies by Genre', 'movie genres menu')) 
     items.append(create_directory_tuple('Movies by Group', 'movie groups menu'))
-    items.append(create_directory_tuple('Movies by Studio', 'movie studios menu'))	
+    items.append(create_directory_tuple('Movies by Studio', 'movie studios menu'))
+    items.append(create_directory_tuple('Scene Releases', 'nzbmovie menu'))	
     items.append(create_movie_directory_tuple('Blu-Ray at Amazon', 'blu-ray menu'))
+    return items
+	
+def imdb_menu_tv():
+    items = []
     items.append(create_directory_tuple('Top TV Shows', 'all tv shows menu'))  
     items.append(create_directory_tuple('TV shows by Genre', 'tv show genres menu'))
     items.append(create_directory_tuple('TV shows by Group', 'tv show groups menu'))	
@@ -1239,6 +1292,40 @@ def movies_all_menu():
     params["user_rating"] = USER_RATING
     params["production_status"] = PRODUCTION_STATUS
     movies = search_imdb(params)
+    return create_movie_items(movies)
+	
+def movies_actors_menu(name, imdb_id):
+    items = []
+    files = []
+        
+    dialog = xbmcgui.Dialog()
+    filmtype_list = ["Actor","Director", "Writer", "Producer", "Miscellaneous Crew", "Cinematographer", "Soundtrack", "Editor", "Self"]
+    filmtype_list_return = ["actor","director", "writer", "producer", "miscellaneous crew", "cinematographer", "soundtrack", "editor", "self"]
+    
+    filmtype_id = dialog.select(name, filmtype_list)
+    if(filmtype_id < 0):
+        return (None, None)
+        dialog.close()
+    
+    type = filmtype_list_return[filmtype_id]
+    url = "%s%s%s%s" % ("http://m.imdb.com/name/", imdb_id, "/filmotype/", type)
+    print url
+	
+    body = get_url(url, cache=CACHE_PATH)
+    all_tr = regex_get_all(body, '<div class="poster', '<div class="detail')
+    
+    movies = []
+    for tr in all_tr:
+        all_td = regex_get_all(tr, '<div class="title">', '/div>')
+        imdb_id = regex_from_to(all_td[0], '/title/', '/')
+        name = regex_from_to(all_td[0], ';">', '</a')
+        year = regex_from_to(all_td[0], '</a> (', ') ').replace("(","").replace(")","").strip()
+        rating = ""
+        votes = ""
+        exclude = regex_from_to(all_td[0], '</a> (', ') ')
+
+        if exclude.find("(TV")<0 and exclude.find("(Shor")<0 and exclude.find("(Vid")<0:
+            movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
     return create_movie_items(movies)
 	
 def nzbweek_menu():
@@ -1637,6 +1724,18 @@ def imdb_search_menu():
 
     return items
 	
+def imdb_actor_menu():
+    items = []
+    items.append(create_directory_tuple('@Search...', 'imdb actor result menu'))
+    
+    if os.path.isfile(IMDB_ACTOR_FILE):
+        s = read_from_file(IMDB_ACTOR_FILE)
+        search_queries = s.split('\n')
+        for query in search_queries:
+            items.append(create_imdb_actorsearch_tuple(query))
+
+    return items
+	
 def download_movies_menu():
     items = []
     items.append(create_directory_tuple('[COLOR gold]' + ">> Refresh <<" + '[/COLOR]', 'refresh list'))
@@ -1692,6 +1791,22 @@ def download_episodes_menu():
                     size = ""
                 type = 'tv'
                 items.append(create_download_file_tuple(name, path, type, pct, size))
+
+    return items
+
+def people_list_menu():
+    items = []
+    
+    if os.path.isfile(PEOPLE_LIST):
+        s = read_from_file(PEOPLE_LIST)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list = list.split('<|>')
+                name = list[0]
+                imdb_id = list[1]
+                photo = list[2]
+                items.append(create_savedpeople_tuple(name, imdb_id, photo))
 
     return items
 	
@@ -1780,6 +1895,25 @@ def imdb_result_menu(query):
                 return create_tv_show_items(search_result)
 
     return imdb_search_menu(), []
+	
+def imdb_actor_result_menu(query):
+    if query.startswith('@'):
+        query = ''
+    
+    keyboard = xbmc.Keyboard(query, 'Search People')
+    keyboard.doModal()
+
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if len(query) > 0:
+            add_search_query(query, IMDB_ACTOR_FILE)
+            params = {}
+            params["name"] = query
+            search_result = search_actors(params)
+            setView('movies', 'movies-view')
+            return create_actor_items(search_result)
+ 
+    return imdb_actor_menu(), []
 
 def episode_dialog(data, imdb_id=None, strm=False):
     items = []
@@ -2061,6 +2195,10 @@ def add_wishlist(name, type):
     episode = type
     list_data = "%s %s<|>%s<|>%s" % (name, quality, action, episode)
     add_search_query(list_data, WISHLIST)
+	
+def add_people(name, data, imdb_id):
+    list_data = "%s<|>%s<|>%s" % (name, data, imdb_id)
+    add_search_query(list_data, PEOPLE_LIST)
 
 def movie_dialog(data, imdb_id=None, strm=False):
     items = []
@@ -2819,7 +2957,26 @@ def create_tv_show_items(tv_shows):
             missing_meta.append(imdb_id)
     
     return items, missing_meta
+	
+def create_actor_items(actors):
+    items = []
 
+    for actor in actors:
+        name = actor['name']
+        photo = actor['photo']
+        imdb_id = actor['imdb_id']
+        profession = actor['profession']
+        actor_tuple = create_actor_tuple(name, photo, imdb_id, profession)
+        items.append(actor_tuple)
+    
+    return items
+
+def create_actor_tuple(name, photo, imdb_id, profession):
+    actor_url = create_url(name, "actor movies menu", imdb_id, "")
+    actor_list_item = create_actor_list_item(name, photo, imdb_id, profession);
+    actor_tuple = (actor_url, actor_list_item, True)
+    return actor_tuple
+	
 def create_movie_tuple(name, imdb_id):
     movie_url = create_url(name, "movie dialog menu", "", imdb_id)
     movie_list_item = create_movie_list_item(name, imdb_id);
@@ -2874,6 +3031,12 @@ def create_imdb_search_tuple(query):
     imdb_search_tuple = (imdb_search_url, imdb_search_list_item, True)
     return imdb_search_tuple
 	
+def create_imdb_actorsearch_tuple(query):
+    imdb_actorsearch_url = create_url(query, "imdb actor result menu", query, "")
+    imdb_actorsearch_list_item = create_imdb_actorsearch_list_item(query);
+    imdb_actorsearch_tuple = (imdb_actorsearch_url, imdb_actorsearch_list_item, True)
+    return imdb_actorsearch_tuple
+	
 def create_archive_tuple(xbmcname, text, name, mode, url, id, size, poster):
     archive_url = create_url(xbmcname, mode, id, "")
     archive_list_item = create_archive_list_item(xbmcname, text, name, url, id, size, poster);
@@ -2891,6 +3054,12 @@ def create_download_file_tuple(name, path, type, pct, size):
     download_file_item = create_download_file_list_item(name, path, type, pct, size);
     download_file_tuple = (download_file_url, download_file_item, True)
     return download_file_tuple
+	
+def create_savedpeople_tuple(name, imdb_id, photo):
+    people_url = create_url(name, "actor movies menu", imdb_id)
+    people_item = create_people_list_item(name, imdb_id, photo);
+    people_tuple = (people_url, people_item, True)
+    return people_tuple
 	
 def create_dls_tuple(name, size, speed, mode, downloaded, id, seeders, fail_reason):
     dls_url = create_url(name, mode, id, "")
@@ -2929,9 +3098,31 @@ def create_imdb_search_list_item(query):
     li = xbmcgui.ListItem(query)
     li.addContextMenuItems(contextMenuItems, True)
     return li 
+	
+def create_imdb_actorsearch_list_item(query):
+    contextMenuItems = []
+    #remove furk search
+    remove_url = '%s?name=%s&mode=remove actor search' % (sys.argv[0], query)
+    contextMenuItems.append(('Remove', 'XBMC.RunPlugin(%s)' % remove_url))
+
+    li = xbmcgui.ListItem(query)
+    li.addContextMenuItems(contextMenuItems, True)
+    return li 
 
 iconimage = None
-
+def create_actor_list_item(name, photo, imdb_id, profession):
+    contextMenuItems = []
+    print photo
+    text = "%s | %s" % (name, profession)
+    name = clean_file_name(name, use_blanks=False)
+    actor_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add people' % (sys.argv[0], urllib.quote(name), imdb_id, urllib.quote(photo))
+    contextMenuItems.append(('Add to People List', 'XBMC.RunPlugin(%s)' % actor_url))
+    
+    li = xbmcgui.ListItem(clean_file_name(text, use_blanks=False))
+    li.addContextMenuItems(contextMenuItems, replaceItems=True)
+    li.setIconImage(photo)
+    return li
+	
 def create_movie_list_item(name, imdb_id):
     contextMenuItems = []
     name = clean_file_name(name, use_blanks=False)
@@ -3069,6 +3260,17 @@ def create_download_file_list_item(name, path, type, pct, size):
         remove_url = '%s?name=%s&data=%s&mode=remove wishlist search' % (sys.argv[0], urllib.quote(list_data), list_path)
         contextMenuItems.append(('Remove', 'XBMC.RunPlugin(%s)' % remove_url))
     li = xbmcgui.ListItem("%s %s" % (clean_file_name(name.replace("dummy", ""), use_blanks=False), pct))
+    li.addContextMenuItems(contextMenuItems, replaceItems=True)
+    return li
+	
+def create_people_list_item(name, imdb_id, photo):
+    contextMenuItems = []
+    list_path = PEOPLE_LIST
+    list_data = "%s<|>%s<|>%s" % (name, imdb_id, photo)
+    remove_url = '%s?name=%s&data=%s&mode=remove wishlist search' % (sys.argv[0], urllib.quote(list_data), list_path)
+    contextMenuItems.append(('Remove', 'XBMC.RunPlugin(%s)' % remove_url))
+    li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
+    li.setIconImage(photo)
     li.addContextMenuItems(contextMenuItems, replaceItems=True)
     return li
 
@@ -3328,24 +3530,36 @@ def get_menu_items(name, mode, data, imdb_id):
         items = main_menu()
     elif mode == "imdb menu":
         items = imdb_menu()
-        GA("None","IMDB Browse")
+        GA("None","Movies")
+    elif mode == "imdb tv menu":
+        items = imdb_menu_tv()
+        GA("None","TV Shows")
+    elif mode == "search menu":
+        items = search_menu()
     elif mode == "imdb list menu":
         items = imdb_list_menu()
         GA("None","IMDB Watchlist")
     elif mode == "nzbmovie menu":
         items = nzbmovie_menu()
-        GA("None","Scene Releases")
+        GA("Movies","Scene Releases")
     elif mode == "all movies menu": #all menu
         items, missing_meta = movies_all_menu()
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
-        GA("IMDB Browse","Top Movies")
+        GA("Movies","Top Movies")
+    elif mode == "actor movies menu":
+        items, missing_meta = movies_actors_menu(name, data)
+        get_missing_meta(missing_meta, 'movies')
+        setView('movies', 'movies-view')
+        enable_sort = XBMC_SORT
     elif mode == "download movies menu": #all menu
         items = download_movies_menu()
     elif mode == "download episodes menu": #all menu
         items = download_episodes_menu()#
-    elif mode == "wishlist pending menu": #all menu
+    elif mode == "people list menu":
+        items = people_list_menu()
+    elif mode == "wishlist pending menu":
         items = wishlist_pending_menu()
     elif mode == "wishlist finished menu": #all menu
         items = wishlist_finished_menu()
@@ -3445,7 +3659,7 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "movie genres menu": #Genres menu
         items = movies_genres_menu()
-        GA("IMDB Browse", "Movie Genres")
+        GA("Movies", "Movie Genres")
     elif mode == "movie genre menu": #Genre menu
         items, missing_meta = movies_genre_menu(str(name).lower())
         GA("Movie Genres", name)
@@ -3454,7 +3668,7 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "movie groups menu": #Groups menu
         items = movies_groups_menu()
-        GA("IMDB Browse", "Movie Groups")
+        GA("Movies", "Movie Groups")
     elif mode == "movie group menu": #Group menu
         items, missing_meta = movies_group_menu(str(name).lower())
         GA("Movie Groups", name)
@@ -3463,7 +3677,7 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "movie studios menu": #Studios menu
         items = movies_studios_menu()
-        GA("IMDB Browse", "Movie Studios")
+        GA("Movies", "Movie Studios")
     elif mode == "movie studio menu": #Studio menu
         items, missing_meta = movies_studio_menu(str(name).lower())
         GA("Movie Studios", name)
@@ -3472,25 +3686,25 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "new movies menu": #New movies menu
         items, missing_meta = movies_new_menu()
-        GA("IMDB Browse", "New Movies")
+        GA("Movies", "New Movies")
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "blu-ray menu": #blu-ray
         items, missing_meta = blu_ray_menu()
-        GA("IMDB Browse", "Blu-Ray Amazon")
+        GA("Movies", "Blu-Ray Amazon")
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "all tv shows menu": #all menu
         items, missing_meta = tv_shows_all_menu()
-        GA("IMDB Browse", "Top TV Shows")
+        GA("TV Shows", "Top TV Shows")
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
     elif mode == "tv show genres menu": #Genres menu
         items = tv_shows_genres_menu()
-        GA("IMDB Browse", "TV Show Genres")
+        GA("TV Shows", "TV Show Genres")
     elif mode == "tv show genre menu": #Genre menu
         items, missing_meta = tv_shows_genre_menu(str(name).lower())
         GA("TV Show Genres", name)
@@ -3499,7 +3713,7 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "tv show groups menu": #Groups menu
         items = tv_shows_groups_menu()
-        GA("IMDB Browse", "TV Show Groups")
+        GA("TV Shows", "TV Show Groups")
     elif mode == "tv show group menu": #Group menu
         items, missing_meta = tv_shows_group_menu(str(name).lower())
         GA("TV Show Groups", name)
@@ -3508,7 +3722,7 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT
     elif mode == "active tv shows menu": #New movies menu
         items, missing_meta = tv_shows_active_menu()
-        GA("IMDB Browse", "Active TV Shows")
+        GA("TV Shows", "Active TV Shows")
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
@@ -3538,12 +3752,17 @@ def get_menu_items(name, mode, data, imdb_id):
         items = subscription_menu()
     elif mode == "furk search menu": #Search menu
         items = furk_search_menu()
-        GA("None", "Furk Search")
+        GA("Search", "Furk Search")
     elif mode == "imdb search menu": #Search menu
         items = imdb_search_menu()
-        GA("None", "IMDB Search")
+        GA("Search", "IMDB Search")
     elif mode == "imdb result menu":
         items, missing_meta = imdb_result_menu(data)
+    elif mode == "imdb actor menu": #Search menu
+        items = imdb_actor_menu()
+        GA("Search", "People Search")
+    elif mode == "imdb actor result menu":
+        items = imdb_actor_result_menu(data)
     elif mode == "strm movie dialog":
         items = movie_dialog(name, imdb_id)#, strm=True
     elif mode == "strm tv show dialog":
@@ -3623,6 +3842,10 @@ elif mode == "remove furk search":
     xbmc.executebuiltin("Container.Refresh")
 elif mode == "remove imdb search":
     remove_search_query(name, IMDB_SEARCH_FILE)
+    xbmc.executebuiltin("Container.Refresh")
+	
+elif mode == "remove actor search":
+    remove_search_query(name, IMDB_ACTOR_FILE)
     xbmc.executebuiltin("Container.Refresh")
 	
 elif mode == "remove wishlist search":
@@ -3748,9 +3971,17 @@ elif mode == "add wishlist":
     add_wishlist(name, data)
     GA("Context","Wishlist")
 	
+elif mode == "add people":
+    add_people(name, data, imdb_id)
+	
+elif mode == "refresh list":
+    xbmc.executebuiltin("Container.Refresh")
+	
+elif mode == "toggle one-click":
+    toggle_one_click()
+	
 elif mode == "dev message":
     ADDON.setSetting('dev_message', value='run')
     dev_message()
+	
 
-elif mode == "refresh list":
-    xbmc.executebuiltin("Container.Refresh")

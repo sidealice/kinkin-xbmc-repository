@@ -1299,8 +1299,8 @@ def movies_actors_menu(name, imdb_id):
     files = []
         
     dialog = xbmcgui.Dialog()
-    filmtype_list = ["Actor","Director", "Writer", "Producer", "Miscellaneous Crew", "Cinematographer", "Soundtrack", "Editor", "Self"]
-    filmtype_list_return = ["actor","director", "writer", "producer", "miscellaneous crew", "cinematographer", "soundtrack", "editor", "self"]
+    filmtype_list = ["Actor","Actress", "Director", "Writer", "Producer", "Miscellaneous Crew", "Cinematographer", "Soundtrack", "Editor", "Self"]
+    filmtype_list_return = ["actor", "actress", "director", "writer", "producer", "miscellaneous crew", "cinematographer", "soundtrack", "editor", "self"]
     
     filmtype_id = dialog.select(name, filmtype_list)
     if(filmtype_id < 0):
@@ -2169,8 +2169,8 @@ def add_download(name, info_hash):
 def add_wishlist(name, type):
     name = name.replace("(","").replace(")","")
     dialog = xbmcgui.Dialog()
-    quality_list = ["Custom","Any", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_list_return = ["custom", "any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list = ["Custom","Any", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["custom", "any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     quality_id = dialog.select("Select your preferred quality", quality_list)
     if(quality_id == 0):
         quality = name
@@ -2205,8 +2205,8 @@ def movie_dialog(data, imdb_id=None, strm=False):
     files = []
         
     dialog = xbmcgui.Dialog()
-    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     
     if QUALITYSTYLE == "preferred":
         if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", CUSTOMQUALITY):
@@ -2283,8 +2283,8 @@ def strm_movie_dialog(name, imdb_id, strm=False):
 
     else:		
         dialog = xbmcgui.Dialog()
-        quality_list = ["Custom Search", "Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-        quality_list_return = ["Custom","","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+        quality_list = ["Custom Search", "Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+        quality_list_return = ["Custom","","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
 	
         if not login_at_furk():
             return []

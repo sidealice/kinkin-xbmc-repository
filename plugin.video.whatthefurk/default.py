@@ -294,15 +294,15 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip2":
+    if ADDON.getSetting('dev_message')!="skip4":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Home menu re-arranged","Added one-click toggle to Maintenance menu", "add toggle to favourites for easy access")
-        dialog.ok("Changes in this version....continued:","Added People Search", "Search for any actor/writer/director", "Add your favourites to 'My People'")
-        ADDON.setSetting('dev_message', value='skip2') 
+        dialog.ok("Changes in this version:","DVD Release menu added","Top, Current, New and Upcoming releases", "lists include Critic and User rating from RT")
+        #dialog.ok("Changes in this version....continued:","Added People Search", "Search for any actor/writer/director", "Add your favourites to 'My People'")
+        ADDON.setSetting('dev_message', value='skip4') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -1197,6 +1197,7 @@ def main_menu():
     items = []
     items.append(create_directory_tuple('Movies', 'imdb menu'))
     items.append(create_directory_tuple('TV Shows', 'imdb tv menu'))
+    items.append(create_directory_tuple('DVD Releases', 'dvd release menu'))
     items.append(create_directory_tuple('Search', 'search menu'))
     items.append(create_directory_tuple('My Files', 'my files directory menu'))
     items.append(create_directory_tuple('My People', 'people list menu'))
@@ -1206,6 +1207,43 @@ def main_menu():
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
     return items
+	
+def dvd_release_menu():
+    items = []
+    lists = ['Top Rentals', 'Current Releases', 'New Releases', 'Upcoming']
+    for list in lists:
+        items.append(create_subdirectory_tuple(list, 'dvd releases menu'))
+    return items
+	
+def dvd_releases(list):
+    items = []
+    list = list.replace(' ', '_')
+    if list == "top_rentals":
+        url = url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=50&country=us&apikey=crcvkfzgky27e276ug8pjckt")
+    else:
+        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?page_limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
+    #GETTop Rentals   /api/public/v1.0/lists/dvds/top_rentals.json
+	#GETCurrent Release DVDs/api/public/v1.0/lists/dvds/current_releases.json
+	#GETNew Release DVDs/api/public/v1.0/lists/dvds/new_releases.json
+	#GETUpcoming DVDs/api/public/v1.0/lists/dvds/upcoming.json
+	#GETMovies Similar/api/public/v1.0/movies/:id/similar.json
+    #url = "http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/new_releases.json?page_limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt"
+    body = get_url(url, cache=CACHE_PATH).strip()
+    all_mov = regex_get_all(body, '{"id"', '}}')
+    movies = []
+    for mov in all_mov:
+        try:
+            imdb_id = "%s%s" % ("tt", regex_from_to(mov, 'imdb":"', '"}'))
+        except:
+            imdb_id = ""
+        name = regex_from_to(mov, 'title":"', '","year')
+        year = regex_from_to(mov, 'year":', ',"')
+        rating = regex_from_to(mov, 'critics_score":', ',"')
+        votes = regex_from_to(mov, 'audience_score":', '}')
+
+        movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
+    return create_movie_items(movies)
+	
 
 def search_menu():
     items = []
@@ -2937,7 +2975,9 @@ def create_movie_items(movies):
         else:
 		    name = "%s (%s)" % (movie['name'], movie['year'])
         imdb_id = movie['imdb_id']
-        movie_tuple = create_movie_tuple(name, imdb_id)
+        rating = movie['rating']
+        votes = movie['votes']
+        movie_tuple = create_movie_tuple(name, imdb_id, rating, votes)
         items.append(movie_tuple)
         if not meta_exist(imdb_id, META_PATH):
             missing_meta.append(imdb_id)
@@ -2977,9 +3017,9 @@ def create_actor_tuple(name, photo, imdb_id, profession):
     actor_tuple = (actor_url, actor_list_item, True)
     return actor_tuple
 	
-def create_movie_tuple(name, imdb_id):
+def create_movie_tuple(name, imdb_id, rating, votes):
     movie_url = create_url(name, "movie dialog menu", "", imdb_id)
-    movie_list_item = create_movie_list_item(name, imdb_id);
+    movie_list_item = create_movie_list_item(name, imdb_id, rating, votes);
     movie_tuple = (movie_url, movie_list_item, True)
     return movie_tuple
 
@@ -3123,9 +3163,13 @@ def create_actor_list_item(name, photo, imdb_id, profession):
     li.setIconImage(photo)
     return li
 	
-def create_movie_list_item(name, imdb_id):
+def create_movie_list_item(name, imdb_id, rating, votes):
     contextMenuItems = []
-    name = clean_file_name(name, use_blanks=False)
+    if mode == "dvd releases menu":
+        ratings = '[COLOR cyan]' + "[%s: %s %s: %s]" % ("Critics", rating, "User", votes) + '[/COLOR]'
+        name = "%s - %s" % (clean_file_name(name, use_blanks=False), ratings)
+    else:
+        name = clean_file_name(name, use_blanks=False)
     contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
         name2 = name[:len(data)-7].replace("The ","")
@@ -3147,7 +3191,10 @@ def create_movie_list_item(name, imdb_id):
     type = "dummy"
     wishlist_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add wishlist' % (sys.argv[0], urllib.quote(name), type, imdb_id)
     contextMenuItems.append(('Add to Wishlist', 'XBMC.RunPlugin(%s)' % wishlist_url))
-    
+    name2 = name[:len(data)-7].replace("The ","")  
+    contextMenuItems.append(('View trailer', 'plugin.video.trailer.addict/?mode=4&name=Kick-Ass%202&url=http%3a%2f%2fwww.traileraddict.com%2ftags%2fkick-ass-2'))	
+    #contextMenuItems.append(('View trailer', 'XBMC.Container.Update(%s?mode=4&name=%s&url=%s)' %('plugin.video.trailer.addict/',name2,"%s%s" % ("http://www.traileraddict.com/tags/",name2))))
+    #plugin://plugin.video.trailer.addict/?mode=4&name=Kick-Ass%202&url=http%3a%2f%2fwww.traileraddict.com%2ftags%2fkick-ass-2
     li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
     li = set_movie_meta(li, imdb_id, META_PATH)
@@ -3551,6 +3598,15 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "actor movies menu":
         items, missing_meta = movies_actors_menu(name, data)
         get_missing_meta(missing_meta, 'movies')
+        setView('movies', 'movies-view')
+        enable_sort = XBMC_SORT#elif mode == "test":
+    elif mode == "dvd release menu": #Genres menu
+        items = dvd_release_menu()
+        GA("None", "DVD")
+    elif mode == "dvd releases menu":
+        items, missing_meta = dvd_releases(str(name).lower())
+        get_missing_meta(missing_meta, 'movies')
+        GA("DVD", list)
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "download movies menu": #all menu
@@ -3983,5 +4039,9 @@ elif mode == "toggle one-click":
 elif mode == "dev message":
     ADDON.setSetting('dev_message', value='run')
     dev_message()
+	
+	
+
+    
 	
 

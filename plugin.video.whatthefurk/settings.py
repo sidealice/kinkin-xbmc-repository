@@ -154,6 +154,7 @@ def qualitystyle():
         return "preferred"
     else:
         return "full list"
+
 	
 def furk_limit_result():
     limit = ADDON.getSetting('furk_limit_result')

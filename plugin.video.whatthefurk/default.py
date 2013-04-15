@@ -294,15 +294,15 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip4":
+    if ADDON.getSetting('dev_message')!="skip5":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","DVD Release menu added","Top, Current, New and Upcoming releases", "lists include Critic and User rating from RT")
-        #dialog.ok("Changes in this version....continued:","Added People Search", "Search for any actor/writer/director", "Add your favourites to 'My People'")
-        ADDON.setSetting('dev_message', value='skip4') 
+        dialog.ok("Changes in this version:","Fixed Account Info for free members","Added Furk.net status to main menu....Account Info ", "will be highlighted green or red depending on status")
+        dialog.ok("Changes in this version continued:", "Removed popup when searching with preferred quality","Search will now try for preferred first....", "....and will search for any file if no files are found")
+        ADDON.setSetting('dev_message', value='skip5') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -357,15 +357,16 @@ def account_info():
 
     except:
         accinfo = FURK.account_info()
-        info = regex_from_to(str(accinfo).replace("'","QTE"), 'QTEbw_statsQTE', 'QTEuserQTE') 
+        info = regex_from_to(str(accinfo).replace("'","QTE"), 'QTEbw_statsQTE', ']}') 
 		
         
         all_bytes = regex_get_all(info, 'uQTEbytesQTE: u', ', uQTE')
+
         day1 = regex_from_to(all_bytes[0], 'QTE: uQTE', 'QTE, u')
         day2 = regex_from_to(all_bytes[1], 'QTE: uQTE', 'QTE, u')
         day3 = regex_from_to(all_bytes[2], 'QTE: uQTE', 'QTE, u')
         day4 = regex_from_to(all_bytes[3], 'QTE: uQTE', 'QTE, u')
-        day5 = regex_from_to(all_bytes[4], 'QTE: uQTE', 'QTE, u')# "%.1f" % 
+        day5 = regex_from_to(all_bytes[4], 'QTE: uQTE', 'QTE, u') 
         day6 = regex_from_to(all_bytes[5], 'QTE: uQTE', 'QTE, u')
         day7 = regex_from_to(all_bytes[6], 'QTE: uQTE', 'QTE, u')
 		
@@ -1194,6 +1195,7 @@ def setup():
 
 	
 def main_menu():
+    response = FURK.ping()
     items = []
     items.append(create_directory_tuple('Movies', 'imdb menu'))
     items.append(create_directory_tuple('TV Shows', 'imdb tv menu'))
@@ -1203,11 +1205,14 @@ def main_menu():
     items.append(create_directory_tuple('My People', 'people list menu'))
     items.append(create_directory_tuple('Watchlists', 'imdb list menu'))
     items.append(create_directory_tuple('Subscriptions', 'subscription menu'))
-    items.append(create_directory_tuple('Account Info', 'account info'))
+    if response['status'] == 'ok':
+        items.append(create_directory_tuple('[COLOR green]' + "Account Info" + '[/COLOR]', 'account info'))
+    else:
+        items.append(create_directory_tuple('[COLOR red]' + "Account Info" + '[/COLOR]', 'account info'))
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
     return items
-	
+
 def dvd_release_menu():
     items = []
     lists = ['Top Rentals', 'Current Releases', 'New Releases', 'Upcoming']
@@ -1983,12 +1988,14 @@ def episode_dialog(data, imdb_id=None, strm=False):
     files = []
     
     if QUALITYSTYLE == "preferred":
-        if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", TVCUSTOMQUALITY):
             searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
             GA("Quality-TV", TVCUSTOMQUALITY)
-        else:
-            searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
-            GA("Quality-TV", "Any")
+            files = search_furk(searchstring)
+            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                xbmc.executebuiltin(notify)
+                searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
+                files = search_furk(searchstring)
     else:
         quality_id = dialog.select("Select your preferred option", quality_list)
         quality = quality_list_return[quality_id]
@@ -2013,7 +2020,7 @@ def episode_dialog(data, imdb_id=None, strm=False):
         if(quality_id < 0):
             return (None, None)
             dialog.close()
-    files = search_furk(searchstring)
+        files = search_furk(searchstring)
 	
     if len(files) == 0:
         if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
@@ -2091,12 +2098,14 @@ def strm_episode_dialog(data, imdb_id, strm=False):
         files = []
 
         if QUALITYSTYLE == "preferred":
-            if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", TVCUSTOMQUALITY):
-                searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
-                GA("Quality-TV", TVCUSTOMQUALITY)
-            else:
+            searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
+            GA("Quality-TV", TVCUSTOMQUALITY)
+            files = search_furk(searchstring)
+            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
-                GA("Quality-TV", "Any")
+                files = search_furk(searchstring)
         else:
             quality_id = dialog.select("Select your preferred option", quality_list)
             quality = quality_list_return[quality_id]
@@ -2121,7 +2130,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
             if(quality_id < 0):
                 return (None, None)
                 dialog.close()
-        files = search_furk(searchstring)
+            files = search_furk(searchstring)
 
         if QUALITYSTYLE == "preferred" or (FURK_LIM_FS_TV and (quality_id != 1)):
             fs_limit = FURK_LIM_FS_NUM_TV
@@ -2146,8 +2155,6 @@ def strm_episode_dialog(data, imdb_id, strm=False):
                 return (None, None)
             else:
                 return (None, None)
-            #dialog.ok("No files found", "The search was unable to find any files", searchstring)
-            #return (None, None)
 
         menu_id = dialog.select('Select Archive', menu_texts)
         if(menu_id < 0):
@@ -2247,12 +2254,13 @@ def movie_dialog(data, imdb_id=None, strm=False):
     quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     
     if QUALITYSTYLE == "preferred":
-        if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", CUSTOMQUALITY):
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
             GA("Quality-Movie", CUSTOMQUALITY)
-        else:
-            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
-            GA("Quality-Movie", "Any")
+            files = search_furk(searchstring)
+            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                xbmc.executebuiltin(notify)
+                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
     else:
         quality_id = dialog.select("Select your preferred option", quality_list)
         quality = quality_list_return[quality_id]
@@ -2268,7 +2276,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
             searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
         else:
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), quality)
-    files = search_furk(searchstring)
+        files = search_furk(searchstring)
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
         if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
@@ -2329,12 +2337,13 @@ def strm_movie_dialog(name, imdb_id, strm=False):
 		
         files = []
         if QUALITYSTYLE == "preferred":
-            if dialog.yesno("File Search", '', 'Select your preferred quality', '', "Any", CUSTOMQUALITY):
-                searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
-                GA("Quality-Movie", CUSTOMQUALITY)
-            else:
-                searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
-                GA("Quality-Movie", "Any")
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
+            GA("Quality-Movie", CUSTOMQUALITY)
+            files = search_furk(searchstring)
+            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                xbmc.executebuiltin(notify)
+                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
         else:		
             quality_id = dialog.select("Select your preferred option", quality_list)
             quality = quality_list_return[quality_id]
@@ -2356,7 +2365,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
                 searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
             else:
                 searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
-        files = search_furk(searchstring)
+            files = search_furk(searchstring)
     
         if FURK_LIM_FS:
             fs_limit = FURK_LIM_FS_NUM
@@ -3192,9 +3201,6 @@ def create_movie_list_item(name, imdb_id, rating, votes):
     wishlist_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add wishlist' % (sys.argv[0], urllib.quote(name), type, imdb_id)
     contextMenuItems.append(('Add to Wishlist', 'XBMC.RunPlugin(%s)' % wishlist_url))
     name2 = name[:len(data)-7].replace("The ","")  
-    contextMenuItems.append(('View trailer', 'plugin.video.trailer.addict/?mode=4&name=Kick-Ass%202&url=http%3a%2f%2fwww.traileraddict.com%2ftags%2fkick-ass-2'))	
-    #contextMenuItems.append(('View trailer', 'XBMC.Container.Update(%s?mode=4&name=%s&url=%s)' %('plugin.video.trailer.addict/',name2,"%s%s" % ("http://www.traileraddict.com/tags/",name2))))
-    #plugin://plugin.video.trailer.addict/?mode=4&name=Kick-Ass%202&url=http%3a%2f%2fwww.traileraddict.com%2ftags%2fkick-ass-2
     li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
     li = set_movie_meta(li, imdb_id, META_PATH)
@@ -3276,7 +3282,9 @@ def create_file_list_item(xbmcname, text, name, url, size, poster, type):
         filename = name
     if name.endswith("srt"):
         text = '[COLOR cyan]' + text + '[/COLOR]'
- 
+
+    download_only = '%s?name=%s&data=%s&imdb_id=%s&mode=download only' % (sys.argv[0], urllib.quote(filename), url, type)  
+    contextMenuItems.append(('Download File', 'XBMC.RunPlugin(%s)' % download_only))		
     if not name.endswith("srt"): 
         download_play = '%s?name=%s&data=%s&imdb_id=%s&mode=download play' % (sys.argv[0], urllib.quote(filename), url, type)  
         contextMenuItems.append(('Download and Play', 'XBMC.RunPlugin(%s)' % download_play))
@@ -3284,9 +3292,7 @@ def create_file_list_item(xbmcname, text, name, url, size, poster, type):
             add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add moviefile strm' % (sys.argv[0], urllib.quote(filename), url, imdb_id)
         else:
             add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add episode strm' % (sys.argv[0], urllib.quote(filename), url, imdb_id)
-            contextMenuItems.append(('Add stream to XBMC library', 'XBMC.RunPlugin(%s)' % add_url))
-    download_only = '%s?name=%s&data=%s&imdb_id=%s&mode=download only' % (sys.argv[0], urllib.quote(filename), url, type)  
-    contextMenuItems.append(('Download File', 'XBMC.RunPlugin(%s)' % download_only))
+        contextMenuItems.append(('Add stream to XBMC library', 'XBMC.RunPlugin(%s)' % add_url))
 
     li = xbmcgui.ListItem(clean_file_name(text, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
@@ -4039,9 +4045,7 @@ elif mode == "toggle one-click":
 elif mode == "dev message":
     ADDON.setSetting('dev_message', value='run')
     dev_message()
-	
-	
 
-    
+  
 	
 

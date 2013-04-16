@@ -54,7 +54,10 @@ def download_path():
     return create_directory(DATA_PATH, "download")
 
 def meta_path():
-    return create_directory(DATA_PATH, "meta")
+    if ADDON.getSetting('meta_custom_directory') == "true":
+        return ADDON.getSetting('meta_path')
+    else:
+        return create_directory(DATA_PATH, "meta")
 
 def furk_moderated():
     if ADDON.getSetting('furk_moderated') == "true":

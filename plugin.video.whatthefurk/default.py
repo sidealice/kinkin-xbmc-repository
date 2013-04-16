@@ -294,15 +294,15 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip5":
+    if ADDON.getSetting('dev_message')!="skip6":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Fixed Account Info for free members","Added Furk.net status to main menu....Account Info ", "will be highlighted green or red depending on status")
-        dialog.ok("Changes in this version continued:", "Removed popup when searching with preferred quality","Search will now try for preferred first....", "....and will search for any file if no files are found")
-        ADDON.setSetting('dev_message', value='skip5') 
+        dialog.ok("Changes in this version:","Removed notification when wishlist is searching","Fixed furk.net account status script error")
+        dialog.ok("Changes in this version continued:", "Added setting to define directory path for WTF meta","Enabling and setting a path will give you a new option", "in the Maintenance menu to move meta files to the new path")
+        ADDON.setSetting('dev_message', value='skip6') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -893,6 +893,57 @@ def deletemetazip():
             dialog = xbmcgui.Dialog()
             dialog.ok("Delete WTF Zip Downloads", "There are no files to delete")
 			
+def move_meta():
+    root_src_dir = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.whatthefurk/meta'), '')
+    root_dst_dir = META_PATH
+
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Do you want to copy files to:", META_PATH, "This may take a while!"):
+        try:
+            for src_dir, dirs, files in os.walk(root_src_dir):
+                file_count = 0
+                file_count += len(files)
+                dst_dir = src_dir.replace(root_src_dir, root_dst_dir)
+                if not os.path.exists(dst_dir):
+                    os.mkdir(dst_dir)
+                for file_ in files:
+                    src_file = os.path.join(src_dir, file_)
+                    dst_file = os.path.join(dst_dir, file_)
+                    if os.path.exists(dst_file):
+                        os.remove(dst_file)
+                    shutil.move(src_file, dst_dir)
+            dialog = xbmcgui.Dialog()
+            dialog.ok("DONE!", root_src_dir, "is now empty")
+ 
+        except:
+            dialog = xbmcgui.Dialog()
+            dialog.ok("Move meta files", "Unable to move your files", "You may need to try manually")
+			
+def deletepackages():
+    GA("Maintenance","Delete Packages")
+    print '############################################################       DELETING PACKAGES             ###############################################################'
+    packages_cache_path = xbmc.translatePath(os.path.join('special://home/addons/packages', ''))
+    try:    
+        for root, dirs, files in os.walk(packages_cache_path):
+            file_count = 0
+            file_count += len(files)
+            
+        # Count files and give option to delete
+            if file_count > 0:
+    
+                dialog = xbmcgui.Dialog()
+                if dialog.yesno("Delete Package Cache Files", str(file_count) + " files found", "Do you want to delete them?"):
+                            
+                    for f in files:
+                        os.unlink(os.path.join(root, f))
+                    for d in dirs:
+                        shutil.rmtree(os.path.join(root, d))
+                    dialog = xbmcgui.Dialog()
+                    dialog.ok("Delete Packages", "Success")
+    except: 
+        dialog = xbmcgui.Dialog()
+        dialog.ok("Delete Packages", "Unable to delete")
+			
 def deletesearchlists():
     dialog = xbmcgui.Dialog()
     if dialog.yesno("Delete IMDB search list", "Do you want to clear the list?"):
@@ -918,18 +969,24 @@ def deletewishlists():
 def deletemetafiles():
 	# Set path to What the Furk meta files
     wtf_meta_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.whatthefurk/meta'), '')
-    import glob
-    os.chdir(wtf_meta_path)
-    files=glob.glob('*.dat')
-    file_count = len(files)
-    if file_count > 0:
-        dialog = xbmcgui.Dialog()
-        if dialog.yesno("Delete WTF Meta Files", str(file_count) + " files found", "Do you want to delete them?"):
-            for filename in files:
-                os.unlink(filename)	
-    else:
-        dialog = xbmcgui.Dialog()
-        dialog.ok("Delete WTF Meta Files", "There are no meta files to delete")
+    for root, dirs, files in os.walk(wtf_meta_path):
+        file_count = 0
+        file_count += len(files)
+	
+    # Count files and give option to delete
+        if file_count > 0:
+
+            dialog = xbmcgui.Dialog()
+            if dialog.yesno("Delete Meta Files from userdata directory", str(file_count) + " files found", "Do you want to delete them?"):
+			
+                for f in files:
+    	            os.unlink(os.path.join(root, f))
+                for d in dirs:
+    	            shutil.rmtree(os.path.join(root, d))
+					
+        else:
+            dialog = xbmcgui.Dialog()
+            dialog.ok("Delete WTF Meta Files", "There are no files to delete")
 
 def search_nzbmovie(params):
     movies = []
@@ -1205,7 +1262,7 @@ def main_menu():
     items.append(create_directory_tuple('My People', 'people list menu'))
     items.append(create_directory_tuple('Watchlists', 'imdb list menu'))
     items.append(create_directory_tuple('Subscriptions', 'subscription menu'))
-    if response['status'] == 'ok':
+    if response['status'] == 'ok' and login_at_furk():
         items.append(create_directory_tuple('[COLOR green]' + "Account Info" + '[/COLOR]', 'account info'))
     else:
         items.append(create_directory_tuple('[COLOR red]' + "Account Info" + '[/COLOR]', 'account info'))
@@ -1227,12 +1284,6 @@ def dvd_releases(list):
         url = url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=50&country=us&apikey=crcvkfzgky27e276ug8pjckt")
     else:
         url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?page_limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
-    #GETTop Rentals   /api/public/v1.0/lists/dvds/top_rentals.json
-	#GETCurrent Release DVDs/api/public/v1.0/lists/dvds/current_releases.json
-	#GETNew Release DVDs/api/public/v1.0/lists/dvds/new_releases.json
-	#GETUpcoming DVDs/api/public/v1.0/lists/dvds/upcoming.json
-	#GETMovies Similar/api/public/v1.0/movies/:id/similar.json
-    #url = "http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/new_releases.json?page_limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt"
     body = get_url(url, cache=CACHE_PATH).strip()
     all_mov = regex_get_all(body, '{"id"', '}}')
     movies = []
@@ -1262,8 +1313,11 @@ def maintenance():
     items.append(create_directory_tuple('Update Subscriptions', 'get subscriptions'))
     items.append(create_directory_tuple('Update Library', 'scan library'))
     items.append(create_directory_tuple('Delete Cache Files', 'delete cache'))
+    if ADDON.getSetting('meta_custom_directory') == "true":
+        items.append(create_directory_tuple('Move Meta Files', 'move metafiles'))
     items.append(create_directory_tuple('Delete Meta Files', 'delete metafiles'))
     items.append(create_directory_tuple('Delete Meta Zip Files', 'delete meta zip'))
+    items.append(create_directory_tuple('Delete Packages', 'delete packages'))
     items.append(create_directory_tuple('Clear Search Lists', 'delete search lists'))
     items.append(create_directory_tuple('Clear Wishlists', 'delete wishlists'))
     items.append(create_directory_tuple('Toggle One-Click', 'toggle one-click'))
@@ -2674,8 +2728,6 @@ def one_click_download():
     open_playlists = True
     sleep = 10
     if os.path.isfile(WISHLIST):
-        notify = 'XBMC.Notification(Wishlist,Searching,5000)'
-        xbmc.executebuiltin(notify)
         s = read_from_file(WISHLIST)
         search_list = s.split('\n')
         for list in search_list:
@@ -3926,12 +3978,17 @@ elif mode == "delete meta zip":
 elif mode == "delete search lists":
     deletesearchlists()
     GA("Maintenance","Delete Search")
+elif mode == "delete packages":
+    deletepackages()
 elif mode == "delete wishlists":
     deletewishlists()
     GA("Maintenance","Delete Wishlists")
 elif mode == "delete metafiles":
     deletemetafiles()
     GA("Maintenance","Delete Meta Files")
+elif mode == "move metafiles":
+    move_meta()
+    GA("Maintenance","Move Meta Files")
 elif mode == "account info":
     account_info()
     GA("None","Account Info")

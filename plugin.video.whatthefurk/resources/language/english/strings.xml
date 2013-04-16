@@ -2,6 +2,8 @@
 	<!-- Options -->
 	<string id="30100">Meta data</string>
 	<string id="30101">Download metadata while browsing</string>
+    <string id="30115">Use custom meta directory</string>
+    <string id="30116">    Custom meta directory</string>
 	<string id="30102">Use posters</string>
 	<string id="30103">Use fanart</string>
 	<string id="30104">Image quality</string>

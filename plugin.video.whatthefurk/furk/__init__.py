@@ -128,7 +128,10 @@ class FurkAPI(object):
     def ping(self):
         command = "/api/ping"
         response = self._api_call_noparam(command)
-        return response
+        try:
+            return response
+        except:
+            return None
             
     #upsert label
     def label_upsert(self):

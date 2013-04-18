@@ -1252,7 +1252,6 @@ def setup():
 
 	
 def main_menu():
-    response = FURK.ping()
     items = []
     items.append(create_directory_tuple('Movies', 'imdb menu'))
     items.append(create_directory_tuple('TV Shows', 'imdb tv menu'))
@@ -1262,9 +1261,11 @@ def main_menu():
     items.append(create_directory_tuple('My People', 'people list menu'))
     items.append(create_directory_tuple('Watchlists', 'imdb list menu'))
     items.append(create_directory_tuple('Subscriptions', 'subscription menu'))
-    if response['status'] == 'ok' and login_at_furk():
-        items.append(create_directory_tuple('[COLOR green]' + "Account Info" + '[/COLOR]', 'account info'))
-    else:
+    try:
+        response = FURK.ping()
+        if response['status'] == 'ok':
+            items.append(create_directory_tuple('[COLOR green]' + "Account Info" + '[/COLOR]', 'account info'))
+    except:
         items.append(create_directory_tuple('[COLOR red]' + "Account Info" + '[/COLOR]', 'account info'))
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))

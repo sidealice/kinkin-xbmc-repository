@@ -1,0 +1,6 @@
+<settings>
+	<category label="Options">
+        <setting id="backup_custom_directory" type="bool" label="30101" default="false" />
+		<setting id="backup_path" type="folder" label="30102" default="" enable="!eq(-1,false)"/>
+	</category>
+</settings>

@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
+<addon id="plugin.audio.pearljamlive"
+       name="Pearl Jam Live"
+       version="1.0.0"
+       provider-name="Kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>audio</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>A Pearl Jam fan addon!</summary>
+        <description>Listen to Pearl Jam concert bootlegs as far back as 1990</description>
+    </extension>
+
+</addon>
+
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
        version="1.3.7a"
@@ -20,6 +39,25 @@
         <description>Visit www.xbmchub.com for support.
 
 What the Furk provides the user the ability do do IMDB powered media searches on Furk.net and gives the user the ability to stream the found media files.</description>
+    </extension>
+
+</addon>
+
+<addon id="plugin.video.XMLbackup"
+       name="XML Backup"
+       version="1.0.0"
+       provider-name="Kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video executable</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>XML Backup</summary>
+        <description>Backup all your addon and xbmc userdata xml settings in one easy step</description>
     </extension>
 
 </addon>

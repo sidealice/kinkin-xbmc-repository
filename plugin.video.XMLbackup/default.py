@@ -44,7 +44,10 @@ def restore_xml(url):
 			
     dialog = xbmcgui.Dialog()
     if dialog.yesno("XML Backup", "All userdata/*.xml and addon 'settings.xml' files restored", "Reboot to load restored settings", '', "Reboot Later", "Reboot Now"):
-        xbmc.executebuiltin('RestartApp')
+        if xbmc.getCondVisibility('system.platform.windows'):
+            xbmc.executebuiltin('RestartApp')
+        else:
+            xbmc.executebuiltin('Reboot')
     else:
         xbmc.executebuiltin('xbmc.activatewindow(0)')
 	

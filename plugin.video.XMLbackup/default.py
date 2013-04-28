@@ -3,7 +3,7 @@ import settings
 import shutil, glob
 
 ADDON = settings.addon()
-fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.XMLbackup', 'fanart.jpg'))
+fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.XMLbackup', 'fanart.jpg'))
 restore_path = os.path.join(xbmc.translatePath('special://profile/addon_data'), '')
 restorexbmc_path = os.path.join(xbmc.translatePath('special://profile'), '')
 backup_path = settings.backup_path()
@@ -25,6 +25,8 @@ def backup_xml(url):
         destination = os.path.join(backup_path, d)
         for xml_file in glob.glob(os.path.join(source, "settings.xml")):
             shutil.copy(xml_file, destination)
+        for xml_file in glob.glob(os.path.join(source, "*.list")):
+            shutil.copy(xml_file, destination)
 			
     dialog = xbmcgui.Dialog()
     dialog.ok("XML Backup", "All userdata/*.xml and addon 'settings.xml' files backed up")
@@ -41,9 +43,11 @@ def restore_xml(url):
         destination = os.path.join(restore_path, d)
         for xml_file in glob.glob(os.path.join(source, "settings.xml")):
             shutil.copy(xml_file, destination)
+        for xml_file in glob.glob(os.path.join(source, "*.list")):
+            shutil.copy(xml_file, destination)
 			
     dialog = xbmcgui.Dialog()
-    if dialog.yesno("XML Backup", "All userdata/*.xml and addon 'settings.xml' files restored", "Reboot to load restored settings", '', "Reboot Later", "Reboot Now"):
+    if dialog.yesno("XML Backup", "All userdata/*.xml and addon 'settings.xml' files restored", "Reboot to load restored gui settings settings", '', "Reboot Later", "Reboot Now"):
         if xbmc.getCondVisibility('system.platform.windows'):
             xbmc.executebuiltin('RestartApp')
         else:

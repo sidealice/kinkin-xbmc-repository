@@ -1,7 +1,5 @@
 '''
-Created on 24 feb 2012
-
-@author: Batch
+@author: kinkin
 '''
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin
 import os

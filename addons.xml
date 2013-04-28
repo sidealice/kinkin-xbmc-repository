@@ -45,7 +45,7 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 
 <addon id="plugin.video.XMLbackup"
        name="XML Backup"
-       version="1.0.1"
+       version="1.0.2"
        provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.0"/>

@@ -7,9 +7,15 @@ import xbmc, xbmcaddon, xbmcgui, xbmcplugin
 import os
 from common import create_directory, create_file
 
+XML_BACKUP = xbmcaddon.Addon(id='plugin.video.XMLbackup')
 ADDON = xbmcaddon.Addon(id='plugin.video.whatthefurk')
 DATA_PATH = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.whatthefurk'), '')
 
+def xmlbackup_path():
+    try:
+        return XML_BACKUP.getSetting('backup_path')
+    except:
+        return False
 
 def addon():
     return ADDON
@@ -65,18 +71,26 @@ def furk_moderated():
     else:
         return "no"
 
-#def furk_file_size():
-    #if ADDON.getSetting('furk_file_size') == "true":
-        #return True
-    #else:
-        #return False
+def restrict_trailer():
+    if ADDON.getSetting('restrict_trailer') == "true":
+        return True
+    else:
+        return False
 		
-#def furk_file_size_unit():
-    #unit = ADDON.getSetting('furk_file_size_unit')
-    #if unit == '1':
-        #return "GB"
-    #else:
-        #return "MB"
+def trailer_quality():
+    quality = ADDON.getSetting('trailer_quality')
+    if quality == '0':
+        return '480p'
+    elif quality == '1':
+        return '720p'
+    else:
+        return '1080p'
+		
+def trailer_one_click():
+    if ADDON.getSetting('trailer_one_click') == "true":
+        return True
+    else:
+        return False
 		
 def download_subtitles():
     if ADDON.getSetting('download_subtitles') == "true":

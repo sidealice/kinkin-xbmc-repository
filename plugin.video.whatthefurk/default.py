@@ -9,7 +9,7 @@ import settings
 from common import notification, get_url, regex_get_all, regex_from_to, create_directory, write_to_file, read_from_file, clean_file_name, get_file_size, wait, wait_dl_only
 from datetime import date, timedelta
 import urllib, os, sys, re, urllib2
-import shutil
+import shutil, glob
 from furk import FurkAPI
 from mediahandler import play, download, download_and_play, set_resolved_url
 from meta import TheTVDBInfo, set_movie_meta, download_movie_meta, set_tv_show_meta, download_tv_show_meta, meta_exist
@@ -122,7 +122,10 @@ ACTIVE_DOWNLOADS_TV = settings.downloads_file_tv()
 LIBRARY_FORMAT = settings.lib_format()
 WISHLIST = settings.wishlist()
 WISHLIST_FINISHED = settings.wishlist_finished()
-PEOPLE_LIST = settings.people_list()
+TRAILER_RESTRICT = settings.restrict_trailer()
+TRAILER_QUALITY = settings.trailer_quality()
+TRAILER_ONECLICK = settings.trailer_one_click()
+BACKUP = settings.xmlbackup_path()
 
 ###....................G.A...............................................###
 
@@ -294,15 +297,16 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip6":
+    if ADDON.getSetting('dev_message')!="skip7":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Removed notification when wishlist is searching","Fixed furk.net account status script error")
-        dialog.ok("Changes in this version continued:", "Added setting to define directory path for WTF meta","Enabling and setting a path will give you a new option", "in the Maintenance menu to move meta files to the new path")
-        ADDON.setSetting('dev_message', value='skip6') 
+        dialog.ok("Changes in this version:","Fixed Scene Releases","Moved DVD Releases to Movies menu", "Added Coming Soon section to Movies")
+        dialog.ok("Changes in this version continued:", "Added Trailers to context menu on Movies","Trailer options available in Settings/Options:", "Restrict trailer quality & enable one-click play")
+        dialog.ok("Changes in this version continued:", "Added option to 'First Time' check to restore settings","from XML Backup if available", "Useful for Linux builds that suffer from the lost settings bug")
+        ADDON.setSetting('dev_message', value='skip7') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -1228,45 +1232,65 @@ def exist_in_dir(name, path, isMovie=False):
 def setup():
     if FIRST_TIME_STARTUP:
         dialog = xbmcgui.Dialog()
-        dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
-        
-        if not FURK_ACCOUNT:
-            if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
-                if not register_account():
-                    dialog.ok("Setup account", "Account registation aborted.")
-                    dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                    ADDON.openSettings()
+        if BACKUP != False:
+            if dialog.yesno("What the Furk", "Settings not found", "", 'Do you want to restore all settings?', "No Thanks", "Restore Settings"):
+                restore_path = os.path.join(xbmc.translatePath('special://profile/addon_data'), '')
+                restorexbmc_path = os.path.join(xbmc.translatePath('special://profile'), '')
+                backup_path = BACKUP
+                for xml_file in glob.glob(os.path.join(backup_path, "*.xml")):
+                    shutil.copy(xml_file, restorexbmc_path)
+
+                directories = os.listdir(backup_path)
+                for d in directories:
+                    source = os.path.join(backup_path, d)
+                    destination = os.path.join(restore_path, d)
+                    for xml_file in glob.glob(os.path.join(source, "settings.xml")):
+                        shutil.copy(xml_file, destination)
+                    for xml_file in glob.glob(os.path.join(source, "*.list")):
+                        shutil.copy(xml_file, destination)
+			
+                dialog = xbmcgui.Dialog()
+                if dialog.yesno("XML Backup", "All userdata/*.xml and addon 'settings.xml' files restored", "Reboot to load restored gui settings settings", '', "Reboot Later", "Reboot Now"):
+                    if xbmc.getCondVisibility('system.platform.windows'):
+                        xbmc.executebuiltin('RestartApp')
+                    else:
+                        xbmc.executebuiltin('Reboot')
+                else:
+                    xbmc.executebuiltin('xbmc.activatewindow(0)')
             else:
-                dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                ADDON.openSettings()     
-        if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
-            download_meta_zip()
-        if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
-            ADDON.setSetting('download_meta', value='true')
-        else:
-            ADDON.setSetting('download_meta', value='false')  
-        if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
-            if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
-                setup_sources()
-        ADDON.setSetting('first_time_startup', value='false')      
+                dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
+        
+                if not FURK_ACCOUNT:
+                    if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
+                        if not register_account():
+                            dialog.ok("Setup account", "Account registation aborted.")
+                            dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
+                            ADDON.openSettings()
+                    else:
+                        dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
+                        ADDON.openSettings()     
+                if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
+                    download_meta_zip()
+                if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
+                    ADDON.setSetting('download_meta', value='true')
+                else:
+                    ADDON.setSetting('download_meta', value='false')  
+                if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
+                    if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
+                        setup_sources()
+                ADDON.setSetting('first_time_startup', value='false')      
 
 	
 def main_menu():
     items = []
     items.append(create_directory_tuple('Movies', 'imdb menu'))
     items.append(create_directory_tuple('TV Shows', 'imdb tv menu'))
-    items.append(create_directory_tuple('DVD Releases', 'dvd release menu'))
     items.append(create_directory_tuple('Search', 'search menu'))
     items.append(create_directory_tuple('My Files', 'my files directory menu'))
     items.append(create_directory_tuple('My People', 'people list menu'))
     items.append(create_directory_tuple('Watchlists', 'imdb list menu'))
     items.append(create_directory_tuple('Subscriptions', 'subscription menu'))
-    try:
-        response = FURK.ping()
-        if response['status'] == 'ok':
-            items.append(create_directory_tuple('[COLOR green]' + "Account Info" + '[/COLOR]', 'account info'))
-    except:
-        items.append(create_directory_tuple('[COLOR red]' + "Account Info" + '[/COLOR]', 'account info'))
+    items.append(create_directory_tuple('Account Info', 'account info'))
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
     return items
@@ -1341,7 +1365,9 @@ def myfiles_directory():
 def imdb_menu():
     items = []
     items.append(create_movie_directory_tuple('Top Movies', 'all movies menu')) 
-    items.append(create_movie_directory_tuple('New Movies', 'new movies menu'))	
+    items.append(create_movie_directory_tuple('New Movies', 'new movies menu'))
+    items.append(create_movie_directory_tuple('Coming Soon', 'movies soon menu'))
+    items.append(create_directory_tuple('DVD Releases', 'dvd release menu'))
     items.append(create_directory_tuple('Movies by Genre', 'movie genres menu')) 
     items.append(create_directory_tuple('Movies by Group', 'movie groups menu'))
     items.append(create_directory_tuple('Movies by Studio', 'movie studios menu'))
@@ -1586,6 +1612,16 @@ def movies_new_menu():
     params["title_type"] = "feature,documentary"
     params["num_votes"] = NUM_VOTES
     params["production_status"] = PRODUCTION_STATUS
+    movies = search_imdb(params)
+    return create_movie_items(movies)
+	
+def movies_soon_menu():
+    from_date = (date.today() + timedelta(1))
+    to_date = (from_date + timedelta(60))
+    params = {}
+    params["release_date"] = "%s,%s" % (from_date, to_date)
+    #params["sort"] = SORT_MOV_NEW
+    params["title_type"] = "feature,documentary"
     movies = search_imdb(params)
     return create_movie_items(movies)
 	
@@ -2045,8 +2081,9 @@ def episode_dialog(data, imdb_id=None, strm=False):
     if QUALITYSTYLE == "preferred":
             searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
             GA("Quality-TV", TVCUSTOMQUALITY)
+            print searchstring
             files = search_furk(searchstring)
-            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+            if len(files)==0:#files.count('"type":"video"')<1: 
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
@@ -2107,7 +2144,7 @@ def episode_dialog(data, imdb_id=None, strm=False):
                 mode = "t files tv menu"
             else:
                 text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
-                poster = ""#os.path.join(ADDON.getAddonInfo('path'),'art','noentry.png')
+                poster = ""
                 id = info_hash
                 mode = "add download"
 
@@ -2156,7 +2193,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
             searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
             GA("Quality-TV", TVCUSTOMQUALITY)
             files = search_furk(searchstring)
-            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+            if files.count('"type":"video"')==0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
@@ -2312,7 +2349,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
             GA("Quality-Movie", CUSTOMQUALITY)
             files = search_furk(searchstring)
-            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+            if files.count('"type":"video"')==0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
@@ -2364,7 +2401,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
                 mode = "t files menu"
             else:
                 text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
-                poster = ""#os.path.join(ADDON.getAddonInfo('path'),'art','noentry.png')
+                poster = ""
                 id = info_hash
                 mode = "add download"
 
@@ -2395,7 +2432,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
             GA("Quality-Movie", CUSTOMQUALITY)
             files = search_furk(searchstring)
-            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+            if files.count('"type":"video"')==0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
@@ -2453,10 +2490,82 @@ def strm_movie_dialog(name, imdb_id, strm=False):
 		
         id = str(menu_linkid[menu_id])
         t_file_dialog(id)
+
+
+def view_trailer(name, xbmcname, strm=False):
+    menu_texts = []
+    menu_data = []
+    menu_res = []
+    menu_list_item = []
+    pDialog = xbmcgui.DialogProgress()
+    pDialog.create('Searching for trailer')
+    dialog = xbmcgui.Dialog()
+    try:
+        url = "http://www.hd-trailers.net/movie/" + name
+        response = get_url(url, cache=CACHE_PATH)
+        match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
+        if len(match)==0:
+            url = "http://www.hd-trailers.net/movie/" + name.replace('and','')
+            response = get_url(url, cache=CACHE_PATH)
+            match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
+            if len(match)==0:
+                dialog.ok("Trailer Search", 'No trailers found for:', xbmcname) 
+                return
+        for url, info, title, res in match:
+            if url.find('apple')>0:
+                url = '%s|User-Agent=QuickTime' % ("http://" + url)
+            elif url.find('youtube')>0:
+                video_id = url.replace('www.youtube.com/watch?v=','')
+                url = (
+                    'plugin://plugin.video.youtube/'
+                    '?action=play_video&videoid=%s' % video_id
+                )
+            else:
+                url = "http://" + url
+            if TRAILER_RESTRICT:
+                if url.find('yahoo')<0 and res==TRAILER_QUALITY:
+                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
+                    menu_list_item.append(clean_file_name(title, use_blanks=False))
+                    menu_data.append(url)
+                    menu_res.append(res)
+            else:
+                if url.find('yahoo')<0:
+                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
+                    menu_list_item.append(clean_file_name(title, use_blanks=False))
+                    menu_data.append(url)
+                    menu_res.append(res)
+					
+        if TRAILER_ONECLICK:
+            menu_id =0
+        else:
+            menu_id = dialog.select('Select Trailer', menu_texts)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        else:	
+            url = menu_data[menu_id]
+            name = menu_texts[menu_id]
+            list_item = menu_list_item[menu_id]
+			
+        pDialog.close()
+    
+        if not url or not name:
+            if strm:
+                set_resolved_to_dummy()
+            return
+    
+        li = xbmcgui.ListItem(list_item)
+    
+        execute_video(name, url, li, strm)
+    except:
+        dialog.ok("Trailer Search", 'No trailers found for:', xbmcname) 
+        
+
 	
 def t_file_dialog_movie(xbmcname, id, strm=False):
     items = []
     files = []
+
     dialog = xbmcgui.Dialog()
     my_files = FURK.t_file_get(id, t_files="1")
     files = my_files.files
@@ -2542,7 +2651,7 @@ def one_click_movie(name, imdb_id, strm=False):
 	
     files = []
     files = search_furk(str(data.replace("-"," ").replace(" Documentary","").replace(":","")) + '+' + quality)
-    if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+    if files.count('"type":"video"')==0:
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
         files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
@@ -2623,7 +2732,7 @@ def one_click_episode(data, imdb_id, strm=False):
 	
     files = []
     files = search_furk(str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")) + '+' + quality)
-    if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+    if files.count('"type":"video"')==0:
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
         files = search_furk(str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")))
@@ -2748,7 +2857,7 @@ def one_click_download():
                 else:	
                     files = []
                     files = search_furk(str(searchname))
-                    if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
+                    if files.count('"type":"video"')==0:
                         if mode != "wishlist search":
                             notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                             xbmc.executebuiltin(notify)
@@ -3037,8 +3146,12 @@ def create_movie_items(movies):
         else:
 		    name = "%s (%s)" % (movie['name'], movie['year'])
         imdb_id = movie['imdb_id']
-        rating = movie['rating']
-        votes = movie['votes']
+        try:
+            rating = movie['rating']
+            votes = movie['votes']
+        except:
+            rating = '0'
+            votes = '0'
         movie_tuple = create_movie_tuple(name, imdb_id, rating, votes)
         items.append(movie_tuple)
         if not meta_exist(imdb_id, META_PATH):
@@ -3229,10 +3342,14 @@ def create_movie_list_item(name, imdb_id, rating, votes):
     contextMenuItems = []
     if mode == "dvd releases menu":
         ratings = '[COLOR cyan]' + "[%s: %s %s: %s]" % ("Critics", rating, "User", votes) + '[/COLOR]'
-        name = "%s - %s" % (clean_file_name(name, use_blanks=False), ratings)
+        listname = "%s - %s" % (clean_file_name(name, use_blanks=False), ratings)
     else:
-        name = clean_file_name(name, use_blanks=False)
+        listname = clean_file_name(name, use_blanks=False)
     contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
+    name_trailer = clean_file_name(name[:len(name)-7], use_blanks=False).replace("3D","").replace('.','-').replace(':','-').replace('&','and').replace(" ","-").replace("'","-").lower()
+    data_trailer = "trailer"
+    trailer_url = '%s?name=%s&data=%s&imdb_id=%s&mode=view trailer' % (sys.argv[0], urllib.quote(name_trailer), urllib.quote(data_trailer), urllib.quote(name))
+    contextMenuItems.append(('View trailer', 'XBMC.RunPlugin(%s)' % trailer_url))
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
         name2 = name[:len(data)-7].replace("The ","")
         contextMenuItems.append(('@Search Movie Easynews', 'XBMC.Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
@@ -3254,7 +3371,7 @@ def create_movie_list_item(name, imdb_id, rating, votes):
     wishlist_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add wishlist' % (sys.argv[0], urllib.quote(name), type, imdb_id)
     contextMenuItems.append(('Add to Wishlist', 'XBMC.RunPlugin(%s)' % wishlist_url))
     name2 = name[:len(data)-7].replace("The ","")  
-    li = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
+    li = xbmcgui.ListItem(clean_file_name(listname, use_blanks=False))
     li.addContextMenuItems(contextMenuItems, replaceItems=False)
     li = set_movie_meta(li, imdb_id, META_PATH)
     
@@ -3589,6 +3706,12 @@ def get_all_meta():
                 download_movie_meta(imdb_id, META_PATH)
     xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
 	
+    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_soon_menu...")
+    items, missing_meta = movies_soon_menu()
+    for imdb_id in missing_meta:
+                download_movie_meta(imdb_id, META_PATH)
+    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
+	
     xbmc.log("[What the Furk...XBMCHUB.COM] Downloading blu_ray_menu...")
     items, missing_meta = blu_ray_menu()
     for imdb_id in missing_meta:
@@ -3802,6 +3925,12 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "new movies menu": #New movies menu
         items, missing_meta = movies_new_menu()
         GA("Movies", "New Movies")
+        get_missing_meta(missing_meta, 'movies')
+        setView('movies', 'movies-view')
+        enable_sort = XBMC_SORT
+    elif mode == "movies soon menu": #Coming Soon
+        items, missing_meta = movies_soon_menu()
+        GA("Movies", "Coming Soon")
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
@@ -4103,6 +4232,10 @@ elif mode == "toggle one-click":
 elif mode == "dev message":
     ADDON.setSetting('dev_message', value='run')
     dev_message()
+	
+elif mode == "view trailer":
+    view_trailer(name, imdb_id)
+
 
   
 	

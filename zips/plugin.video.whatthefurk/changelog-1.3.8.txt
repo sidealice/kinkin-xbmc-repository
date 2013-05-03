@@ -47,7 +47,7 @@ Fixed error when trying to delete from download list
 Added calculation for % downloaded in "Downloaded - Movies" & "Downloaded - TV" lists 
 
 1.3.1a
-Wishlist: no need to sleep when searching for new torrents. 
+Wishlist: no need to sleep when searching for new torrents.
 
 1.3.1
 Added increasing delay to watchlist search to get round furk api limits
@@ -76,7 +76,6 @@ Added option to Library "Use film/search name" - Switch between filename or sear
 Moved Update Subscriptions to Maintenance menu
 Added "Update Library" to Maintenance menu
 
-
 1.1.9
 Removed "Check My Files" option
 Changed movies, TV Episodes and Furk search results to return archives.
@@ -90,9 +89,8 @@ Added "Downloads" menu - view/play/delete downloaded files
 Removed context options (My Files) on Movie/TV Show lists - option now added to returned results
 Video file formats no restricted to avi, mp4, mkv, wmv, flv
 
-
 1.1.8c
-Changed My Files and Season Search (context) method drill down to archived files. Now uses Furk API which improves speed.
+Chenged My Files and Season Search (context) method drill down to archived files. Now uses Furk API which improves speed.
 
 1.1.8b
 Changed xbmc player from DVDPLAYER to AUTO to fix issues when using an external player
@@ -153,14 +151,14 @@ Fixed furk searches opening "My Files"
 Added Furk option to query My Files before searching furk.net
 
 1.1.2
-Fixed "days left until bandwidth reset" for premium users
+Fixed "days left unti bandwidth reset" for premium users
 
 1.1.1
 Show file size by default...removed option to toggle on/off
 Improved speed of Furk results
 
 1.1.0
-Added TV meta information
+Added TV Show meta information
 
 1.0.9c
 Added some account info for non-premium users

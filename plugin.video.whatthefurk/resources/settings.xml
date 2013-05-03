@@ -13,6 +13,12 @@
         
 	    <setting id="separator" type="lsep" label="30113"/>
 		<setting id="first_time_startup" type="bool" label="30114" default="true" />
+        <setting id="restrict_trailer" type="bool" label="30118" default="false"/>
+		
+        <setting id="separator" type="lsep" label="30125"/>
+        <setting id="restrict_trailer" type="bool" label="30118" default="false"/>
+	    <setting id="trailer_quality" type="enum" values="480p|720p|1080p" label="30119" default="1" enable="!eq(-1,false)"/>
+        <setting id="trailer_one_click" type="bool" label="30120" default="false"/>
 	</category>
     <category label="Furk">
 		<setting id="furk_account" type="bool" label="30300" default="false"/>

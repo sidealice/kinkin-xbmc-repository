@@ -1,3 +1,8 @@
+1.3.8c
+Fixed Scene Releases
+Fixed My People error
+Fixed startip error (hopefully)
+
 1.3.8
 Added Trailers
 Adding 'Coming Soon' to Movies

@@ -7,15 +7,8 @@ import xbmc, xbmcaddon, xbmcgui, xbmcplugin
 import os
 from common import create_directory, create_file
 
-XML_BACKUP = xbmcaddon.Addon(id='plugin.video.XMLbackup')
 ADDON = xbmcaddon.Addon(id='plugin.video.whatthefurk')
 DATA_PATH = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.whatthefurk'), '')
-
-def xmlbackup_path():
-    try:
-        return XML_BACKUP.getSetting('backup_path')
-    except:
-        return False
 
 def addon():
     return ADDON

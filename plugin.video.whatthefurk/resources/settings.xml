@@ -13,7 +13,6 @@
         
 	    <setting id="separator" type="lsep" label="30113"/>
 		<setting id="first_time_startup" type="bool" label="30114" default="true" />
-        <setting id="restrict_trailer" type="bool" label="30118" default="false"/>
 		
         <setting id="separator" type="lsep" label="30125"/>
         <setting id="restrict_trailer" type="bool" label="30118" default="false"/>

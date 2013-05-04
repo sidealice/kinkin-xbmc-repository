@@ -1231,53 +1231,38 @@ def exist_in_dir(name, path, isMovie=False):
 def setup():
     if FIRST_TIME_STARTUP:
         dialog = xbmcgui.Dialog()
-        if os.path.exists.join(xbmc.translatePath('special://profile/addon_data/plugin.video.XMLbakcup'), ''):
-            if dialog.yesno("What the Furk", "Settings not found", "", 'Do you want to restore all settings?', "No Thanks", "Restore Settings"):
-                restore_path = os.path.join(xbmc.translatePath('special://profile/addon_data'), '')
-                restorexbmc_path = os.path.join(xbmc.translatePath('special://profile'), '')
-                backup_path = BACKUP
-                for xml_file in glob.glob(os.path.join(backup_path, "*.xml")):
-                    shutil.copy(xml_file, restorexbmc_path)
-
-                directories = os.listdir(backup_path)
-                for d in directories:
-                    source = os.path.join(backup_path, d)
-                    destination = os.path.join(restore_path, d)
-                    for xml_file in glob.glob(os.path.join(source, "settings.xml")):
-                        shutil.copy(xml_file, destination)
-                    for xml_file in glob.glob(os.path.join(source, "*.list")):
-                        shutil.copy(xml_file, destination)
-			
-                dialog = xbmcgui.Dialog()
-                if dialog.yesno("XML Backup", "All userdata/*.xml and addon 'settings.xml' files restored", "Reboot to load restored gui settings settings", '', "Reboot Later", "Reboot Now"):
-                    if xbmc.getCondVisibility('system.platform.windows'):
-                        xbmc.executebuiltin('RestartApp')
-                    else:
-                        xbmc.executebuiltin('Reboot')
-                else:
-                    xbmc.executebuiltin('xbmc.activatewindow(0)')
-        else:
-            dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
-        
-            if not FURK_ACCOUNT:
-                if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
-                    if not register_account():
-                        dialog.ok("Setup account", "Account registation aborted.")
-                        dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                        ADDON.openSettings()
-                else:
-                    dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                    ADDON.openSettings()     
-            if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
-                download_meta_zip()
-            if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
-                ADDON.setSetting('download_meta', value='true')
+        if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.XMLbackup'):
+            if dialog.yesno("What the Furk", "XML Backup addon found", "", 'Do you want to restore all settings?', "No Thanks", "Restore Settings"):
+                xbmc.executebuiltin('RunPlugin(plugin://plugin.video.XMLbackup/?mode=2&url="url")')
             else:
-                ADDON.setSetting('download_meta', value='false')  
-            if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
-                if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
-                    setup_sources()
-            ADDON.setSetting('first_time_startup', value='false')      
+                setup_FURK()
+        else:
+            setup_FURK()
+			
+def setup_FURK():
+    dialog = xbmcgui.Dialog()
+    dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
+        
+    if not FURK_ACCOUNT:
+        if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
+            if not register_account():
+                dialog.ok("Setup account", "Account registation aborted.")
+                dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
+                ADDON.openSettings()
+        else:
+            dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
+            ADDON.openSettings()     
+    if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
+        download_meta_zip()
+    if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
+        ADDON.setSetting('download_meta', value='true')
+    else:
+        ADDON.setSetting('download_meta', value='false')  
+    if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
+        if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
+            setup_sources()
+    ADDON.setSetting('first_time_startup', value='false')
+
 
 	
 def main_menu():

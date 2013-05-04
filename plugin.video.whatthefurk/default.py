@@ -125,7 +125,6 @@ WISHLIST_FINISHED = settings.wishlist_finished()
 TRAILER_RESTRICT = settings.restrict_trailer()
 TRAILER_QUALITY = settings.trailer_quality()
 TRAILER_ONECLICK = settings.trailer_one_click()
-BACKUP = settings.xmlbackup_path()
 
 ###....................G.A...............................................###
 
@@ -1232,7 +1231,7 @@ def exist_in_dir(name, path, isMovie=False):
 def setup():
     if FIRST_TIME_STARTUP:
         dialog = xbmcgui.Dialog()
-        if BACKUP != False:
+        if os.path.exists.join(xbmc.translatePath('special://profile/addon_data/plugin.video.XMLbakcup'), ''):
             if dialog.yesno("What the Furk", "Settings not found", "", 'Do you want to restore all settings?', "No Thanks", "Restore Settings"):
                 restore_path = os.path.join(xbmc.translatePath('special://profile/addon_data'), '')
                 restorexbmc_path = os.path.join(xbmc.translatePath('special://profile'), '')
@@ -1257,28 +1256,28 @@ def setup():
                         xbmc.executebuiltin('Reboot')
                 else:
                     xbmc.executebuiltin('xbmc.activatewindow(0)')
-            else:
-                dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
+        else:
+            dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
         
-                if not FURK_ACCOUNT:
-                    if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
-                        if not register_account():
-                            dialog.ok("Setup account", "Account registation aborted.")
-                            dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                            ADDON.openSettings()
-                    else:
+            if not FURK_ACCOUNT:
+                if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
+                    if not register_account():
+                        dialog.ok("Setup account", "Account registation aborted.")
                         dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                        ADDON.openSettings()     
-                if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
-                    download_meta_zip()
-                if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
-                    ADDON.setSetting('download_meta', value='true')
+                        ADDON.openSettings()
                 else:
-                    ADDON.setSetting('download_meta', value='false')  
-                if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
-                    if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
-                        setup_sources()
-                ADDON.setSetting('first_time_startup', value='false')      
+                    dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
+                    ADDON.openSettings()     
+            if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
+                download_meta_zip()
+            if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
+                ADDON.setSetting('download_meta', value='true')
+            else:
+                ADDON.setSetting('download_meta', value='false')  
+            if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
+                if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
+                    setup_sources()
+            ADDON.setSetting('first_time_startup', value='false')      
 
 	
 def main_menu():
@@ -1617,7 +1616,7 @@ def movies_new_menu():
 	
 def movies_soon_menu():
     from_date = (date.today() + timedelta(1))
-    to_date = (from_date + timedelta(60))
+    to_date = (from_date + timedelta(30))
     params = {}
     params["release_date"] = "%s,%s" % (from_date, to_date)
     #params["sort"] = SORT_MOV_NEW

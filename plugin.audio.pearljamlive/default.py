@@ -1,11 +1,15 @@
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
 
 pearljam_url = 'http://www.pearljamlive.com/'
+pjbootlegs_url = 'http://www.pearljambootlegs.org/modules/jinzora2/'
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive', 'fanart.jpg'))
+pjbootleg_logo = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'pjbootleglogo.gif'))
+pjbootleg_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart2.jpg'))
+audio_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart1.jpg'))
 
 def CATEGORIES():
         addDir('Pearl Jam Live',pearljam_url,1,'http://www.pearljamlive.com/images/pic_home.jpg')
-        addDir( '','',1,'')
+        addDir( 'Pearl Jam Bootlegs','url',4,pjbootleg_logo)
 
 #########################  PEARL JAM	#################################################	
 def LISTEN_YEAR(url):
@@ -100,10 +104,151 @@ def AUDIOLINKS(url,name,clear):
                     pass
             if clear or (not xbmc.Player().isPlayingAudio()):
                 xbmc.Player().play(pl)
-########################################################################################				
-  
+################################Peal Jam Bootlegs#####################################				
 
+def PJB_MAIN(url):
+        addDir( 'New Shows',pjbootlegs_url,5,pjbootleg_logo)
+        addDir( 'Top Downloaded Shows',pjbootlegs_url,6,pjbootleg_logo)
+        addDir( 'Top Played Shows',pjbootlegs_url,7,pjbootleg_logo)
+        addDir( 'Shows by Year',pjbootlegs_url,8,pjbootleg_logo)
 
+def PJB_NEW(url):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('"openPopup(.+?)</td>').findall(link)
+        show=re.compile('openMediaPlayer(.+?)title="(.+?)" alt=(.+?)href="(.+?)">').findall(match[0])
+        for dummy,title,info,pjb_url in show:
+            addDir(title,pjbootlegs_url+pjb_url,9,pjbootleg_logo)
+
+def PJB_TOP_DL(url):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('"openPopup(.+?)</td>').findall(link)
+        show=re.compile('openMediaPlayer(.+?)title="(.+?)" alt=(.+?)href="(.+?)">').findall(match[1])
+        for dummy,title,info,pjb_url in show:
+            addDir(title,pjbootlegs_url+pjb_url,9,pjbootleg_logo)
+
+def PJB_TOP_PL(url):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('"openPopup(.+?)</td>').findall(link)
+        show=re.compile('openMediaPlayer(.+?)title="(.+?)" alt=(.+?)href="(.+?)">').findall(match[2])
+        for dummy,title,info,pjb_url in show:
+            addDir(title,pjbootlegs_url+pjb_url,9,pjbootleg_logo)
+			
+def PJB_YEAR(url):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="(.+?)" title="Browse: (.+?)"').findall(link)
+        for year_url,name in match:
+            addDir(name,pjbootlegs_url+year_url,11,pjbootleg_logo)
+			
+def PJB_YEAR_SHOWS(url):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        match=re.compile('<a href="(.+?)" title="Browse: (.+?)"').findall(link)
+        for show_url,name in match:
+            addDir(name,pjbootlegs_url+show_url,9,pjbootleg_logo)
+
+def PJB_AUDIOLINKS(url,name,clear):
+        iconimage=""
+        dialog = xbmcgui.Dialog()
+        show_name=name
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        #match=re.compile('title="Download: (.+?)" href="(.+?)"><img src="style/cms-theme/download.gif" border=0 alt="Download"').findall(link)
+        match=re.compile('Download: (.+?)" href="(.+?)"><img src="style/cms-theme/download.gif" border=0 alt="Download" title="Download">').findall(link)
+        playlist=[]
+        nItem=len(match)
+        if dialog.yesno("Pearl Jam Live", 'Browse songs or play full album?', '', '', 'Play Now','Browse'):
+            pl = get_XBMCPlaylist(clear)
+            for name,url in match:
+                url1=pjbootlegs_url + str(url)
+                thumb = pjbootleg_logo
+                addDirAudio(name,url1,10,thumb)
+                liz=xbmcgui.ListItem(show_name, iconImage=thumb, thumbnailImage=iconimage)
+                liz.setInfo('music', {'Title':name, 'Artist':'Pearl Jam', 'Album':show_name})
+                liz.setProperty('mimetype', 'audio/mpeg')
+                liz.setThumbnailImage(thumb)
+                liz.setProperty('fanart_image', audio_fanart)
+                playlist.append((url1, liz))
+                
+        else:
+            dp = xbmcgui.DialogProgress()
+            dp.create("Pearl Jam Live",'Creating Your Playlist')
+            dp.update(0)
+            pl = get_XBMCPlaylist(clear)
+            for name,url in match:
+                url1=pjbootlegs_url + str(url)
+                thumb = pjbootleg_logo
+                addDirAudio(name,url1,10,thumb)
+                liz=xbmcgui.ListItem(show_name, iconImage=thumb, thumbnailImage=iconimage)
+                liz.setInfo('music', {'Title':name, 'Artist':'Pearl Jam', 'Album':show_name})
+                liz.setProperty('mimetype', 'audio/mpeg')
+                liz.setThumbnailImage(thumb)
+                liz.setProperty('fanart_image', audio_fanart)
+                playlist.append((url1, liz))
+
+                progress = len(playlist) / float(nItem) * 100               
+                dp.update(int(progress), 'Adding to Your Playlist',show_name)
+                if dp.iscanceled():
+                    return
+
+            print 'THIS IS PLAYLIST====   '+str(playlist)
+    
+            for blob ,liz in playlist:
+                try:
+                    if blob:
+                        pl.add(blob,liz)
+                except:
+                    pass
+            if clear or (not xbmc.Player().isPlayingAudio()):
+                xbmc.Player().play(pl)
+
+def PJB_SINGLELINKS(url,name,clear):
+        iconimage=""
+        dialog = xbmcgui.Dialog()
+        show_name=name
+        playlist=[]
+        pl = get_XBMCPlaylist(clear)
+        #pl=xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
+        url1=str(url)
+        thumb = ''
+        liz=xbmcgui.ListItem(show_name, iconImage=thumb, thumbnailImage=iconimage)
+        liz.setInfo('music', {'Title':name, 'Artist':'Pearl Jam', 'Album':show_name})
+        liz.setProperty('mimetype', 'audio/mpeg')
+        liz.setThumbnailImage(thumb)
+        liz.setProperty('fanart_image', fanart)
+        #pl.clear()
+        playlist.append((url1, liz))
+        for blob ,liz in playlist:
+            try:
+                if blob:
+                    pl.add(blob,liz)
+            except:
+                pass
+        if clear or (not xbmc.Player().isPlayingAudio()):
+            xbmc.Player().play(pl)				
+
+############################################################################################
 def get_params():
         param=[]
         paramstring=sys.argv[2]
@@ -138,7 +283,7 @@ def addLink(name,url,iconimage):
         ok=True
         liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
-        liz.setProperty('fanart_image', fanart)
+        liz.setProperty('fanart_image', audio_fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
         return ok
 
@@ -147,9 +292,21 @@ def addDir(name,url,mode,iconimage):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
         ok=True
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": name } )
-        liz.setProperty('fanart_image', fanart)
+        liz.setInfo( type="Audio", infoLabels={ "Title": name } )
+        if mode>3:
+            liz.setProperty('fanart_image', pjbootleg_fanart)
+        else:
+            liz.setProperty('fanart_image', fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
+        return ok
+		
+def addDirAudio(name,url,mode,iconimage):
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
+        ok=True
+        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+        liz.setInfo( type="Audio", infoLabels={ "Title": name } )
+        liz.setProperty('fanart_image', audio_fanart)
+        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz)
         return ok
         
               
@@ -190,6 +347,38 @@ elif mode==2:
 elif mode==3:
         print ""+url
         AUDIOLINKS(url,name,True)
+		
+elif mode==4:
+        print ""+url
+        PJB_MAIN(url)
+		
+elif mode==5:
+        print ""+url
+        PJB_NEW(url)
+
+elif mode==6:
+        print ""+url
+        PJB_TOP_DL(url)
+		
+elif mode==7:
+        print ""+url
+        PJB_TOP_PL(url)
+		
+elif mode==8:
+        print ""+url
+        PJB_YEAR(url)
+	
+elif mode==9:
+        print ""+url
+        PJB_AUDIOLINKS(url,name,True)
+		
+elif mode==10:
+        print ""+url
+        PJB_SINGLELINKS(url,name,True)
+		
+elif mode==11:
+        print ""+url
+        PJB_YEAR_SHOWS(url)
 		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

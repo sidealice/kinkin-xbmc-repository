@@ -19,6 +19,25 @@
 
 </addon>
 
+<addon id="plugin.video.ultimateguitar"
+       name="Ultimate Guitar"
+       version="1.0.0"
+       provider-name="Kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Learn to play guitar!</summary>
+        <description>A complete guitar course from Justin Sandercoe, for beginners to advanced players</description>
+    </extension>
+
+</addon>
+
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
        version="1.3.8c"

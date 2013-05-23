@@ -1,0 +1,7 @@
+<settings>
+	<category label="Option">
+        <setting id="ga_time" type="text" label="GA Called" default="2000-01-01 00:00:00" visible="false"/>
+        <setting id="visitor_ga" type="text" label="GA visitor" default="" visible="false"/>
+        <setting id="dev_message" type="text" label="Dev Message" default="true" visible="false"/>
+	</category>
+</settings>

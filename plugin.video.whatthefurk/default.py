@@ -126,6 +126,7 @@ PEOPLE_LIST = settings.people_list()
 TRAILER_RESTRICT = settings.restrict_trailer()
 TRAILER_QUALITY = settings.trailer_quality()
 TRAILER_ONECLICK = settings.trailer_one_click()
+OTHER_ADDONS = settings.other_addons()
 
 ###....................G.A...............................................###
 
@@ -198,6 +199,7 @@ def GA(group,name):
             if name=="None":
                     utm_url = utm_gif_location + "?" + \
                             "utmwv=" + VERSION + \
+                            "&utmn=" + str(randint(0, 0x7fffffff)) + \
                             "&utmn=" + str(randint(0, 0x7fffffff)) + \
                             "&utmp=" + quote(PATH) + \
                             "&utmac=" + UATRACK + \
@@ -297,16 +299,16 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip7":
+    if ADDON.getSetting('dev_message')!="skip9":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Fixed Scene Releases","Moved DVD Releases to Movies menu", "Added Coming Soon section to Movies")
-        dialog.ok("Changes in this version continued:", "Added Trailers to context menu on Movies","Trailer options available in Settings/Options:", "Restrict trailer quality & enable one-click play")
-        dialog.ok("Changes in this version continued:", "Added option to 'First Time' check to restore settings","from XML Backup if available", "Useful for Linux builds that suffer from the lost settings bug")
-        ADDON.setSetting('dev_message', value='skip7') 
+        dialog.ok("Changes in this version:","","Fixed DVD Releases script error")
+        dialog.ok("Changes in this version continued:", "Added option to search 1Channel and EasyNews from xbmc library","Enable in Settings/Option", "Consider this beta....you will get some 'playback failed' messages")
+        dialog.ok("Changes in this version continued:", "More Addons will be added at a later date")
+        ADDON.setSetting('dev_message', value='skip9') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -1289,11 +1291,11 @@ def dvd_release_menu():
 	
 def dvd_releases(list):
     items = []
-    list = list.replace(' ', '_')
+    list = list.replace(' ', '_').lower()
     if list == "top_rentals":
         url = url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=50&country=us&apikey=crcvkfzgky27e276ug8pjckt")
     else:
-        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?page_limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
+        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
     body = get_url(url, cache=CACHE_PATH).strip()
     all_mov = regex_get_all(body, '{"id"', '}}')
     movies = []
@@ -2137,8 +2139,48 @@ def episode_dialog(data, imdb_id=None, strm=False):
             items.append(archive_tuple)
             setView('movies', 'movies-view')
     return items;
+
+def strm_episode_dialog(data, imdb_id, strm):
+    addon_select = []
+    name2 = name[:len(data)-7].replace("The ","")
+    playlist = xbmc.PlayList(0)
+    dialog = xbmcgui.Dialog()
+    addon_select.append('Search What the Furk')
+    addon_select.append('Search EasyNews')
+    addon_select.append('Search 1Channel')
+    data1 = str(data).replace('<|>', '$')
+    data2 = data.split('<|>')
+    tv_show_name = data2[0].replace(" Mini-Series","").replace("The ","")
+    season_number = int(data2[2])
+    episode_number = int(data2[3])
+    easyname = "S%.2d E%.2d %s" % (season_number, episode_number, tv_show_name)
+    blank = None
+    fanart = None
+    description = None
+		
+    if OTHER_ADDONS:	
+        menu_id = dialog.select('Select Addon', addon_select)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        if(menu_id == 1):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
+                playlist.clear()
+                xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=13&iconimage=None&fanart=%s&series=%s&description=%s&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/', blank, fanart, easyname,description)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the EasyNews addon to use this function")
+        elif(menu_id == 2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
+                playlist.clear()
+                xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+        else:
+            strm_episode_dialog_wtf(data, imdb_id, strm=False)
+    else:
+        strm_episode_dialog_wtf(data, imdb_id, strm=False)
 	
-def strm_episode_dialog(data, imdb_id, strm=False):
+def strm_episode_dialog_wtf(data, imdb_id, strm=False):
     menu_texts = []
     menu_data = []
     menu_linkid = []
@@ -2394,13 +2436,44 @@ def movie_dialog(data, imdb_id=None, strm=False):
             items.append(archive_tuple)
             setView('movies', 'movies-view')
     return items;
+
+def strm_movie_dialog(name, imdb_id, strm):
+    addon_select = []
+    name2 = name[:len(data)-7].replace("The ","")
+    playlist = xbmc.PlayList(0)
+    dialog = xbmcgui.Dialog()
+    addon_select.append('Search What the Furk')
+    addon_select.append('Search EasyNews')
+    addon_select.append('Search 1Channel')
+    if OTHER_ADDONS:	
+        menu_id = dialog.select('Select Addon', addon_select)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        if(menu_id == 1):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
+                playlist.clear()
+                xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the EasyNews addon to use this function")
+        elif(menu_id == 2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
+                playlist.clear()
+                xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+        else:
+            strm_movie_dialog__wtf(name, imdb_id, strm=False)
+    else:
+        strm_movie_dialog__wtf(name, imdb_id, strm=False)
 	
-def strm_movie_dialog(name, imdb_id, strm=False):
+def strm_movie_dialog__wtf(name, imdb_id, strm=False):
     open_playlists = True
     menu_texts = []
     menu_data = []
     menu_linkid = []
     menu_url_pls = []
+		
     if ONECLICK_SEARCH:
         one_click_movie(name, imdb_id, strm=True)
 

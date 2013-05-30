@@ -1,5 +1,4 @@
 '''
-Created on 24 feb 2012
 
 @author: Batch
 '''
@@ -18,6 +17,12 @@ def data_path():
 
 def cache_path():
     return create_directory(DATA_PATH, "cache")
+	
+def other_addons():
+    if ADDON.getSetting('other_addons') == "true":
+        return True
+    else:
+        return False
 
 def cookie_jar():
     return create_file(DATA_PATH, "cookiejar.lwp")

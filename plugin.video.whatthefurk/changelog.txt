@@ -1,7 +1,11 @@
+1.3.9
+Fixed DVD Releases Releases
+Added option to search 1Channel and EasyNews from xbmc library
+
 1.3.8c
 Fixed Scene Releases
 Fixed My People error
-Fixed startip error (hopefully)
+Fixed startup error (hopefully)
 
 1.3.8
 Added Trailers

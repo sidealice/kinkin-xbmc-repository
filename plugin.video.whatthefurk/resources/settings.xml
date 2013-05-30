@@ -10,6 +10,7 @@
 		<setting id="use_posters" type="bool" label="30102" default="true" />
 		<setting id="use_fanart" type="bool" label="30103" default="true" />
 		<setting id="meta_quality" type="enum" values="Low|Medium|High|Maximum" label="30104" default="1" />
+        <setting id="other_addons" type="bool" label="30130" default="false"/>
         
 	    <setting id="separator" type="lsep" label="30113"/>
 		<setting id="first_time_startup" type="bool" label="30114" default="true" />

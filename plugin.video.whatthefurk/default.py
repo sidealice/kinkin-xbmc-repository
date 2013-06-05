@@ -24,7 +24,7 @@ if ADDON.getSetting('visitor_ga')=='':
     
 PATH = "XBMC_WHATTHEFURK"  #<---- PLUGIN NAME MINUS THE "plugin.video"          
 UATRACK = "UA-39563241-1" #<---- GOOGLE ANALYTICS UA NUMBER   
-VERSION = "1.4.0" #<---- PLUGIN VERSION
+VERSION = "1.4.0a" #<---- PLUGIN VERSION
 
 
 DATA_PATH = settings.data_path()
@@ -299,7 +299,7 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip10":
+    if ADDON.getSetting('dev_message')!="skip12":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
@@ -307,8 +307,14 @@ def dev_message():
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
         dialog.ok("Changes in this version:","","Changed subscription service", "No longer updates on every start up")
         dialog.ok("Changes in this version continued:", "Maintenance section will show scheduled run time","Forcing update sets next update time per settings", "Added option to incl/excl wishlist search from updates")
-        #dialog.ok("Changes in this version continued:", "More Addons will be added at a later date")
-        ADDON.setSetting('dev_message', value='skip10') 
+        dialog.ok("Changes in this version continued:", "Update will run once now to set the correct scheduled time")
+        ADDON.setSetting('service_time', str(datetime.datetime.now()).split('.')[0])
+        time.sleep(2)
+        get_subscriptions()
+        hours_list = [2, 5, 10, 15, 24]
+        hours = hours_list[settings.subscription_timer()]
+        ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
+        ADDON.setSetting('dev_message', value='skip12') 
 
 ######################## DEV MESSAGE ###########################################################################################
 

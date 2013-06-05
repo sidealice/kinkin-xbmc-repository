@@ -1,3 +1,6 @@
+1.4.0a
+Force update on first startup to set the correct time
+
 1.4.0
 Service now runs according to settings
 

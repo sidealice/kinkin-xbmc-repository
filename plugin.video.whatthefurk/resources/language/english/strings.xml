@@ -93,6 +93,7 @@
     <!-- Library -->
     <string id="30402">Activate subscriptions</string>
     <string id="30403">    Update interval</string> 
+    <string id="30411">    Update Wishlist with subscriptions</string>
     <string id="30410">Use film/search name</string>	
     <string id="30404">One folder per movie</string>
 	<string id="30405">Use custom TV-show directory</string>

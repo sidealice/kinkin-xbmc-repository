@@ -723,10 +723,16 @@ def dummy_path():
     return os.path.join(ADDON.getAddonInfo('path'), 'dummy.wma')
 
 def service_sleep_time():
-    return 10
+    return 60
 
 def subscription_timer():
     return int(ADDON.getSetting('subscription_timer'))
+
+def subscription_wishlist():
+    if ADDON.getSetting('subscription_wishlist') == 'true':
+        return True
+    else:
+        return False
 
 def use_posters():
     if ADDON.getSetting('use_posters') == 'true':

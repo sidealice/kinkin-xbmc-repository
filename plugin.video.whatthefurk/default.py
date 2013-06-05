@@ -24,7 +24,7 @@ if ADDON.getSetting('visitor_ga')=='':
     
 PATH = "XBMC_WHATTHEFURK"  #<---- PLUGIN NAME MINUS THE "plugin.video"          
 UATRACK = "UA-39563241-1" #<---- GOOGLE ANALYTICS UA NUMBER   
-VERSION = "1.3.4" #<---- PLUGIN VERSION
+VERSION = "1.4.0" #<---- PLUGIN VERSION
 
 
 DATA_PATH = settings.data_path()
@@ -299,16 +299,16 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip9":
+    if ADDON.getSetting('dev_message')!="skip10":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","","Fixed DVD Releases script error")
-        dialog.ok("Changes in this version continued:", "Added option to search 1Channel and EasyNews from xbmc library","Enable in Settings/Option", "Consider this beta....you will get some 'playback failed' messages")
-        dialog.ok("Changes in this version continued:", "More Addons will be added at a later date")
-        ADDON.setSetting('dev_message', value='skip9') 
+        dialog.ok("Changes in this version:","","Changed subscription service", "No longer updates on every start up")
+        dialog.ok("Changes in this version continued:", "Maintenance section will show scheduled run time","Forcing update sets next update time per settings", "Added option to incl/excl wishlist search from updates")
+        #dialog.ok("Changes in this version continued:", "More Addons will be added at a later date")
+        ADDON.setSetting('dev_message', value='skip10') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -635,6 +635,7 @@ def get_subscriptions():
                         movie_imdb = urllib.unquote_plus(params["imdb_id"])
                         movie_mode = "strm movie dialog"
                         create_strm_file(movie_name, movie_data, movie_imdb, movie_mode, MOVIES_PATH)
+        xbmc.executebuiltin('UpdateLibrary(video)')
                     
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] Failed to fetch subscription")
@@ -1293,9 +1294,9 @@ def dvd_releases(list):
     items = []
     list = list.replace(' ', '_').lower()
     if list == "top_rentals":
-        url = url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=50&country=us&apikey=crcvkfzgky27e276ug8pjckt")
+        url = url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?country=us&apikey=crcvkfzgky27e276ug8pjckt")
     else:
-        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=50&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
+        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=16&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
     body = get_url(url, cache=CACHE_PATH).strip()
     all_mov = regex_get_all(body, '{"id"', '}}')
     movies = []
@@ -1322,7 +1323,7 @@ def search_menu():
 	
 def maintenance():
     items = []
-    items.append(create_directory_tuple('Update Subscriptions', 'get subscriptions'))
+    items.append(create_directory_tuple('Update Subscriptions (scheduled for ' + ADDON.getSetting('service_time') +')', 'force subscriptions'))
     items.append(create_directory_tuple('Update Library', 'scan library'))
     items.append(create_directory_tuple('Delete Cache Files', 'delete cache'))
     if ADDON.getSetting('meta_custom_directory') == "true":
@@ -4188,6 +4189,16 @@ elif mode == "unsubscribe":
     xbmc.executebuiltin("Container.Refresh")
 elif mode == "get subscriptions":
     get_subscriptions()
+elif mode == "force subscriptions":
+    ADDON.setSetting('service_time', str(datetime.datetime.now()).split('.')[0])
+    time.sleep(2)
+    get_subscriptions()
+    hours_list = [2, 5, 10, 15, 24]
+    hours = hours_list[settings.subscription_timer()]
+    ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
+    time.sleep(1)
+    xbmc.executebuiltin("Container.Refresh")
+    
 elif mode == "add movie strm":
     create_strm_file(name, data, imdb_id, "strm movie dialog", MOVIES_PATH)
 elif mode == "add moviefile strm":

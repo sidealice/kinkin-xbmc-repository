@@ -21,9 +21,7 @@ class AutoUpdater:
             if settings.subscription_update():
                 next_run  = datetime.datetime.fromtimestamp(time.mktime(time.strptime(ADDON.getSetting('service_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
                 now = datetime.datetime.now()
-                delta = next_run - now
-                nseconds = delta.seconds
-                if nseconds < 0:
+                if now > next_run:
                     if xbmc.Player().isPlaying() == False:
                         if xbmc.getCondVisibility('Library.IsScanningVideo') == False:      
                             xbmc.log('[What the Furk] Updating video library')
@@ -33,11 +31,11 @@ class AutoUpdater:
                             time.sleep(1)
                             self.last_run = now
                             if ADDON.getSetting('subscription_wishlist') == 'true':
-                                xbmc.executebuiltin('RunPlugin(plugin://plugin.video.whatthefurk/?mode=wishlist%20search)') 
+                                xbmc.executebuiltin('RunPlugin(plugin://plugin.video.whatthefurk/?mode=wishlist%20search)')
+                            ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
+                            xbmc.log("[What the Furk] Subscriptions and Library updated. Next run at " + ADDON.getSetting('service_time'))
                     else:
                         xbmc.log("[What the Furk] Player is running, waiting until finished")
-                    xbmc.log("[What the Furk] Next update is scheduled to run in " + str(hours) + "h")
-                    ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
                 else:
                     xbmc.log("[What the Furk] Subscription update not required. Next run at " + ADDON.getSetting('service_time'))
             time.sleep(settings.service_sleep_time())

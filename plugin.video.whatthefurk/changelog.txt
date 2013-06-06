@@ -1,3 +1,6 @@
+1.4.0b
+Fixed error with subscription update schedule
+
 1.4.0a
 Force update on first startup to set the correct time
 

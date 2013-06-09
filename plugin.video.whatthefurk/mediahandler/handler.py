@@ -8,6 +8,9 @@ import os, sys, time
 import urllib
 from threading import Thread
 from common import notification, wait
+import settings
+from meta import set_movie_meta
+META_PATH = settings.meta_path()
 
 WAITING_TIME = 7
 
@@ -50,7 +53,7 @@ def download_and_play(name, url, path):
         except:
             print 'download failed'
 
-def play(name, url, list_item=None):
+def play(name, url, list_item):#=None
     print 'attempting to stream file'
 
     if xbmc.Player().isPlayingVideo() == True:
@@ -63,11 +66,12 @@ def play(name, url, list_item=None):
         print 'file streaming failed'
         notification("Streaming failed", "Streaming failed")
 
-def set_resolved_url(handle, name, url, list_item=None):
+def set_resolved_url(handle, name, url, imdb_id, list_item=None):#=None
     if xbmc.Player().isPlayingVideo() == True:
         xbmc.Player().stop()
     if not list_item: 
         list_item = xbmcgui.ListItem(name, iconImage="DefaultVideoBig.png", thumbnailImage='', path=url)
+        list_item = set_movie_meta(list_item, imdb_id, META_PATH)
     list_item.setProperty("IsPlayable", "true")
     xbmcplugin.setResolvedUrl(handle, True, list_item)
 

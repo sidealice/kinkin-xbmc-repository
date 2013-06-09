@@ -24,7 +24,7 @@ if ADDON.getSetting('visitor_ga')=='':
     
 PATH = "XBMC_WHATTHEFURK"  #<---- PLUGIN NAME MINUS THE "plugin.video"          
 UATRACK = "UA-39563241-1" #<---- GOOGLE ANALYTICS UA NUMBER   
-VERSION = "1.4.0b" #<---- PLUGIN VERSION
+VERSION = "1.4.1" #<---- PLUGIN VERSION
 
 
 DATA_PATH = settings.data_path()
@@ -299,16 +299,16 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip13":
+    if ADDON.getSetting('dev_message')!="skip15":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","","Fixed subscription service error", "Updates will now run as scheduled")
-        #dialog.ok("Changes in this version continued:", "Maintenance section will show scheduled run time","Forcing update sets next update time per settings", "Added option to incl/excl wishlist search from updates")
-        #dialog.ok("Changes in this version continued:", "Update will run once now to set the correct scheduled time")
-        ADDON.setSetting('dev_message', value='skip13') 
+        dialog.ok("Changes in this version:","New context menu search for Movies & TV Shows","'IMDB users also like...' will list similar titles", "that have been recommended by IMDB users")
+        dialog.ok("Changes in this version continued:", "WTF now passes meta correctly to xbmc player","Cover art will now show when viewing on-screen controls", "Fix will not work for DIRECT stream files already in Library")
+        #dialog.ok("Changes in this version continued:", "Fix will not work for DIRECT stream files already in Library")
+        ADDON.setSetting('dev_message', value='skip15') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -518,7 +518,6 @@ def download_kat(queryname, episode):
                 add_download(name, info_hash)
                 action = "newtorrents"
                 list_data = "%s<|>%s<|>%s" % (list_name, action, episode)
-                print list_data
                 remove_search_query(list_data, WISHLIST)
                 add_search_query(list_data, WISHLIST_FINISHED)
         else:
@@ -687,7 +686,6 @@ def daily_torrents():
         content = read_from_file(search_file) 
         lines = content.split('\n')
         #index = lines.index(query)
-        print lines
         return lines
     except:
         return -1
@@ -1197,9 +1195,12 @@ def scrape_xspf(body, id):
     return tracks
 	
 def execute_video(name, url, list_item, strm=False):
+    imdb_id=list_item
+    list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
+    list_item = set_movie_meta(list_item, imdb_id, META_PATH)
     if PLAY_MODE == 'stream':
         if mode == "strm file dialog" or strm:
-            set_resolved_url(int(sys.argv[1]), name, url) 
+            set_resolved_url(int(sys.argv[1]), name, url, imdb_id) 
         else:
             play(name, url, list_item)
         GA("None", "Streaming")			
@@ -1283,6 +1284,21 @@ def main_menu():
     items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
     return items
 
+def imdb_similar_menu(name, data, imdb_id):
+    url = "%s%s%s" % ('http://m.imdb.com/title/',imdb_id,'/similarities')
+    body = get_url(url, cache=CACHE_PATH)
+    body = body.replace('\n','').replace('(','AX').replace(')','AZ')
+    all_tr = regex_from_to(body, '<section class="similarities posters">', '</section>')
+    match = re.compile('<a href="/title/(.+?)/"(.+?)>(.+?)</a> AX(.+?)AZ').findall(all_tr)
+    movies=[]
+    movies.append({'imdb_id': imdb_id, 'name': '[COLOR cyan]' + 'IMDB USERS WHO LIKE ' + '[/COLOR]' + '[COLOR gold]' + clean_file_name(name, use_blanks=False).replace(' TV Series','').replace(' Mini-Series','') +  '[/COLOR]' + '[COLOR cyan]' + ' ALSO LIKE:' + '[/COLOR]', 'year': 'rem', 'rating': "", 'votes': "D"})
+    for imdb_id,blank,name,year in match:
+        movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': "", 'votes': ""})
+    if data == "MOV":
+        return create_movie_items(movies)
+    else:
+        return create_tv_show_items(movies)
+	
 def dvd_release_menu():
     items = []
     lists = ['Top Rentals', 'Current Releases', 'New Releases', 'Upcoming']
@@ -2037,9 +2053,10 @@ def imdb_actor_result_menu(query):
  
     return imdb_actor_menu(), []
 
-def episode_dialog(data, imdb_id=None, strm=False):
+def episode_dialog(data, imdb_id, strm=False):
     items = []
     dialog = xbmcgui.Dialog()
+    data = data.replace('[COLOR cyan]','').replace('[/COLOR]','').replace('[COLOR gold]','')
     quality_list = ["Custom Search", "Season Search", "Any",  "1080P", "720P", "HDTV", "480P", "BDRIP", "BRRIP", "DVDRIP"]
     quality_list_return = ["Custom Search", "Season", "",  "1080P", "720P", "HDTV", "480P", "BDRIP", "BRRIP", "DVDRIP"]
 	
@@ -2136,7 +2153,7 @@ def episode_dialog(data, imdb_id=None, strm=False):
                 id = info_hash
                 mode = "add download"
 
-            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster)
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
             items.append(archive_tuple)
             setView('movies', 'movies-view')
     return items;
@@ -2282,9 +2299,9 @@ def strm_episode_dialog_wtf(data, imdb_id, strm=False):
             dialog.close()
         else:	
             id = str(menu_linkid[menu_id])
-            t_file_dialog(id)
+            t_file_dialog(id, imdb_id)
 	
-def t_file_dialog_tv(xbmcname, id, strm=False):
+def t_file_dialog_tv(xbmcname, id, imdb_id, strm=False):
     items = []
     files = []
     dialog = xbmcgui.Dialog()
@@ -2312,7 +2329,7 @@ def t_file_dialog_tv(xbmcname, id, strm=False):
 
         if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
             mode = "execute video"
-            file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type)
+            file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type, imdb_id)
             items.append(file_list_tuple)
             setView('movies', 'tvshows-view')
     return items;
@@ -2368,6 +2385,7 @@ def add_people(name, data, imdb_id):
 def movie_dialog(data, imdb_id=None, strm=False):
     items = []
     files = []
+    data=data.replace('[COLOR cyan]','').replace('[/COLOR]','').replace('[COLOR gold]','')
         
     dialog = xbmcgui.Dialog()
     quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
@@ -2433,7 +2451,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
                 id = info_hash
                 mode = "add download"
 
-            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster)
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
             items.append(archive_tuple)
             setView('movies', 'movies-view')
     return items;
@@ -2548,10 +2566,10 @@ def strm_movie_dialog__wtf(name, imdb_id, strm=False):
             dialog.close()
 		
         id = str(menu_linkid[menu_id])
-        t_file_dialog(id)
+        t_file_dialog(id, imdb_id)
 
 
-def view_trailer(name, xbmcname, strm=False):
+def view_trailer(name, imdb_id, xbmcname, strm=False):
     menu_texts = []
     menu_data = []
     menu_res = []
@@ -2615,13 +2633,13 @@ def view_trailer(name, xbmcname, strm=False):
     
         li = xbmcgui.ListItem(list_item)
     
-        execute_video(name, url, li, strm)
+        execute_video(name, url, imdb_id, strm)
     except:
         dialog.ok("Trailer Search", 'No trailers found for:', xbmcname) 
         
 
 	
-def t_file_dialog_movie(xbmcname, id, strm=False):
+def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):
     items = []
     files = []
 
@@ -2650,12 +2668,12 @@ def t_file_dialog_movie(xbmcname, id, strm=False):
         if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
             mode = "execute video"
             type = "movie"
-            file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type)
+            file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type, imdb_id)
             items.append(file_list_tuple)
             setView('movies', 'movies-view')
     return items;
 
-def t_file_dialog(id, strm=True):
+def t_file_dialog(id, imdb_id, strm=True):
     menu_texts = []
     menu_data = []
     menu_size = []
@@ -2700,7 +2718,7 @@ def t_file_dialog(id, strm=True):
     
         li = xbmcgui.ListItem(list_item)
     
-        execute_video(name, url, li, strm)
+        execute_video(name, url, imdb_id, strm)
 
 
 def one_click_movie(name, imdb_id, strm=False):
@@ -2759,8 +2777,7 @@ def one_click_movie(name, imdb_id, strm=False):
             set_resolved_to_dummy()
         return
 	
-    li = xbmcgui.ListItem(clean_file_name(data))
-    execute_video(name, url, li, strm)
+    execute_video(name, url, imdb_id, strm)
     GA("One-Click","Movies")
 	
 def one_click_episode(data, imdb_id, strm=False):
@@ -2841,7 +2858,7 @@ def one_click_episode(data, imdb_id, strm=False):
         return
 	
     li = xbmcgui.ListItem(clean_file_name(data))
-    execute_video(name, url, li, strm)
+    execute_video(name, url, imdb_id, strm)
     GA("One-Click","TV Shows")
 
 
@@ -2888,7 +2905,7 @@ def furksearch_dialog(query, imdb_id=None, strm=False):
                 id = info_hash
                 mode = "add download"
 
-            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster)
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster,"")
             items.append(archive_tuple)
             setView('movies', 'movies-view')
     return items;
@@ -3044,13 +3061,12 @@ def myfiles(unlinked, strm=False):
         xbmcname = f.name
 
         mode = "t files menu"
-        archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster)
+        archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
         items.append(archive_tuple)
         setView('movies', 'movies-view')
     return items;
 
 def myfiles_add(name, id):
-    print id
     dialog = xbmcgui.Dialog()
     response = FURK.file_link(id)
 
@@ -3102,7 +3118,6 @@ def myfiles_remove(name, id):
     dialog.close()
 	
 def myfiles_clear(name, id):
-    print id
     dialog = xbmcgui.Dialog()
     response = FURK.file_clear(id)
 
@@ -3213,7 +3228,7 @@ def create_movie_items(movies):
             votes = '0'
         movie_tuple = create_movie_tuple(name, imdb_id, rating, votes)
         items.append(movie_tuple)
-        if not meta_exist(imdb_id, META_PATH):
+        if not meta_exist(imdb_id, META_PATH) or imdb_id==None:
             missing_meta.append(imdb_id)
     
     return items, missing_meta
@@ -3223,7 +3238,10 @@ def create_tv_show_items(tv_shows):
     missing_meta = []
 
     for tv_show in tv_shows:
-        name = "%s (%s)" % (tv_show['name'], tv_show['year'])
+        if tv_show['year'] == "rem":
+            name = tv_show['name']
+        else:
+            name = "%s (%s)" % (tv_show['name'], tv_show['year'])
         imdb_id = tv_show['imdb_id']
         tv_show_tuple = create_tv_show_tuple(name, imdb_id)
         items.append(tv_show_tuple)
@@ -3250,9 +3268,12 @@ def create_actor_tuple(name, photo, imdb_id, profession):
     actor_list_item = create_actor_list_item(name, photo, imdb_id, profession);
     actor_tuple = (actor_url, actor_list_item, True)
     return actor_tuple
-	
+
 def create_movie_tuple(name, imdb_id, rating, votes):
-    movie_url = create_url(name, "movie dialog menu", "", imdb_id)
+    if votes == 'D':
+        movie_url = create_url(name.replace('IMDB USERS WHO LIKE ','').replace(' ALSO LIKE:',''), "movie dialog menu", "", imdb_id)
+    else:
+        movie_url = create_url(name, "movie dialog menu", "", imdb_id)
     movie_list_item = create_movie_list_item(name, imdb_id, rating, votes);
     movie_tuple = (movie_url, movie_list_item, True)
     return movie_tuple
@@ -3268,6 +3289,7 @@ def create_directory_tuple(name, mode):
     directory_list_item = create_directory_list_item(name, mode);
     directory_tuple = (directory_url, directory_list_item, True)
     return directory_tuple
+    return directory_tuple
 	
 def create_subdirectory_tuple(name, mode):
     subdirectory_url = create_url(name, mode, "", "")
@@ -3276,7 +3298,7 @@ def create_subdirectory_tuple(name, mode):
     return subdirectory_tuple
 
 def create_tv_show_tuple(name, imdb_id):
-    tv_show_url = create_url(name, "seasons menu", "", imdb_id)
+    tv_show_url = create_url(name.replace('IMDB USERS WHO LIKE ','').replace(' ALSO LIKE:',''), "seasons menu", "", imdb_id)
     tv_show_list_item = create_tv_show_list_item(name, imdb_id);
     tv_show_tuple = (tv_show_url, tv_show_list_item, True)
     return tv_show_tuple
@@ -3311,15 +3333,15 @@ def create_imdb_actorsearch_tuple(query):
     imdb_actorsearch_tuple = (imdb_actorsearch_url, imdb_actorsearch_list_item, True)
     return imdb_actorsearch_tuple
 	
-def create_archive_tuple(xbmcname, text, name, mode, url, id, size, poster):
-    archive_url = create_url(xbmcname, mode, id, "")
+def create_archive_tuple(xbmcname, text, name, mode, url, id, size, poster, imdb_id):
+    archive_url = create_url(xbmcname, mode, id, imdb_id)
     archive_list_item = create_archive_list_item(xbmcname, text, name, url, id, size, poster);
     archive_tuple = (archive_url, archive_list_item, True)
     return archive_tuple
 	
-def create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type):
-    file_list_url = create_url(name, mode, url, "")
-    file_list_item = create_file_list_item(xbmcname, text, name, url, size, poster, type);
+def create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type, imdb_id):
+    file_list_url = create_url(name, mode, url, imdb_id)
+    file_list_item = create_file_list_item(xbmcname, text, name, url, size, poster, type, imdb_id);
     file_list_tuple = (file_list_url, file_list_item, True)
     return file_list_tuple
 	
@@ -3386,7 +3408,6 @@ def create_imdb_actorsearch_list_item(query):
 iconimage = None
 def create_actor_list_item(name, photo, imdb_id, profession):
     contextMenuItems = []
-    print photo
     text = "%s | %s" % (name, profession)
     name = clean_file_name(name, use_blanks=False)
     actor_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add people' % (sys.argv[0], urllib.quote(name), imdb_id, urllib.quote(photo))
@@ -3406,9 +3427,10 @@ def create_movie_list_item(name, imdb_id, rating, votes):
         listname = clean_file_name(name, use_blanks=False)
     contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
     name_trailer = clean_file_name(name[:len(name)-7], use_blanks=False).replace("3D","").replace('.','-').replace(':','-').replace('&','and').replace(" ","-").replace("'","-").lower()
-    data_trailer = "trailer"
+    data_trailer = imdb_id
     trailer_url = '%s?name=%s&data=%s&imdb_id=%s&mode=view trailer' % (sys.argv[0], urllib.quote(name_trailer), urllib.quote(data_trailer), urllib.quote(name))
     contextMenuItems.append(('View trailer', 'XBMC.RunPlugin(%s)' % trailer_url))
+    contextMenuItems.append(('IMDB users also like...', "XBMC.Container.Update(%s?mode=similartitles menu&name=%s&data=%s&imdb_id=%s)" % (sys.argv[0], urllib.quote(name), "MOV", imdb_id ) ) )
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
         name2 = name[:len(data)-7].replace("The ","")
         contextMenuItems.append(('@Search Movie Easynews', 'XBMC.Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
@@ -3442,6 +3464,7 @@ def create_tv_show_list_item(name, imdb_id):
     suffix = ""
     
     contextMenuItems.append(('TV Show information', 'XBMC.Action(Info)'))
+    contextMenuItems.append(('IMDB users also like...', "XBMC.Container.Update(%s?mode=similartitles tv menu&name=%s&data=%s&imdb_id=%s)" % (sys.argv[0], urllib.quote(name).replace(" Mini-Series","").replace(" TV Series",""), "TV", imdb_id ) ) )
     if exist_in_dir(clean_file_name(name.split('(')[0][:-1]), TV_SHOWS_PATH):
         remove_url = '%s?data=%s&imdb_id=%s&mode=remove tv show strm' % (sys.argv[0], urllib.quote(name), imdb_id)
         contextMenuItems.append(('Remove from XBMC library', 'XBMC.RunPlugin(%s)' % remove_url))
@@ -3503,7 +3526,7 @@ def create_archive_list_item(xbmcname, text, name, url, id, size, poster):
     li.setThumbnailImage(poster)
     return li
 	
-def create_file_list_item(xbmcname, text, name, url, size, poster, type):
+def create_file_list_item(xbmcname, text, name, url, size, poster, type, imdb_id):
     contextMenuItems = []
     if LIBRARY_FORMAT:
         filename = "%s.%s" % (xbmcname,name[len(name)-3:])
@@ -3999,6 +4022,18 @@ def get_menu_items(name, mode, data, imdb_id):
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+    elif mode == "similartitles menu":
+        items, missing_meta = imdb_similar_menu(name, data, imdb_id)
+        GA("Movies","Similar Movies")
+        get_missing_meta(missing_meta, 'movies')
+        setView('movies', 'movies-view')
+        enable_sort = XBMC_SORT
+    elif mode == "similartitles tv menu":
+        items, missing_meta = imdb_similar_menu(name, data, imdb_id)
+        GA("TV Shows","Similar TV Shows")
+        get_missing_meta(missing_meta, 'tv shows')
+        setView('movies', 'tvshows-view')
+        enable_sort = XBMC_SORT
     elif mode == "all tv shows menu": #all menu
         items, missing_meta = tv_shows_all_menu()
         GA("TV Shows", "Top TV Shows")
@@ -4048,9 +4083,9 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "episode dialog menu":
         items = episode_dialog(data, imdb_id)
     elif mode == "t files menu":
-        items = t_file_dialog_movie(name, data)
+        items = t_file_dialog_movie(name, data, imdb_id)
     elif mode == "t files tv menu":
-        items = t_file_dialog_tv(name, data)
+        items = t_file_dialog_tv(name, data, imdb_id)
     elif mode == "subscription menu": #Subscription menu
         items = subscription_menu()
     elif mode == "furk search menu": #Search menu
@@ -4133,7 +4168,7 @@ if mode.endswith('menu'):
     dev_message()
 elif mode == "strm file dialog":
     li = xbmcgui.ListItem(name)
-    execute_video(name, data, li, strm=True)
+    execute_video(name, data, imdb_id, strm=True)
 elif mode == "strm movie dialog":
     strm_movie_dialog(name, imdb_id, strm=False)
 elif mode == "strm tv show dialog":
@@ -4265,7 +4300,7 @@ elif mode == "download only":
     GA("Context","Download only")
 	
 elif mode == "execute video":
-    execute_video(name, data, "", strm=False)
+    execute_video(name, data, imdb_id, strm=False)
 	
 elif mode == "add download":
     add_download(name, data)#
@@ -4303,7 +4338,9 @@ elif mode == "dev message":
     dev_message()
 	
 elif mode == "view trailer":
-    view_trailer(name, imdb_id)
+    view_trailer(name, data, imdb_id)
+	
+
 
 
   

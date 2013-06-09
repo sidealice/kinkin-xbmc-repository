@@ -34,11 +34,12 @@ class AutoUpdater:
                                 xbmc.executebuiltin('RunPlugin(plugin://plugin.video.whatthefurk/?mode=wishlist%20search)')
                             ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
                             xbmc.log("[What the Furk] Subscriptions and Library updated. Next run at " + ADDON.getSetting('service_time'))
+                            time.sleep(hours*3500)
                     else:
                         xbmc.log("[What the Furk] Player is running, waiting until finished")
+                        time.sleep(settings.service_sleep_time())
                 else:
-                    xbmc.log("[What the Furk] Subscription update not required. Next run at " + ADDON.getSetting('service_time'))
-            time.sleep(settings.service_sleep_time())
+                    time.sleep(settings.service_sleep_time())
 
 
 xbmc.log("[What the Furk] Subscription service starting...")

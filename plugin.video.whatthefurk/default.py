@@ -1197,7 +1197,10 @@ def scrape_xspf(body, id):
 def execute_video(name, url, list_item, strm=False):
     imdb_id=list_item
     list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
-    list_item = set_movie_meta(list_item, imdb_id, META_PATH)
+    poster_path = create_directory(META_PATH, META_QUALITY)
+    poster_file = os.path.join(poster_path, "%s_poster.jpg" % (imdb_id))
+    list_item.setThumbnailImage(poster_file)
+    #list_item = set_movie_meta(list_item, imdb_id, META_PATH)
     if PLAY_MODE == 'stream':
         if mode == "strm file dialog" or strm:
             set_resolved_url(int(sys.argv[1]), name, url, imdb_id) 
@@ -1437,7 +1440,6 @@ def movies_actors_menu(name, imdb_id):
     
     type = filmtype_list_return[filmtype_id]
     url = "%s%s%s%s" % ("http://m.imdb.com/name/", imdb_id, "/filmotype/", type)
-    print url
 	
     body = get_url(url, cache=CACHE_PATH)
     all_tr = regex_get_all(body, '<div class="poster', '<div class="detail')
@@ -2032,7 +2034,7 @@ def imdb_result_menu(query):
                 setView('movies', 'tvshows-view')
                 return create_tv_show_items(search_result)
 
-    return imdb_search_menu(), []
+    #return imdb_search_menu(), []
 	
 def imdb_actor_result_menu(query):
     if query.startswith('@'):
@@ -2051,7 +2053,7 @@ def imdb_actor_result_menu(query):
             setView('movies', 'movies-view')
             return create_actor_items(search_result)
  
-    return imdb_actor_menu(), []
+    #return imdb_actor_menu(), []
 
 def episode_dialog(data, imdb_id, strm=False):
     items = []
@@ -2297,9 +2299,9 @@ def strm_episode_dialog_wtf(data, imdb_id, strm=False):
         if(menu_id < 0):
             return (None, None)
             dialog.close()
-        else:	
-            id = str(menu_linkid[menu_id])
-            t_file_dialog(id, imdb_id)
+		
+        id = str(menu_linkid[menu_id])
+        t_file_dialog(id, imdb_id, tv_show_episode)
 	
 def t_file_dialog_tv(xbmcname, id, imdb_id, strm=False):
     items = []
@@ -2385,6 +2387,7 @@ def add_people(name, data, imdb_id):
 def movie_dialog(data, imdb_id=None, strm=False):
     items = []
     files = []
+    get_missing_meta(imdb_id, 'movies')
     data=data.replace('[COLOR cyan]','').replace('[/COLOR]','').replace('[COLOR gold]','')
         
     dialog = xbmcgui.Dialog()
@@ -2492,6 +2495,7 @@ def strm_movie_dialog__wtf(name, imdb_id, strm=False):
     menu_data = []
     menu_linkid = []
     menu_url_pls = []
+    filename=name
 		
     if ONECLICK_SEARCH:
         one_click_movie(name, imdb_id, strm=True)
@@ -2566,7 +2570,7 @@ def strm_movie_dialog__wtf(name, imdb_id, strm=False):
             dialog.close()
 		
         id = str(menu_linkid[menu_id])
-        t_file_dialog(id, imdb_id)
+        t_file_dialog(id, imdb_id, filename)
 
 
 def view_trailer(name, imdb_id, xbmcname, strm=False):
@@ -2673,7 +2677,7 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):
             setView('movies', 'movies-view')
     return items;
 
-def t_file_dialog(id, imdb_id, strm=True):
+def t_file_dialog(id, imdb_id, filename, strm=True):
     menu_texts = []
     menu_data = []
     menu_size = []
@@ -2708,7 +2712,7 @@ def t_file_dialog(id, imdb_id, strm=True):
         dialog.close()
     else:	
         url = menu_data[menu_id]
-        name = menu_texts[menu_id]
+        name = menu_list_item[menu_id]
         list_item = menu_list_item[menu_id]
     
         if not url or not name:
@@ -2717,14 +2721,17 @@ def t_file_dialog(id, imdb_id, strm=True):
             return
     
         li = xbmcgui.ListItem(list_item)
-    
-        execute_video(name, url, imdb_id, strm)
+        if LIBRARY_FORMAT:    
+            execute_video(filename, url, imdb_id, strm)
+        else:
+            execute_video(name, url, imdb_id, strm)
 
 
 def one_click_movie(name, imdb_id, strm=False):
     open_playlists = True
     quality = CUSTOMQUALITY
     dialog = xbmcgui.Dialog()
+    filename=name
 	
     files = []
     files = search_furk(str(data.replace("-"," ").replace(" Documentary","").replace(":","")) + '+' + quality)
@@ -2777,7 +2784,10 @@ def one_click_movie(name, imdb_id, strm=False):
             set_resolved_to_dummy()
         return
 	
-    execute_video(name, url, imdb_id, strm)
+    if LIBRARY_FORMAT:    
+        execute_video(filename, url, imdb_id, strm)
+    else:
+        execute_video(name, url, imdb_id, strm)
     GA("One-Click","Movies")
 	
 def one_click_episode(data, imdb_id, strm=False):
@@ -2858,7 +2868,10 @@ def one_click_episode(data, imdb_id, strm=False):
         return
 	
     li = xbmcgui.ListItem(clean_file_name(data))
-    execute_video(name, url, imdb_id, strm)
+    if LIBRARY_FORMAT:    
+        execute_video(tv_show_episode, url, imdb_id, strm)
+    else:
+        execute_video(name, url, imdb_id, strm)
     GA("One-Click","TV Shows")
 
 
@@ -3340,7 +3353,10 @@ def create_archive_tuple(xbmcname, text, name, mode, url, id, size, poster, imdb
     return archive_tuple
 	
 def create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type, imdb_id):
-    file_list_url = create_url(name, mode, url, imdb_id)
+    if LIBRARY_FORMAT:
+        file_list_url = create_url(xbmcname, mode, url, imdb_id)
+    else:
+        file_list_url = create_url(name, mode, url, imdb_id)
     file_list_item = create_file_list_item(xbmcname, text, name, url, size, poster, type, imdb_id);
     file_list_tuple = (file_list_url, file_list_item, True)
     return file_list_tuple
@@ -4069,6 +4085,7 @@ def get_menu_items(name, mode, data, imdb_id):
         setView('movies', 'episodes-view')
     elif mode == "seasons menu":
         items = tv_shows_seasons_menu(name, imdb_id)
+        get_missing_meta(imdb_id, 'tv shows')
     elif mode == "my files directory menu":
         items = myfiles_directory()
         GA("None", "My Files")

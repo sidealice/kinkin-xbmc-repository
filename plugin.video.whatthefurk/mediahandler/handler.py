@@ -7,10 +7,11 @@ import xbmc, xbmcplugin, xbmcgui
 import os, sys, time
 import urllib
 from threading import Thread
-from common import notification, wait
+from common import notification, wait, create_directory
 import settings
 from meta import set_movie_meta
 META_PATH = settings.meta_path()
+META_QUALITY = settings.meta_quality()
 
 WAITING_TIME = 7
 
@@ -70,8 +71,11 @@ def set_resolved_url(handle, name, url, imdb_id, list_item=None):#=None
     if xbmc.Player().isPlayingVideo() == True:
         xbmc.Player().stop()
     if not list_item: 
-        list_item = xbmcgui.ListItem(name, iconImage="DefaultVideoBig.png", thumbnailImage='', path=url)
-        list_item = set_movie_meta(list_item, imdb_id, META_PATH)
+        list_item = xbmcgui.ListItem(name,path=url)# iconImage="DefaultVideoBig.png", thumbnailImage='',
+        poster_path = create_directory(META_PATH, META_QUALITY)
+        poster_file = os.path.join(poster_path, "%s_poster.jpg" % (imdb_id))
+        list_item.setThumbnailImage(poster_file)		
+        #list_item = set_movie_meta(list_item, imdb_id, META_PATH)
     list_item.setProperty("IsPlayable", "true")
     xbmcplugin.setResolvedUrl(handle, True, list_item)
 

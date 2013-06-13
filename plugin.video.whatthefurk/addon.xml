@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.4.1"
+       version="1.4.1a"
        provider-name="Batch,Kinkin,Mikey1234">
     <requires>
         <import addon="xbmc.python" version="2.0"/>

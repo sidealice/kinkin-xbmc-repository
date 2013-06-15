@@ -24,7 +24,7 @@ if ADDON.getSetting('visitor_ga')=='':
     
 PATH = "XBMC_WHATTHEFURK"  #<---- PLUGIN NAME MINUS THE "plugin.video"          
 UATRACK = "UA-39563241-1" #<---- GOOGLE ANALYTICS UA NUMBER   
-VERSION = "1.4.1" #<---- PLUGIN VERSION
+VERSION = "1.4.1b" #<---- PLUGIN VERSION
 
 
 DATA_PATH = settings.data_path()
@@ -299,16 +299,16 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip15":
+    if ADDON.getSetting('dev_message')!="skip1.4.1b":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","New context menu search for Movies & TV Shows","'IMDB users also like...' will list similar titles", "that have been recommended by IMDB users")
-        dialog.ok("Changes in this version continued:", "WTF now passes meta correctly to xbmc player","Cover art will now show when viewing on-screen controls", "Fix will not work for DIRECT stream files already in Library")
+        dialog.ok("Changes in this version:","Added Icefilms and MashUp to 'Other Addons' movie search","Added Icefilms to 'Other Addons' episode search", "Applies to context menu and searching from library")
+        #dialog.ok("Changes in this version continued:", "WTF now passes meta correctly to xbmc player","Cover art will now show when viewing on-screen controls", "Fix will not work for DIRECT stream files already in Library")
         #dialog.ok("Changes in this version continued:", "Fix will not work for DIRECT stream files already in Library")
-        ADDON.setSetting('dev_message', value='skip15') 
+        ADDON.setSetting('dev_message', value='skip1.4.1b') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -2163,16 +2163,20 @@ def episode_dialog(data, imdb_id, strm=False):
 def strm_episode_dialog(data, imdb_id, strm):
     addon_select = []
     name2 = name[:len(data)-7].replace("The ","")
-    playlist = xbmc.PlayList(0)
+    playlist = xbmc.PlayList(1)
     dialog = xbmcgui.Dialog()
     addon_select.append('Search What the Furk')
     addon_select.append('Search EasyNews')
     addon_select.append('Search 1Channel')
+    addon_select.append('Search Icefilms')
     data1 = str(data).replace('<|>', '$')
     data2 = data.split('<|>')
     tv_show_name = data2[0].replace(" Mini-Series","").replace("The ","")
     season_number = int(data2[2])
     episode_number = int(data2[3])
+    season_episode = "s%.2de%.2d" % (season_number, episode_number)
+    tv_show_season = "%s season" % (tv_show_name)
+    tv_show_episode = "%s %s" % (tv_show_name, season_episode)
     easyname = "S%.2d E%.2d %s" % (season_number, episode_number, tv_show_name)
     blank = None
     fanart = None
@@ -2195,6 +2199,14 @@ def strm_episode_dialog(data, imdb_id, strm):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
             else:
                 dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+        elif(menu_id == 3):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
+                playlist.clear()
+                iurl='http%3a%2f%2fwww.icefilms.info%2f'
+                iname = "%s %sx%.2d" % (tv_show_name,season_number,episode_number)
+                xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
+            else:
+                dialog.ok("Addon not installed", "", "Install the Icefilms addon to use this function")
         else:
             strm_episode_dialog_wtf(data, imdb_id, strm=False)
     else:
@@ -2462,34 +2474,50 @@ def movie_dialog(data, imdb_id=None, strm=False):
 def strm_movie_dialog(name, imdb_id, strm):
     addon_select = []
     name2 = name[:len(data)-7].replace("The ","")
-    playlist = xbmc.PlayList(0)
+    playlist = xbmc.PlayList(1)
     dialog = xbmcgui.Dialog()
     addon_select.append('Search What the Furk')
     addon_select.append('Search EasyNews')
     addon_select.append('Search 1Channel')
-    if OTHER_ADDONS:	
-        menu_id = dialog.select('Select Addon', addon_select)
-        if(menu_id < 0):
-            return (None, None)
-            dialog.close()
-        if(menu_id == 1):
-            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
-                playlist.clear()
-                xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
-            else:
-                dialog.ok("Addon not installed", "", "Install the EasyNews addon to use this function")
-        elif(menu_id == 2):
-            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
-                playlist.clear()
-                xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
-            else:
-                dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+    addon_select.append('Search MashUp')
+    addon_select.append('Search IceFilms')
+    menu_id = dialog.select('Select Addon', addon_select)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    if(menu_id == 1):
+        if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
+            playlist.clear()
+            xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
+        else:
+            dialog.ok("Addon not installed", "", "Install the EasyNews addon to use this function")
+    elif(menu_id == 2):
+        if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
+            playlist.clear()
+            xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
+        else:
+            dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+    elif(menu_id == 3):
+        if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.movie25'):
+            playlist.clear()
+            xbmc.executebuiltin(('Container.Update(%s?mode=4&url=%s)' %('plugin://plugin.video.movie25/',urllib.quote_plus(name.replace("The ","")))))
+        else:
+            dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+    elif(menu_id == 4):
+        if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
+            playlist.clear()
+            url='http%3a%2f%2fwww.icefilms.info%2f'
+            xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',url,urllib.quote_plus(name2),"0")))
+        else:
+            dialog.ok("Addon not installed", "", "Install the IceFilms addon to use this function")
+    else:
+        if mode=="Search other addons":
+            movie_dialog(data, imdb_id=None, strm=False)
         else:
             strm_movie_dialog__wtf(name, imdb_id, strm=False)
-    else:
-        strm_movie_dialog__wtf(name, imdb_id, strm=False)
+
 	
-def strm_movie_dialog__wtf(name, imdb_id, strm=False):
+def strm_movie_dialog_wtf(name, imdb_id, strm=False):
     open_playlists = True
     menu_texts = []
     menu_data = []
@@ -3453,6 +3481,12 @@ def create_movie_list_item(name, imdb_id, rating, votes):
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
         name2 = name[:len(data)-7].replace("The ","")        
         contextMenuItems.append(('@Search Movie 1Channel', 'XBMC.Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.movie25'):
+        contextMenuItems.append(('@Search Movie MashUp', 'Container.Update(%s?mode=4&url=%s)' %('plugin://plugin.video.movie25/',urllib.quote_plus(name.replace("The ","")))))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
+        iurl='http%3a%2f%2fwww.icefilms.info%2f'
+        contextMenuItems.append(('@Search Movie Icefilms', 'Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(name2),"0")))
+
     if exist_in_dir(clean_file_name(name), MOVIES_PATH, isMovie=True):
         remove_url = '%s?name=%s&data=%s&imdb_id=%s&mode=remove movie strm' % (sys.argv[0], urllib.quote(name), urllib.quote(name), imdb_id)
         contextMenuItems.append(('Remove from XBMC library', 'XBMC.RunPlugin(%s)' % remove_url))
@@ -3616,6 +3650,10 @@ def create_episode_list_item(name, data, imdb_id, poster, title, year, overview,
         data = data.split('<|>')
         tv_show_name = data[0].replace(" Mini-Series","")
         contextMenuItems.append(('@Search Tv 1Channel', 'XBMC.Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
+        iurl='http%3a%2f%2fwww.icefilms.info%2f'
+        iname = "%s %sx%.2d" % (tv_show_name,season_number,episode_number)
+        contextMenuItems.append(('@Search Episode Icefilms', 'Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
 
     name_kat = tv_show_name.replace("The ","")
     data_kat = season_episode
@@ -4187,7 +4225,10 @@ elif mode == "strm file dialog":
     li = xbmcgui.ListItem(name)
     execute_video(name, data, imdb_id, strm=True)
 elif mode == "strm movie dialog":
-    strm_movie_dialog(name, imdb_id, strm=False)
+    if OTHER_ADDONS:
+        strm_movie_dialog(name, imdb_id, strm=False)
+    else:
+        strm_movie_dialog_wtf(name, imdb_id, strm=False)
 elif mode == "strm tv show dialog":
     strm_episode_dialog(data, imdb_id, strm=False)
 elif mode == "play":
@@ -4356,6 +4397,7 @@ elif mode == "dev message":
 	
 elif mode == "view trailer":
     view_trailer(name, data, imdb_id)
+
 	
 
 

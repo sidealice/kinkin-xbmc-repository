@@ -723,7 +723,7 @@ def dummy_path():
     return os.path.join(ADDON.getAddonInfo('path'), 'dummy.wma')
 
 def service_sleep_time():
-    return 60
+    return 10
 
 def subscription_timer():
     return int(ADDON.getSetting('subscription_timer'))

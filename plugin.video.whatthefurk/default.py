@@ -2088,9 +2088,8 @@ def episode_dialog(data, imdb_id, strm=False):
     if QUALITYSTYLE == "preferred":
             searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
             GA("Quality-TV", TVCUSTOMQUALITY)
-            print searchstring
             files = search_furk(searchstring)
-            if len(files)==0:#files.count('"type":"video"')<1: 
+            if len(files)==0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
@@ -2399,21 +2398,21 @@ def add_people(name, data, imdb_id):
 def movie_dialog(data, imdb_id=None, strm=False):
     items = []
     files = []
-    get_missing_meta(imdb_id, 'movies')
-    data=data.replace('[COLOR cyan]','').replace('[/COLOR]','').replace('[COLOR gold]','')
         
     dialog = xbmcgui.Dialog()
     quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     
     if QUALITYSTYLE == "preferred":
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), CUSTOMQUALITY)
+            print CUSTOMQUALITY 
+            print searchstring
             GA("Quality-Movie", CUSTOMQUALITY)
             files = search_furk(searchstring)
-            if files.count('"type":"video"')==0:
+            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
-                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
+                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","").replace("(","").replace(")","")))
     else:
         quality_id = dialog.select("Select your preferred option", quality_list)
         quality = quality_list_return[quality_id]
@@ -2426,9 +2425,9 @@ def movie_dialog(data, imdb_id=None, strm=False):
             ga_quality = quality
         GA("Quality-Movie", ga_quality)
         if(quality_id == 0):
-            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
+            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
         else:
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), quality)
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
         files = search_furk(searchstring)
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
@@ -2462,7 +2461,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
                 mode = "t files menu"
             else:
                 text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
-                poster = ""
+                poster = ""#os.path.join(ADDON.getAddonInfo('path'),'art','noentry.png')
                 id = info_hash
                 mode = "add download"
 
@@ -2511,10 +2510,7 @@ def strm_movie_dialog(name, imdb_id, strm):
         else:
             dialog.ok("Addon not installed", "", "Install the IceFilms addon to use this function")
     else:
-        if mode=="Search other addons":
-            movie_dialog(data, imdb_id=None, strm=False)
-        else:
-            strm_movie_dialog__wtf(name, imdb_id, strm=False)
+        strm_movie_dialog_wtf(name, imdb_id, strm=False)
 
 	
 def strm_movie_dialog_wtf(name, imdb_id, strm=False):
@@ -4156,10 +4152,6 @@ def get_menu_items(name, mode, data, imdb_id):
         GA("Search", "People Search")
     elif mode == "imdb actor result menu":
         items = imdb_actor_result_menu(data)
-    elif mode == "strm movie dialog":
-        items = movie_dialog(name, imdb_id)#, strm=True
-    elif mode == "strm tv show dialog":
-        items = episode_dialog(data, imdb_id, strm=True)
     elif mode == "furk result dialog menu":
         items = furksearch_dialog(data)
     elif mode == "active download menu":
@@ -4320,16 +4312,9 @@ elif mode == "remove tv show strm":
     data = clean_file_name(data.split('(')[0][:-1])
     remove_tv_show_strm_files(data, TV_SHOWS_PATH)
 	
-elif mode == "managemyfiles":
-    #manage_myfiles_true()
-    movie_dialog(name, imdb_id)
-	
 elif mode == "seasonsearch":
     #manage_myfiles_true()
     season_dialog(name, imdb_id)
-	
-elif mode == "managemyfiles_tv":
-    episode_dialog(data, imdb_id)
 	
 elif mode == "format1 tv":
     episode_dialog(data, imdb_id)

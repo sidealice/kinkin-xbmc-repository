@@ -240,6 +240,8 @@ def custom_quality():
         return '720P'
     elif quality == '11':
         return '1080P'
+    elif quality == '12':
+        return ''
     else:
         return '720P'
 
@@ -267,6 +269,8 @@ def tvcustom_quality():
         return '720P'
     elif quality == '10':
         return '1080P'
+    elif quality == '11':
+        return ''
     else:
         return '720P'
 

@@ -17,12 +17,6 @@ def data_path():
 
 def cache_path():
     return create_directory(DATA_PATH, "cache")
-	
-def other_addons():
-    if ADDON.getSetting('other_addons') == "true":
-        return True
-    else:
-        return False
 
 def cookie_jar():
     return create_file(DATA_PATH, "cookiejar.lwp")
@@ -96,8 +90,8 @@ def download_subtitles():
     else:
         return False
 		
-def oneclick_myfiles():
-    if ADDON.getSetting('oneclick_myfiles') == "true":
+def check_myfiles():
+    if ADDON.getSetting('check_myfiles') == "true":
         return True
     else:
         return False
@@ -464,7 +458,13 @@ def imdb_search_sort():
 
 def newmovie_days():
     newmovdays = ADDON.getSetting('newmovdays')
-    if newmovdays == '6':
+    if newmovdays == '9':
+        return 360
+    elif newmovdays == '8':
+        return 300
+    elif newmovdays == '7':
+        return 240
+    elif newmovdays == '6':
         return 180
     elif newmovdays == '5':
         return 150

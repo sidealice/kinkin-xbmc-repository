@@ -11,7 +11,6 @@
 		<setting id="use_posters" type="bool" label="30102" default="true" />
 		<setting id="use_fanart" type="bool" label="30103" default="true" />
 		<setting id="meta_quality" type="enum" values="Low|Medium|High|Maximum" label="30104" default="1" />
-        <setting id="other_addons" type="bool" label="30130" default="false"/>
         
 	    <setting id="separator" type="lsep" label="30113"/>
 		<setting id="first_time_startup" type="bool" label="30114" default="true" />
@@ -26,6 +25,7 @@
 		<setting id="furk_user" type="text" label="30301" default="" enable="!eq(-1,false)"/>
 		<setting id="furk_pass" type="text" option="hidden" label="30302" default="" enable="!eq(-2,false)"/>
         <setting id="oneclick_search" type="bool" label="30319" default="false"/>
+        <setting id="furk_search_myfiles" type="bool" label="30321" default="true"/>
 		<setting id="furk_moderated" type="bool" label="30303" default="true"/>
         <setting id="qualitystyle" type="enum" values="Preferred|Full List" label="30320" default="1" />
 		<setting id="quality" type="enum" values="CAM|TS|TELESYNC|R5|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30305" default="10" />
@@ -61,7 +61,7 @@
 		<setting id="number_of_votes_min" type="text" label="30211" default="1000" enable="!eq(-1,false)"/>
 		<setting id="number_of_votes_max" type="text" label="30212" default="" enable="!eq(-2,false)"/>
 		<setting id="separator" type="lsep" label="30213"/>
-		<setting id="newmovdays" type="enum" values="14|30|60|90|120|150|180" label="30214" default="4" />
+		<setting id="newmovdays" type="enum" values="14|30|60|90|120|150|180|240|300|360" label="30214" default="4" />
         <setting id="separator" type="lsep" label="30215"/>
         <setting id="imdb_region" type="enum" values="English|Original" label="30216" default="1" />
         <setting id="separator" type="lsep" label="30217"/>

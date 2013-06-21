@@ -7,7 +7,6 @@
 	<string id="30102">Use posters</string>
 	<string id="30103">Use fanart</string>
 	<string id="30104">Image quality</string>
-    <string id="30130">Search other addons from XBMC Library</string>
     <string id="30113">Other</string>
     <string id="30114">Show setup next time What the Furk is run</string>
     <string id="30125">Trailers</string>
@@ -77,6 +76,7 @@
 	<string id="30301">    Username</string>
     <string id="30302">    Password</string>
     <string id="30319">One-Click Play - Furk Search</string>
+    <string id="30321">Check My Files when searching</string>
     <string id="30303">Adult filter</string>
     <string id="30320">Set quality list options when searching</string>
     <string id="30305">Set preferred movie quality</string>

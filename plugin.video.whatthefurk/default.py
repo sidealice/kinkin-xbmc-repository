@@ -2008,6 +2008,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
     menu_data = []
     menu_linkid = []
     menu_url_pls = []
+    customstring="abcdef"
 	
     if ONECLICK_SEARCH:
         one_click_episode(data, imdb_id, strm=True)
@@ -2080,6 +2081,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
                 keyboard.doModal()
                 if keyboard.isConfirmed():
                     searchstring = keyboard.getText()
+                    customstring=searchstring
             elif(quality_id == 2):
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":",""))
             elif(quality_id == 1):
@@ -2113,9 +2115,14 @@ def strm_episode_dialog(data, imdb_id, strm=False):
         menu_texts.append("...Search latest torrents")
 
         menu_id = dialog.select('Select Archive', menu_texts)
+        iname = "%s %sx%.2d" % (tv_show_name,season_number,episode_number)
         if(menu_id < 0):
             return (None, None)
             dialog.close()
+        if customstring!="abcdef":
+            easyname=customstring
+            tv_show_name=customstring
+            iname=customstring
         if(menu_id == len(menu_texts)-4):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
                 xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=13&iconimage=None&fanart=%s&series=%s&description=%s&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/', blank, fanart, easyname,description)))
@@ -2129,7 +2136,6 @@ def strm_episode_dialog(data, imdb_id, strm=False):
         elif(menu_id == len(menu_texts)-2):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
                 iurl='http%3a%2f%2fwww.icefilms.info%2f'
-                iname = "%s %sx%.2d" % (tv_show_name,season_number,episode_number)
                 xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
             else:
                 dialog.ok("Addon not installed", "", "Install the Icefilms addon to use this function")
@@ -2321,6 +2327,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
     menu_url_pls = []
     name2 = name[:len(data)-7].replace("The ","").lower()
     filename=name
+    customstring="abcdef"
 		
     if ONECLICK_SEARCH:
         one_click_movie(name, imdb_id, strm=True)
@@ -2372,6 +2379,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
                 keyboard.doModal()
                 if keyboard.isConfirmed():
                     searchstring = keyboard.getText()
+                    customstring=searchstring
             elif(quality_id == 1):
                 searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
             else:
@@ -2404,6 +2412,9 @@ def strm_movie_dialog(name, imdb_id, strm=False):
         if(menu_id < 0):
             return (None, None)
             dialog.close()
+        if customstring!="abcdef":
+            name=customstring
+            name2=customstring
         if(menu_id == len(menu_texts)-5):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
                 xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
@@ -2950,17 +2961,21 @@ def myfiles(unlinked, strm=False):
         size = f.size
         size = float(size)/1073741824
         size = "[%.2fGB]" % size
-        text = "%s %s [%s files]" %(size, f.name, count_files)
+        text = "%s %s [%s files]" %(size, name, count_files)
         try:
             poster = f.ss_urls_tn[0]
         except:
             poster = ""
-        xbmcname = f.name
+        xbmcname = name
+
 
         mode = "t files menu"
-        archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
-        items.append(archive_tuple)
-        setView('movies', 'movies-view')
+        try:
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+            items.append(archive_tuple)
+            setView('movies', 'movies-view')
+        except:
+            pass
     return items;
 
 def myfiles_add(name, id):

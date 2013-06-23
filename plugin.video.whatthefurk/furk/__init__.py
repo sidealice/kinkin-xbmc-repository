@@ -46,7 +46,6 @@ class FurkAPI(object):
         params = {"unlinked": unlinked}
         command = "/api/file/get"
         response = self._api_call(command, params)
-        #print response
         if self._status_ok(response):
             return Get(response)
         else:
@@ -194,7 +193,6 @@ class FurkAPI(object):
             return True
         else:
             return False
-			
 
     def _api_call(self, command, params):
         url = "%s%s" % (API_URL, command)
@@ -216,8 +214,8 @@ class FurkAPI(object):
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
         response = opener.open(req)
         cj.save(self.cookie_file, ignore_discard=True)
-
-        body = response.read()
+        trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
+        body = response.read().translate(trans_table)
         response.close()
         return body
 		
@@ -240,8 +238,8 @@ class FurkAPI(object):
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
         response = opener.open(req)
         cj.save(self.cookie_file, ignore_discard=True)
-
-        body = response.read()
+        trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
+        body = response.read().translate(trans_table)
         response.close()
         return body
 		

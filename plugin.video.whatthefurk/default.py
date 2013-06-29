@@ -124,17 +124,17 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip1.4.2":
+    if ADDON.getSetting('dev_message')!="skip1.4.2b":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Added option [Furk tab] to check My Files on all searches","My files results returned at the top (gold)", "Applies to Library, WTF browse and Furk Search options")
-        dialog.ok("Changes in this version continued:", "Added 'Other Addon' search to bottom of search results","Applies only to searches from xbmc library", "Use the context menu within the addon")
-        dialog.ok("Changes in this version continued:", "Fixed 'Search latest torrents' option", "Option now added to results using library search")
-        dialog.ok("Changes in this version continued:", "Added more options to 'New Movie Days' setting", "Now search up to 360 days")
-        ADDON.setSetting('dev_message', value='skip1.4.2') 
+        dialog.ok("Changes in this version:","Fixed error if My Files is empty when searching","", "")
+        #dialog.ok("Changes in this version continued:", "Added 'Other Addon' search to bottom of search results","Applies only to searches from xbmc library", "Use the context menu within the addon")
+        #dialog.ok("Changes in this version continued:", "Fixed 'Search latest torrents' option", "Option now added to results using library search")
+        #dialog.ok("Changes in this version continued:", "Added more options to 'New Movie Days' setting", "Now search up to 360 days")
+        ADDON.setSetting('dev_message', value='skip1.4.2b') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -1912,26 +1912,28 @@ def episode_dialog(data, imdb_id, strm=False):
         mfiles = []
         my_files = FURK.file_get('0')
         mfiles = my_files.files
-	
-        for f in mfiles:
-            if (tv_show_name.find(' ')>0 and tv_show[0] in f.name.lower() and tv_show[1] in f.name.lower()) or (tv_show_name in f.name.lower()):
-                count_files = (f.files_num_video)
-                name = f.name
-                url = f.url_dl
-                id = f.id
-                size = f.size
-                size = float(size)/1073741824
-                size = "[%.2fGB]" % size
-                text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                try:
-                    poster = f.ss_urls_tn[0]
-                except:
-                    poster = ""
-                xbmcname = f.name
+        try:	
+            for f in mfiles:
+                if (tv_show_name.find(' ')>0 and tv_show[0] in f.name.lower() and tv_show[1] in f.name.lower()) or (tv_show_name in f.name.lower()):
+                    count_files = (f.files_num_video)
+                    name = f.name
+                    url = f.url_dl
+                    id = f.id
+                    size = f.size
+                    size = float(size)/1073741824
+                    size = "[%.2fGB]" % size
+                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                    try:
+                        poster = f.ss_urls_tn[0]
+                    except:
+                        poster = ""
+                    xbmcname = f.name
 
-                mode = "t files menu"
-                archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
-                items.append(archive_tuple)
+                    mode = "t files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                    items.append(archive_tuple)
+        except:
+            pass
 
     if QUALITYSTYLE == "preferred":
         searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
@@ -2047,19 +2049,21 @@ def strm_episode_dialog(data, imdb_id, strm=False):
             mfiles = []
             my_files = FURK.file_get('0')
             mfiles = my_files.files
-	
-            for f in mfiles:
-                if (tv_show_name.find(' ')>0 and tv_show[0] in f.name.lower() and tv_show[1] in f.name.lower()) or (tv_show_name in f.name.lower()):
-                    count_files = (f.files_num_video)
-                    name = f.name
-                    size = f.size
-                    size = float(size)/1073741824
-                    size = "[%.2fGB]" % size
-                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                    menu_texts.append(text)
-                    menu_data.append(f.url_dl)
-                    menu_linkid.append(f.id)
-                    menu_url_pls.append(f.url_pls)
+            try:	
+                for f in mfiles:
+                    if (tv_show_name.find(' ')>0 and tv_show[0] in f.name.lower() and tv_show[1] in f.name.lower()) or (tv_show_name in f.name.lower()):
+                        count_files = (f.files_num_video)
+                        name = f.name
+                        size = f.size
+                        size = float(size)/1073741824
+                        size = "[%.2fGB]" % size
+                        text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                        menu_texts.append(text)
+                        menu_data.append(f.url_dl)
+                        menu_linkid.append(f.id)
+                        menu_url_pls.append(f.url_pls)
+            except:
+                pass
 	
         files = []
 
@@ -2233,26 +2237,28 @@ def movie_dialog(data, imdb_id=None, strm=False):
         my_files = FURK.file_get('0')
         mfiles = my_files.files
         name3 = name2.split(' ')
-	
-        for f in mfiles:
-            if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
-                count_files = (f.files_num_video)
-                name = f.name
-                url = f.url_dl
-                id = f.id
-                size = f.size
-                size = float(size)/1073741824
-                size = "[%.2fGB]" % size
-                text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                try:
-                    poster = f.ss_urls_tn[0]
-                except:
-                    poster = ""
-                xbmcname = f.name
+        try:	
+            for f in mfiles:
+                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
+                    count_files = (f.files_num_video)
+                    name = f.name
+                    url = f.url_dl
+                    id = f.id
+                    size = f.size
+                    size = float(size)/1073741824
+                    size = "[%.2fGB]" % size
+                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                    try:
+                        poster = f.ss_urls_tn[0]
+                    except:
+                        poster = ""
+                    xbmcname = f.name
 
-                mode = "t files menu"
-                archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
-                items.append(archive_tuple)
+                    mode = "t files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                    items.append(archive_tuple)
+        except:
+            pass
     files = []
         
     dialog = xbmcgui.Dialog()
@@ -2338,19 +2344,21 @@ def strm_movie_dialog(name, imdb_id, strm=False):
             mfiles = []
             my_files = FURK.file_get('0')
             mfiles = my_files.files
-	
-            for f in mfiles:
-                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
-                    count_files = (f.files_num_video)
-                    name = f.name
-                    size = f.size
-                    size = float(size)/1073741824
-                    size = "[%.2fGB]" % size
-                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                    menu_texts.append(text)
-                    menu_data.append(f.url_dl)
-                    menu_linkid.append(f.id)
-                    menu_url_pls.append(f.url_pls)
+            try:	
+                for f in mfiles:
+                    if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
+                        count_files = (f.files_num_video)
+                        name = f.name
+                        size = f.size
+                        size = float(size)/1073741824
+                        size = "[%.2fGB]" % size
+                        text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                        menu_texts.append(text)
+                        menu_data.append(f.url_dl)
+                        menu_linkid.append(f.id)
+                        menu_url_pls.append(f.url_pls)
+            except:
+                pass
 					
         dialog = xbmcgui.Dialog()
         quality_list = ["Custom Search", "Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
@@ -2765,26 +2773,28 @@ def furksearch_dialog(query, imdb_id=None, strm=False):
         my_files = FURK.file_get('0')
         mfiles = my_files.files
         name3 = name2.split(' ')
-	
-        for f in mfiles:
-            if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
-                count_files = (f.files_num_video)
-                name = f.name
-                url = f.url_dl
-                id = f.id
-                size = f.size
-                size = float(size)/1073741824
-                size = "[%.2fGB]" % size
-                text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                try:
-                    poster = f.ss_urls_tn[0]
-                except:
-                    poster = ""
-                xbmcname = f.name
+        try:	
+            for f in mfiles:
+                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
+                    count_files = (f.files_num_video)
+                    name = f.name
+                    url = f.url_dl
+                    id = f.id
+                    size = f.size
+                    size = float(size)/1073741824
+                    size = "[%.2fGB]" % size
+                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                    try:
+                        poster = f.ss_urls_tn[0]
+                    except:
+                        poster = ""
+                    xbmcname = f.name
 
-                mode = "t files menu"
-                archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
-                items.append(archive_tuple)
+                    mode = "t files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                    items.append(archive_tuple)
+        except:
+            pass
 	
     if len(files) == 0:
         dialog.ok("File Search", 'No files found for:', query) 

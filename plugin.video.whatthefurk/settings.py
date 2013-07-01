@@ -163,6 +163,13 @@ def qualitystyle():
         return "preferred"
     else:
         return "full list"
+		
+def qualitystyle_tv():
+    style = ADDON.getSetting('qualitystyle_tv')
+    if style == '0':
+        return "preferred"
+    else:
+        return "full list"
 
 	
 def furk_limit_result():

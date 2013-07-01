@@ -1,3 +1,8 @@
+1.4.2c
+Fixed search error if My Files is empty...again
+Separated quality list settings for tv and movies
+Fixed incorrect name being passed to Player from My Files
+
 1.4.2b
 Fixed search error if My Files is empty
 

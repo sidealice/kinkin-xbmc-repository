@@ -106,6 +106,7 @@ META_QUALITY = settings.meta_quality()
 FURK_SEARCH_MF = settings.furk_search_myfiles()
 ONECLICK_SEARCH = settings.oneclick_search()
 QUALITYSTYLE = settings.qualitystyle()
+QUALITYSTYLE_TV = settings.qualitystyle_tv()
 DOWNLOAD_MOV = settings.movies_download_directory()
 DOWNLOAD_TV = settings.tv_download_directory()
 DOWNLOAD_SUB = settings.download_subtitles()
@@ -130,9 +131,9 @@ def dev_message():
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Fixed error if My Files is empty when searching","", "")
-        #dialog.ok("Changes in this version continued:", "Added 'Other Addon' search to bottom of search results","Applies only to searches from xbmc library", "Use the context menu within the addon")
-        #dialog.ok("Changes in this version continued:", "Fixed 'Search latest torrents' option", "Option now added to results using library search")
+        dialog.ok("Changes in this version:","Fixed error if My Files is empty when searching....again","Let me know on www.xbmchub.com if this doesn't work", "")
+        dialog.ok("Changes in this version continued:", "Separate quality style setting for movies and tv","", "")
+        dialog.ok("Changes in this version continued:", "Fixed My Files passing incorrect name to xbmc player", "")
         #dialog.ok("Changes in this version continued:", "Added more options to 'New Movie Days' setting", "Now search up to 360 days")
         ADDON.setSetting('dev_message', value='skip1.4.2b') 
 
@@ -1908,11 +1909,11 @@ def episode_dialog(data, imdb_id, strm=False):
     files = []
   
     if FURK_SEARCH_MF:
-        tv_show = tv_show_name.lower().split(' ')
-        mfiles = []
-        my_files = FURK.file_get('0')
-        mfiles = my_files.files
-        try:	
+        try:
+            tv_show = tv_show_name.lower().split(' ')
+            mfiles = []
+            my_files = FURK.file_get('0')
+            mfiles = my_files.files
             for f in mfiles:
                 if (tv_show_name.find(' ')>0 and tv_show[0] in f.name.lower() and tv_show[1] in f.name.lower()) or (tv_show_name in f.name.lower()):
                     count_files = (f.files_num_video)
@@ -1927,7 +1928,7 @@ def episode_dialog(data, imdb_id, strm=False):
                         poster = f.ss_urls_tn[0]
                     except:
                         poster = ""
-                    xbmcname = f.name
+                    xbmcname = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
 
                     mode = "t files menu"
                     archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
@@ -1935,7 +1936,7 @@ def episode_dialog(data, imdb_id, strm=False):
         except:
             pass
 
-    if QUALITYSTYLE == "preferred":
+    if QUALITYSTYLE_TV == "preferred":
         searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
         files = search_furk(searchstring)
         if len(files)==0:
@@ -2045,11 +2046,11 @@ def strm_episode_dialog(data, imdb_id, strm=False):
             return []
 			
         if FURK_SEARCH_MF:
-            tv_show = tv_show_name.lower().split(' ')
-            mfiles = []
-            my_files = FURK.file_get('0')
-            mfiles = my_files.files
-            try:	
+            try:
+                tv_show = tv_show_name.lower().split(' ')
+                mfiles = []
+                my_files = FURK.file_get('0')
+                mfiles = my_files.files
                 for f in mfiles:
                     if (tv_show_name.find(' ')>0 and tv_show[0] in f.name.lower() and tv_show[1] in f.name.lower()) or (tv_show_name in f.name.lower()):
                         count_files = (f.files_num_video)
@@ -2067,10 +2068,11 @@ def strm_episode_dialog(data, imdb_id, strm=False):
 	
         files = []
 
-        if QUALITYSTYLE == "preferred":
+        if QUALITYSTYLE_TV == "preferred":
             searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
             files = search_furk(searchstring)
-            if files.count('"type":"video"')==0:
+            print len(files)
+            if len(files)==0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
@@ -2097,7 +2099,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
                 dialog.close()
             files = search_furk(searchstring)
 
-        if QUALITYSTYLE == "preferred" or (FURK_LIM_FS_TV and (quality_id != 1)):
+        if QUALITYSTYLE_TV == "preferred" or (FURK_LIM_FS_TV and (quality_id != 1)):
             fs_limit = FURK_LIM_FS_NUM_TV
         else:
             fs_limit = 50
@@ -2232,12 +2234,12 @@ def add_people(name, data, imdb_id):
 def movie_dialog(data, imdb_id=None, strm=False):
     items = []
     if FURK_SEARCH_MF:
-        name2 = data[:len(data)-7].replace("The ","").lower()
-        mfiles = []
-        my_files = FURK.file_get('0')
-        mfiles = my_files.files
-        name3 = name2.split(' ')
-        try:	
+        try:
+            name2 = data[:len(data)-7].replace("The ","").lower()
+            mfiles = []
+            my_files = FURK.file_get('0')
+            mfiles = my_files.files
+            name3 = name2.split(' ')
             for f in mfiles:
                 if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
                     count_files = (f.files_num_video)
@@ -2252,7 +2254,7 @@ def movie_dialog(data, imdb_id=None, strm=False):
                         poster = f.ss_urls_tn[0]
                     except:
                         poster = ""
-                    xbmcname = f.name
+                    xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
 
                     mode = "t files menu"
                     archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
@@ -2340,11 +2342,11 @@ def strm_movie_dialog(name, imdb_id, strm=False):
 
     else:
         if FURK_SEARCH_MF:
-            name3 = name2.split(' ')
-            mfiles = []
-            my_files = FURK.file_get('0')
-            mfiles = my_files.files
-            try:	
+            try:
+                name3 = name2.split(' ')
+                mfiles = []
+                my_files = FURK.file_get('0')
+                mfiles = my_files.files
                 for f in mfiles:
                     if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
                         count_files = (f.files_num_video)
@@ -2371,7 +2373,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
         if QUALITYSTYLE == "preferred":
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
             files = search_furk(searchstring)
-            if files.count('"type":"video"')==0:
+            if len(files)==0:
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
@@ -2768,12 +2770,12 @@ def furksearch_dialog(query, imdb_id=None, strm=False):
     xbmcname = str(query)
 	
     if FURK_SEARCH_MF:
-        name2 = query[:len(query)-7].replace("The ","").lower()
-        mfiles = []
-        my_files = FURK.file_get('0')
-        mfiles = my_files.files
-        name3 = name2.split(' ')
-        try:	
+        try:
+            name2 = query[:len(query)-7].replace("The ","").lower()
+            mfiles = []
+            my_files = FURK.file_get('0')
+            mfiles = my_files.files
+            name3 = name2.split(' ')
             for f in mfiles:
                 if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
                     count_files = (f.files_num_video)
@@ -2851,7 +2853,7 @@ def one_click_download():
                 else:	
                     files = []
                     files = search_furk(str(searchname))
-                    if files.count('"type":"video"')==0:
+                    if len(files)==0:
                         if mode != "wishlist search":
                             notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                             xbmc.executebuiltin(notify)

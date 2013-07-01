@@ -29,6 +29,7 @@
 		<setting id="furk_moderated" type="bool" label="30303" default="true"/>
         <setting id="qualitystyle" type="enum" values="Preferred|Full List" label="30320" default="1" />
 		<setting id="quality" type="enum" values="CAM|TS|TELESYNC|R5|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30305" default="10" />
+        <setting id="qualitystyle_tv" type="enum" values="Preferred|Full List" label="30322" default="1" />
 		<setting id="tvquality" type="enum" values="CAM|TS|TELESYNC|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30306" default="5" />
 		<setting id="furk_sort" type="enum" values="cached|relevance|size|date" label="30307" default="0" />
 		<setting id="furk_results" type="enum" values="all|cached" label="30308" default="1" />

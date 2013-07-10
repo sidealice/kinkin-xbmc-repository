@@ -4,6 +4,7 @@ Created on 28 jan 2012
 @author: Niklas
 '''
 import urllib2, urllib
+from urllib2 import HTTPError
 import json
 from search import Search, Get
 import cookielib

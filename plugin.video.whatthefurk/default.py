@@ -119,36 +119,28 @@ PEOPLE_LIST = settings.people_list()
 TRAILER_RESTRICT = settings.restrict_trailer()
 TRAILER_QUALITY = settings.trailer_quality()
 TRAILER_ONECLICK = settings.trailer_one_click()
+F_DELAY = settings.furkdelay()
 
 
 fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip1.4.2b":
+    if ADDON.getSetting('dev_message')!="skip1.4.3":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Fixed error if My Files is empty when searching....again","Let me know on www.xbmchub.com if this doesn't work", "")
-        dialog.ok("Changes in this version continued:", "Separate quality style setting for movies and tv","", "")
-        dialog.ok("Changes in this version continued:", "Fixed My Files passing incorrect name to xbmc player", "")
+        dialog.ok("Changes in this version:","Added optional delay to Furk searches","Set in Settings/Furk", "")
+        ##dialog.ok("Changes in this version continued:", "Separate quality style setting for movies and tv","", "")
+        #dialog.ok("Changes in this version continued:", "Fixed My Files passing incorrect name to xbmc player", "")
         #dialog.ok("Changes in this version continued:", "Added more options to 'New Movie Days' setting", "Now search up to 360 days")
-        ADDON.setSetting('dev_message', value='skip1.4.2b') 
+        ADDON.setSetting('dev_message', value='skip1.4.3') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
-def toggle_one_click():
-    if ONECLICK_SEARCH:
-        ADDON.setSetting('oneclick_search', value='false')
-        notification("WTF - One-Click Search", "TURNED OFF")
-    else:
-        ADDON.setSetting('oneclick_search', value='true')
-        notification("WTF - One-Click Search", "TURNED ON")
-    if mode != "mainenance menu":
-        xbmc.executebuiltin('xbmc.activatewindow(0)')
-		
+######################## LOGIN ###########################################################################################
 def login_at_furk():
     if FURK_ACCOUNT:
         if FURK.login(FURK_USER, FURK_PASS):
@@ -159,11 +151,49 @@ def login_at_furk():
             return False
     else:
         return False
+    
+def register_account():
+    keyboard = xbmc.Keyboard('', 'Username')
+    keyboard.doModal()
+    username = None
+    if keyboard.isConfirmed():
+        username = keyboard.getText()
+    if username == None:
+        return False
+
+    password = None
+    keyboard = xbmc.Keyboard('', 'Password')
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        password = keyboard.getText()
+    if password == None:
+        return False
+     
+    email = None
+    keyboard = xbmc.Keyboard('', 'E-mail')
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        email = keyboard.getText()
+    if email == None:
+        return False
+        
+    dialog = xbmcgui.Dialog()
+    response = FURK.reg(username, password, password, email)
+    
+    if response['status'] == 'ok':
+        ADDON.setSetting('furk_user', value=username)
+        ADDON.setSetting('furk_pass', value=password)
+        dialog.ok("Registration", "Registration formula completed.", "In order to complete the registration you need to", "click the confirmation link sent to your email.")    
+        return True
+    else:
+        errors = response['errors']
+        for key in errors.keys():
+            dialog.ok("Registration error", "%s: %s" % (key, errors[key]))
+        return register_account()
 
 def account_info():
     if not login_at_furk():
         return []
-	
     try:	
         accinfo = FURK.account_info()
         text = []
@@ -221,6 +251,9 @@ def account_info():
         dialog = xbmcgui.Dialog()		
         dialog.ok("Account Type: Free", "Used Today: " + str(day1_text), "Last 7 Days: " + str(week_text))
 
+######################## END LOGIN ###########################################################################################
+
+######################## DOWNLOAD ###########################################################################################		
 def download_play(name, url, type):
     WAITING_TIME = 7
     if type == "tv":
@@ -292,14 +325,22 @@ def download_kat(queryname, episode):
     data_path = os.path.join(DOWNLOAD_PATH, "kat.gz")
     if not os.path.exists(data_path):
         print "[What the Furk...XBMCHUB.COM].........daily torrent file does not exist, downloading"
-        urllib.urlretrieve(data_url, data_path)
+        try:
+            urllib.urlretrieve(data_url, data_path)
+        except:
+            xbmc.log("[What the Furk...XBMCHUB.COM] KAT URL request timed out")
+            display_error("kickasstorrents URL request timed out", "Is the website down or blocked?")
     else:
         currenttime = time.time()
         filetime = os.path.getmtime(data_path)
         diff = currenttime - filetime
         if diff > 3600:
             print "[What the Furk...XBMCHUB.COM].........over 1 hour since last torrent file, downloading"
-            urllib.urlretrieve(data_url, data_path)
+            try:
+                urllib.urlretrieve(data_url, data_path)
+            except:
+                xbmc.log("[What the Furk...XBMCHUB.COM] KAT URL request timed out")
+                display_error("kickasstorrents URL request timed out", "Is the website down or blocked?")
         else:
             print "[What the Furk...XBMCHUB.COM].........less than 1 hour since last torrent file, use current file"
     kat_list = gzip.open(data_path)
@@ -394,47 +435,7 @@ def download_meta_zip():
         xbmc.log("[What the Furk...XBMCHUB.COM] All done!")
     except:
         dialog.ok("Setup meta data", "Unable to reach the host server.")
-    
-def register_account():
-    keyboard = xbmc.Keyboard('', 'Username')
-    keyboard.doModal()
-    username = None
-    if keyboard.isConfirmed():
-        username = keyboard.getText()
-    if username == None:
-        return False
-
-    password = None
-    keyboard = xbmc.Keyboard('', 'Password')
-    keyboard.doModal()
-    if keyboard.isConfirmed():
-        password = keyboard.getText()
-    if password == None:
-        return False
-     
-    email = None
-    keyboard = xbmc.Keyboard('', 'E-mail')
-    keyboard.doModal()
-    if keyboard.isConfirmed():
-        email = keyboard.getText()
-    if email == None:
-        return False
-        
-    dialog = xbmcgui.Dialog()
-    response = FURK.reg(username, password, password, email)
-    
-    if response['status'] == 'ok':
-        ADDON.setSetting('furk_user', value=username)
-        ADDON.setSetting('furk_pass', value=password)
-        dialog.ok("Registration", "Registration formula completed.", "In order to complete the registration you need to", "click the confirmation link sent to your email.")    
-        return True
-    else:
-        errors = response['errors']
-        for key in errors.keys():
-            dialog.ok("Registration error", "%s: %s" % (key, errors[key]))
-        return register_account()
-
-
+######################## END DOWNLOAD ###########################################################################################
 def get_subscriptions():
     try:
         content = read_from_file(SUBSCRIPTION_FILE)
@@ -511,7 +512,6 @@ def daily_torrents():
     try:
         content = read_from_file(search_file) 
         lines = content.split('\n')
-        #index = lines.index(query)
         return lines
     except:
         return -1
@@ -555,6 +555,15 @@ def create_strm_file(name, data, imdb_id, mode, dir_path):
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] Error while creating strm file for : " + name)
 
+def toggle_one_click():
+    if ONECLICK_SEARCH:
+        ADDON.setSetting('oneclick_search', value='false')
+        notification("WTF - One-Click Search", "TURNED OFF")
+    else:
+        ADDON.setSetting('oneclick_search', value='true')
+        notification("WTF - One-Click Search", "TURNED ON")
+    if mode != "mainenance menu":
+        xbmc.executebuiltin('xbmc.activatewindow(0)')
 	
 def create_tv_show_strm_files(name, imdb_id, mode, dir_path):
     info = TheTVDBInfo(imdb_id)
@@ -635,7 +644,7 @@ def setup_sources():
             #xbmc.restart()
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] Could not edit sources.xml")
-
+############################### MAINTENANCE #############################################################################
 def deletecachefiles():
 	# Set path to What th Furk cache files
     wtf_cache_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.whatthefurk/cache'), '')
@@ -817,6 +826,8 @@ def deletemetafiles():
         else:
             dialog = xbmcgui.Dialog()
             dialog.ok("Delete WTF Meta Files", "There are no files to delete")
+		
+############################### END MAINTENANCE #############################################################################
 
 def search_nzbmovie(params):
     movies = []
@@ -824,9 +835,14 @@ def search_nzbmovie(params):
     while count < IMDB_RESULTS:
         try:
             body = nzbmovie_search(params, str(count))
-            movies.extend(get_nzbmovie_search_result(body))
+            try:
+                movies.extend(get_nzbmovie_search_result(body))
+            except:
+                xbmc.log("[What the Furk...XBMCHUB.COM] NZB Movie Seeker regex error")
+                display_error("Unable to scrape nzbmovieseeker.com", "Page structure may have changed")
         except:
-            xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out") 
+            xbmc.log("[What the Furk...XBMCHUB.COM] NZB Movie Seeker URL request timed out")
+            display_error("NZB Movie Seeker URL request timed out", "Is the website down?")
         count = count + 250
         if len(movies) < count:
             return movies
@@ -838,7 +854,10 @@ def nzbmovie_search(params, start="1"):
     print params
     url = NZBMOVIE_URL + params
     print url
-    body = get_url(url, cache=CACHE_PATH)
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] NZB Movie Seeker URL request timed out")
     return body
     
 def get_nzbmovie_search_result(body):
@@ -860,9 +879,14 @@ def search_imdb(params):
     while count < IMDB_RESULTS:
         try:
             body = title_search(params, str(count))
-            movies.extend(get_imdb_search_result(body))
+            try:
+                movies.extend(get_imdb_search_result(body))
+            except:
+                xbmc.log("[What the Furk...XBMCHUB.COM] IMDB regex error")
+                display_error("Unable to scrape imdb.com", "Page structure may have changed")
         except:
             xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out") 
+            display_error("IMDB URL request timed out", "Is the website down?")
         
         count = count + 250
         if len(movies) < count:
@@ -878,7 +902,10 @@ def title_search(params, start="1"):
     params["count"] = COUNT
     url = "%s%s" % (IMDB_TITLE_SEARCH, urllib.urlencode(params))
     #print url
-    body = get_url(url, cache=CACHE_PATH)
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
     return body
     
 def get_imdb_search_result(body):
@@ -905,9 +932,14 @@ def watchlist_imdb(params):
     while count < IMDB_RESULTS:
         try:
             body = title_watchlist(params, str(count))
-            movies.extend(get_imdb_watchlist_result(body))
+            try:
+                movies.extend(get_imdb_watchlist_result(body))
+            except:
+                xbmc.log("[What the Furk...XBMCHUB.COM] IMDB watchlist regex error")
+                display_error("Unable to scrape imdb.com/watchlist", "Page structure may have changed")
         except:
-            xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out") 
+            xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
+            display_error("IMDB Watchlist URL request timed out", "Is the website down?")			
         count = count + 250
         if len(movies) < count:
             return movies
@@ -922,7 +954,10 @@ def title_watchlist(params, start="1"):
     params["count"] = COUNT
     url = "%s%s" % (IMDB_WATCHLIST, urllib.urlencode(params)) + "&sort=listorian:asc"
     print url
-    body = get_url(url, cache=CACHE_PATH)
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
     return body
     
 def get_imdb_watchlist_result(body):
@@ -930,7 +965,7 @@ def get_imdb_watchlist_result(body):
      
     movies = []
     for tr in all_tr:
-        all_td = regex_get_all(tr, '<td', 'td>')
+        all_td = regex_get_all(tr, '<ad', 'td>')
         imdb_id = regex_from_to(all_td[1], 'title/', '/')
         name = regex_from_to(all_td[1], '/">', '</a>')
         year = regex_from_to(all_td[2], 'year">', '</td>')
@@ -963,7 +998,10 @@ def title_customlist(list, start="1"):
     print list
     url = IMDB_CUSTOMLIST_URL + list + "/?start=1&view=compact&sort=listorian:asc"
     print url
-    body = get_url(url, cache=CACHE_PATH)
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
     return body
     
 def get_customlist_result(body):
@@ -988,7 +1026,6 @@ def search_actors(params):
     actors = []
     body = []
     url = "%s%s" % (IMDB_ACTOR_SEARCH, urllib.urlencode(params))
-    print url
     try:
         body = get_url(url, cache=CACHE_PATH)
     except:
@@ -1007,35 +1044,6 @@ def search_actors(params):
         photo = photo.replace("54", "214").replace("74", "314").replace("CR1", "CR12")
         actors.append({'name': name, 'imdb_id': imdb_id, 'photo': photo, 'profession': profession})
     return actors
-
-def scrape_xspf(body, id):
-    all_track = regex_get_all(body, '<track>', '</track>')
-    tracks = []
-    for track in all_track:
-        name = regex_from_to(track, '<title>', '</title>')
-        location = regex_from_to(track, '<location>', '</location>')
-        if (name.endswith('.mp4') or name.endswith('.avi') or name.endswith('.mkv')) and name.lower().find("sample")<0 and name.lower().find("sampz")<0:
-            size = get_file_size(location)
-            tracks.append({'name': "[%.2fGB] %s" % (size, name), 'location': location, 'id': id}) 
-    return tracks
-	
-def execute_video(name, url, list_item, strm=False):
-    imdb_id=list_item
-    list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
-    poster_path = create_directory(META_PATH, META_QUALITY)
-    poster_file = os.path.join(poster_path, "%s_poster.jpg" % (imdb_id))
-    list_item.setThumbnailImage(poster_file)
-    #list_item = set_movie_meta(list_item, imdb_id, META_PATH)
-    if PLAY_MODE == 'stream':
-        if mode == "strm file dialog" or strm:
-            set_resolved_url(int(sys.argv[1]), name, url, imdb_id) 
-        else:
-            play(name, url, list_item)
-    elif PLAY_MODE == 'download and play':
-        if strm:
-            download_and_play(name, url, play=True, handle=int(sys.argv[1]))
-        else:
-            download_and_play(name, url, play=True)
 
 def get_items_in_dir(path):
     items = []
@@ -1112,15 +1120,25 @@ def main_menu():
     return items
 
 def imdb_similar_menu(name, data, imdb_id):
-    url = "%s%s%s" % ('http://m.imdb.com/title/',imdb_id,'/similarities')
-    body = get_url(url, cache=CACHE_PATH)
-    body = body.replace('\n',''	).replace('(','AX').replace(')','AZ')
-    all_tr = regex_from_to(body, '<section class="similarities posters">', '</section>')
-    match = re.compile('<a href="/title/(.+?)/"(.+?)>(.+?)</a> AX(.+?)AZ').findall(all_tr)
     movies=[]
-    movies.append({'imdb_id': imdb_id, 'name': '[COLOR cyan]' + 'IMDB USERS WHO LIKE ' + '[/COLOR]' + '[COLOR gold]' + clean_file_name(name, use_blanks=False).replace(' TV Series','').replace(' Mini-Series','') +  '[/COLOR]' + '[COLOR cyan]' + ' ALSO LIKE:' + '[/COLOR]', 'year': 'rem', 'rating': "", 'votes': "D"})
-    for imdb_id,blank,name,year in match:
-        movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': "", 'votes': ""})
+    url = "%s%s%s" % ('http://m.imdb.com/title/',imdb_id,'/similarities')
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+        try:
+            body = body.replace('\n',''	).replace('(','AX').replace(')','AZ')
+            all_tr = regex_from_to(body, '<section class="similarities posters">', '</section>')
+            match = re.compile('<a href="/title/(.+?)/"(.+?)>(.+?)</a> AX(.+?)AZ').findall(all_tr)
+            movies.append({'imdb_id': imdb_id, 'name': '[COLOR cyan]' + 'IMDB USERS WHO LIKE ' + '[/COLOR]' + '[COLOR gold]' + clean_file_name(name, use_blanks=False).replace(' TV Series','').replace(' Mini-Series','') +  '[/COLOR]' + '[COLOR cyan]' + ' ALSO LIKE:' + '[/COLOR]', 'year': 'rem', 'rating': "", 'votes': "D"})
+            for imdb_id,blank,name,year in match:
+                movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': "", 'votes': ""})
+        except:
+            xbmc.log("[What the Furk...XBMCHUB.COM] IMDB SIMILARITIES regex error")
+            display_error("Unable to scrape imdb.com/similarities", "Page structure may have changed")
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
+        display_error("IMDB (similarities) URL request timed out", "Is the website down?")
+        movies.append({'imdb_id': "", 'name': "error", 'year': "visit www.xbmchub.com", 'rating': "", 'votes': ""})
+    
     if data == "MOV":
         return create_movie_items(movies)
     else:
@@ -1135,25 +1153,35 @@ def dvd_release_menu():
 	
 def dvd_releases(list):
     items = []
+    movies = []
     list = list.replace(' ', '_').lower()
     if list == "top_rentals":
         url = url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?country=us&apikey=crcvkfzgky27e276ug8pjckt")
     else:
         url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=16&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
-    body = get_url(url, cache=CACHE_PATH).strip()
-    all_mov = regex_get_all(body, '{"id"', '}}')
-    movies = []
-    for mov in all_mov:
+    try:
+        body = get_url(url, cache=CACHE_PATH)
         try:
-            imdb_id = "%s%s" % ("tt", regex_from_to(mov, 'imdb":"', '"}'))
-        except:
-            imdb_id = ""
-        name = regex_from_to(mov, 'title":"', '","year')
-        year = regex_from_to(mov, 'year":', ',"')
-        rating = regex_from_to(mov, 'critics_score":', ',"')
-        votes = regex_from_to(mov, 'audience_score":', '}')
+            all_mov = regex_get_all(body, '{"id"', '}}')
+            for mov in all_mov:
+                try:
+                    imdb_id = "%s%s" % ("tt", regex_from_to(mov, 'imdb":"', '"}'))
+                except:
+                    imdb_id = ""
+                name = regex_from_to(mov, 'title":"', '","year')
+                year = regex_from_to(mov, 'year":', ',"')
+                rating = regex_from_to(mov, 'critics_score":', ',"')
+                votes = regex_from_to(mov, 'audience_score":', '}')
 
-        movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
+                movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
+        except:
+            xbmc.log("[What the Furk...XBMCHUB.COM] Rotten Tomatoes regex error")
+            display_error("Unable to scrape rottentomatoes.com", "Page structure may have changed")
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] Rotten Tomatoes URL request timed out")
+        display_error("Rotten Tomatoes URL request timed out", "Is the website down?")
+        movies.append({'imdb_id': "", 'name': "error", 'year': "visit www.xbmchub.com", 'rating': "", 'votes': ""})
+    
     return create_movie_items(movies)
 	
 
@@ -1252,6 +1280,7 @@ def movies_all_menu():
 def movies_actors_menu(name, imdb_id):
     items = []
     files = []
+    movies = []
         
     dialog = xbmcgui.Dialog()
     filmtype_list = ["Actor","Actress", "Director", "Writer", "Producer", "Miscellaneous Crew", "Cinematographer", "Soundtrack", "Editor", "Self"]
@@ -1265,21 +1294,29 @@ def movies_actors_menu(name, imdb_id):
     type = filmtype_list_return[filmtype_id]
     url = "%s%s%s%s" % ("http://m.imdb.com/name/", imdb_id, "/filmotype/", type)
 	
-    body = get_url(url, cache=CACHE_PATH)
-    all_tr = regex_get_all(body, '<div class="poster', '<div class="detail')
-    
-    movies = []
-    for tr in all_tr:
-        all_td = regex_get_all(tr, '<div class="title">', '/div>')
-        imdb_id = regex_from_to(all_td[0], '/title/', '/')
-        name = regex_from_to(all_td[0], ';">', '</a')
-        year = regex_from_to(all_td[0], '</a> (', ') ').replace("(","").replace(")","").strip()
-        rating = ""
-        votes = ""
-        exclude = regex_from_to(all_td[0], '</a> (', ') ')
+    try:
+        body = get_url(url, cache=CACHE_PATH)
+        try:
+            all_tr = regex_get_all(body, '<div class="poster', '<div class="detail')
+            for tr in all_tr:
+                all_td = regex_get_all(tr, '<div class="title">', '/div>')
+                imdb_id = regex_from_to(all_td[0], '/title/', '/')
+                name = regex_from_to(all_td[0], ';">', '</a')
+                year = regex_from_to(all_td[0], '</a> (', ') ').replace("(","").replace(")","").strip()
+                rating = ""
+                votes = ""
+                exclude = regex_from_to(all_td[0], '</a> (', ') ')
 
-        if exclude.find("(TV")<0 and exclude.find("(Shor")<0 and exclude.find("(Vid")<0:
-            movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
+                if exclude.find("(TV")<0 and exclude.find("(Shor")<0 and exclude.find("(Vid")<0:
+                    movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
+        except:
+            xbmc.log("[What the Furk...XBMCHUB.COM] regex (name/filmotype) error")
+            display_error("Unable to scrape imdb.com/name/filmoype", "Page structure may have changed")
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] IMDB name/filmotype URL request timed out")
+        display_error("IMDB (name/filmotype) URL request timed out", "Is the website down?")
+        movies.append({'imdb_id': "", 'name': "error", 'year': "visit www.xbmchub.com", 'rating': "", 'votes': ""})
+    
     return create_movie_items(movies)
 	
 def nzbweek_menu():
@@ -1877,8 +1914,9 @@ def imdb_actor_result_menu(query):
             return create_actor_items(search_result)
  
     #return imdb_actor_menu(), []
-
-def episode_dialog(data, imdb_id, strm=False):
+	
+############################################### WTF BROWSE MEDIA ##############################################################
+def episode_dialog(data, imdb_id, strm=False):################### SEARCH TV ARCHIVES ##########################################
     items = []
     dialog = xbmcgui.Dialog()
     data = data.replace('[COLOR cyan]','').replace('[/COLOR]','').replace('[COLOR gold]','')
@@ -1935,11 +1973,13 @@ def episode_dialog(data, imdb_id, strm=False):
                     items.append(archive_tuple)
         except:
             pass
+        time.sleep(F_DELAY)
 
     if QUALITYSTYLE_TV == "preferred":
         searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
         files = search_furk(searchstring)
         if len(files)==0:
+            time.sleep(F_DELAY)
             notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
             xbmc.executebuiltin(notify)
             searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
@@ -2005,8 +2045,226 @@ def episode_dialog(data, imdb_id, strm=False):
 
     return items;
 
+def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVIE ARCHIVES ##########################################
+    items = []
+    if FURK_SEARCH_MF:
+        try:
+            name2 = data[:len(data)-7].replace("The ","").lower()
+            mfiles = []
+            my_files = FURK.file_get('0')
+            mfiles = my_files.files
+            name3 = name2.split(' ')
+            for f in mfiles:
+                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
+                    count_files = (f.files_num_video)
+                    name = f.name
+                    url = f.url_dl
+                    id = f.id
+                    size = f.size
+                    size = float(size)/1073741824
+                    size = "[%.2fGB]" % size
+                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                    try:
+                        poster = f.ss_urls_tn[0]
+                    except:
+                        poster = ""
+                    xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
+
+                    mode = "t files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                    items.append(archive_tuple)
+        except:
+            pass
+        time.sleep(F_DELAY)
+		
+    files = []
+        
+    dialog = xbmcgui.Dialog()
+    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    
+    if QUALITYSTYLE == "preferred":
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), CUSTOMQUALITY)
+            files = search_furk(searchstring)
+            if len(files) == 0:
+                time.sleep(F_DELAY)
+                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+                xbmc.executebuiltin(notify)
+                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","").replace("(","").replace(")","")))
+    else:
+        quality_id = dialog.select("Select your preferred option", quality_list)
+        quality = quality_list_return[quality_id]
+        if(quality_id < 0):
+            return (None, None)
+            dialog.close()
+        if(quality_id == 0):
+            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
+        else:
+            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
+        files = search_furk(searchstring)
+    xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
+    if len(files) == 0:
+        if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+            download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), "dummy")
+            return (None, None)
+        else:
+            return (None, None)
+
+    if FURK_LIM_FS:
+        fs_limit = FURK_LIM_FS_NUM
+    else:
+        fs_limit = 50
+    for f in files:
+        if float(f.size)/1073741824 < fs_limit and f.type == "video" and f.video_info.find("mpeg2video")<0:
+            name = f.name.encode('utf-8','ignore')
+            url = f.url_dl
+            id = f.id
+            is_ready = f.is_ready
+            info_hash = f.info_hash
+            size = f.size
+            size = float(size)/1073741824
+            size = "[%.2fGB]" % size
+            text = "%s %s" %(size, name)
+            if  is_ready == "1" and f.type == "video" and f.url_dl != None:
+                text = '[COLOR cyan]' + "%s %s" %(size, name) + '[/COLOR]'
+                try:
+                    poster = f.ss_urls_tn[0]
+                except:
+                    poster = ""
+                mode = "t files menu"
+            else:
+                text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
+                poster = ""
+                id = info_hash
+                mode = "add download"
+
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
+            items.append(archive_tuple)
+            setView('movies', 'movies-view')
+		
+    return items;
 	
-def strm_episode_dialog(data, imdb_id, strm=False):
+def furksearch_dialog(query, imdb_id=None, strm=False):############# FURK SEARCH #############
+    items = []	
+    files = []
+    if query.startswith('@'):
+        query = ''
+    
+    keyboard = xbmc.Keyboard(query, 'Search')
+    keyboard.doModal()
+
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if len(query) > 0:
+            add_search_query(query, FURK_SEARCH_FILE)
+            files = search_furk(str(query))
+    xbmcname = str(query)
+	
+    if FURK_SEARCH_MF:
+        try:
+            name2 = query[:len(query)-7].replace("The ","").lower()
+            mfiles = []
+            my_files = FURK.file_get('0')
+            mfiles = my_files.files
+            name3 = name2.split(' ')
+            for f in mfiles:
+                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
+                    count_files = (f.files_num_video)
+                    name = f.name
+                    url = f.url_dl
+                    id = f.id
+                    size = f.size
+                    size = float(size)/1073741824
+                    size = "[%.2fGB]" % size
+                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
+                    try:
+                        poster = f.ss_urls_tn[0]
+                    except:
+                        poster = ""
+                    xbmcname = f.name
+
+                    mode = "t files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                    items.append(archive_tuple)
+        except:
+            pass
+        time.sleep(F_DELAY)
+	
+    if len(files) == 0:
+        dialog.ok("File Search", 'No files found for:', query) 
+
+    for f in files:
+        if f.type == "video" and f.video_info.find("mpeg2video")<0:
+            name = f.name.encode('utf-8','ignore')
+            url = f.url_dl
+            id = f.id
+            is_ready = f.is_ready
+            info_hash = f.info_hash
+            size = f.size
+            size = float(size)/1073741824
+            size = "[%.2fGB]" % size
+            text = "%s %s" %(size, name)
+            if is_ready == "1" and f.url_dl != None:
+                text = '[COLOR cyan]' + "%s %s" %(size, name) + '[/COLOR]'
+                try:
+                    poster = f.ss_urls_tn[0]
+                except:
+                    poster = ""
+                mode = "t files menu"
+            else:
+                text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
+                poster = os.path.join(ADDON.getAddonInfo('path'),'art','noentry.png')
+                id = info_hash
+                mode = "add download"
+
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster,"")
+            items.append(archive_tuple)
+            setView('movies', 'movies-view')
+    return items;
+	
+def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### EXPLORE T FILES ##########################################
+    items = []
+    files = []
+    if mode == "t files menu":
+        type = "movie"
+        view = "movies-view"
+    else:
+        type = "tv"
+        view = "tvshows-view"
+
+    dialog = xbmcgui.Dialog()
+    my_files = FURK.t_file_get(id, t_files="1")
+    files = my_files.files
+
+    for f in files:
+        try:
+            poster = f.ss_urls_tn[0]
+        except:
+            poster = ""
+        t_files = f.t_files
+
+    all_tf = regex_get_all(str(t_files), "{", "'}")
+    for tf in all_tf:
+        all_td = regex_get_all(tf, "{", "'}")
+        name = regex_from_to(str(all_td), "name': u'", "', u")
+        format = name[len(name)-3:]
+        url = regex_from_to(str(all_td), "url_dl': u'", "', u")
+        size = regex_from_to(str(all_td), "size': u'", "'")
+        size = float(size)/1073741824
+        size = "[%.2fGB]" % size
+        text = "[%s] %s %s" %(format, size, name)
+
+        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
+            wtf_mode = "execute video"
+            file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb_id)
+            items.append(file_list_tuple)
+            setView('movies', view)
+    return items;
+
+############################################### END BROWSE MEDIA #########################################################################
+
+############################################### STREAM FROM XBMC LIBRARY ##############################################################	
+def strm_episode_dialog(data, imdb_id, strm=False):##################### SEARCH EPISODES ##########################
     menu_texts = []
     menu_data = []
     menu_linkid = []
@@ -2065,6 +2323,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
                         menu_url_pls.append(f.url_pls)
             except:
                 pass
+            time.sleep(F_DELAY)
 	
         files = []
 
@@ -2073,6 +2332,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):
             files = search_furk(searchstring)
             print len(files)
             if len(files)==0:
+                time.sleep(F_DELAY)
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
@@ -2150,184 +2410,8 @@ def strm_episode_dialog(data, imdb_id, strm=False):
         else:
             id = str(menu_linkid[menu_id])
             t_file_dialog(id, imdb_id, tv_show_episode)
-	
-def t_file_dialog_tv(xbmcname, id, imdb_id, strm=False):
-    items = []
-    files = []
-    dialog = xbmcgui.Dialog()
-    my_files = FURK.t_file_get(id, t_files="1")
-    files = my_files.files
-    type = "tv"
 
-    for f in files:
-        try:
-            poster = f.ss_urls_tn[0]
-        except:
-            poster = ""
-        t_files = f.t_files
-
-    all_tf = regex_get_all(str(t_files), "{", "'}")
-    for tf in all_tf:
-        all_td = regex_get_all(tf, "{", "'}")
-        name = regex_from_to(str(all_td), "name': u'", "', u")
-        format = name[len(name)-3:]
-        url = regex_from_to(str(all_td), "url_dl': u'", "', u")
-        size = regex_from_to(str(all_td), "size': u'", "'")
-        size = float(size)/1073741824
-        size = "[%.2fGB]" % size
-        text = "[%s] %s %s" %(format, size, name)
-
-        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
-            mode = "execute video"
-            file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type, imdb_id)
-            items.append(file_list_tuple)
-            setView('movies', 'tvshows-view')
-    return items;
-			
-def add_download(name, info_hash):
-    dialog = xbmcgui.Dialog()
-    if mode == "wishlist search":
-        FURK.dl_add(info_hash)
-    else:
-        if dialog.yesno("Add Download", "Download this file to your Furk account?", "Success depends on number of seeders"):
-            response = FURK.dl_add(info_hash)
-            if response['status'] == 'ok':
-                notify = 'XBMC.Notification(Download added to Furk account,Check status in My Files,3000)'
-                xbmc.executebuiltin(notify)
-            else:
-                notify = 'XBMC.Notification(Error,Unable to add download,3000)'
-                xbmc.executebuiltin(notify)
-			
-def add_wishlist(name, type):
-    name = name.replace("(","").replace(")","")
-    dialog = xbmcgui.Dialog()
-    quality_list = ["Custom","Any", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_list_return = ["custom", "any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_id = dialog.select("Select your preferred quality", quality_list)
-    if(quality_id == 0):
-        quality = name
-        keyboard = xbmc.Keyboard(quality, 'Custom Search')
-        keyboard.doModal()
-        if keyboard.isConfirmed():
-            quality = keyboard.getText()
-    else:
-        quality = quality_list_return[quality_id]
-    if(quality_id < 0):
-        return (None, None)
-        dialog.close()
-		
-    action_list = ["Download","Add Stream", "Add to My Files", "Check for new torrents"]
-    action_list_return = ["download","stream", "myfiles", "newtorrents"]
-    action_id = dialog.select("What would you like to do?", action_list)
-    action = action_list_return[action_id]
-    if(action_id < 0):
-        return (None, None)
-        dialog.close()
-    episode = type
-    list_data = "%s %s<|>%s<|>%s" % (name, quality, action, episode)
-    add_search_query(list_data, WISHLIST)
-	
-def add_people(name, data, imdb_id):
-    list_data = "%s<|>%s<|>%s" % (name, data, imdb_id)
-    add_search_query(list_data, PEOPLE_LIST)
-
-def movie_dialog(data, imdb_id=None, strm=False):
-    items = []
-    if FURK_SEARCH_MF:
-        try:
-            name2 = data[:len(data)-7].replace("The ","").lower()
-            mfiles = []
-            my_files = FURK.file_get('0')
-            mfiles = my_files.files
-            name3 = name2.split(' ')
-            for f in mfiles:
-                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
-                    count_files = (f.files_num_video)
-                    name = f.name
-                    url = f.url_dl
-                    id = f.id
-                    size = f.size
-                    size = float(size)/1073741824
-                    size = "[%.2fGB]" % size
-                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                    try:
-                        poster = f.ss_urls_tn[0]
-                    except:
-                        poster = ""
-                    xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
-
-                    mode = "t files menu"
-                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
-                    items.append(archive_tuple)
-        except:
-            pass
-    files = []
-        
-    dialog = xbmcgui.Dialog()
-    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    
-    if QUALITYSTYLE == "preferred":
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), CUSTOMQUALITY)
-            files = search_furk(searchstring)
-            if (files.count('.mp4') + files.count('.avi') + files.count('.mkv')) == 0 and len(files) == 0:
-                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
-                xbmc.executebuiltin(notify)
-                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","").replace("(","").replace(")","")))
-    else:
-        quality_id = dialog.select("Select your preferred option", quality_list)
-        quality = quality_list_return[quality_id]
-        if(quality_id < 0):
-            return (None, None)
-            dialog.close()
-        if(quality_id == 0):
-            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
-        else:
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
-        files = search_furk(searchstring)
-    xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
-    if len(files) == 0:
-        if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
-            download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), "dummy")
-            return (None, None)
-        else:
-            return (None, None)
-
-    if FURK_LIM_FS:
-        fs_limit = FURK_LIM_FS_NUM
-    else:
-        fs_limit = 50
-    for f in files:
-        if float(f.size)/1073741824 < fs_limit and f.type == "video" and f.video_info.find("mpeg2video")<0:
-            name = f.name.encode('utf-8','ignore')
-            url = f.url_dl
-            id = f.id
-            is_ready = f.is_ready
-            info_hash = f.info_hash
-            size = f.size
-            size = float(size)/1073741824
-            size = "[%.2fGB]" % size
-            text = "%s %s" %(size, name)
-            if  is_ready == "1" and f.type == "video" and f.url_dl != None:
-                text = '[COLOR cyan]' + "%s %s" %(size, name) + '[/COLOR]'
-                try:
-                    poster = f.ss_urls_tn[0]
-                except:
-                    poster = ""
-                mode = "t files menu"
-            else:
-                text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
-                poster = ""
-                id = info_hash
-                mode = "add download"
-
-            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
-            items.append(archive_tuple)
-            setView('movies', 'movies-view')
-		
-    return items;
-	
-def strm_movie_dialog(name, imdb_id, strm=False):
+def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MOVIES ##########################
     open_playlists = True
     menu_texts = []
     menu_data = []
@@ -2361,6 +2445,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
                         menu_url_pls.append(f.url_pls)
             except:
                 pass
+            time.sleep(F_DELAY)
 					
         dialog = xbmcgui.Dialog()
         quality_list = ["Custom Search", "Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
@@ -2374,6 +2459,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
             files = search_furk(searchstring)
             if len(files)==0:
+                time.sleep(F_DELAY)
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
@@ -2451,113 +2537,8 @@ def strm_movie_dialog(name, imdb_id, strm=False):
         else:
             id = str(menu_linkid[menu_id])
             t_file_dialog(id, imdb_id, filename)
-
-
-def view_trailer(name, imdb_id, xbmcname, strm=False):
-    menu_texts = []
-    menu_data = []
-    menu_res = []
-    menu_list_item = []
-    pDialog = xbmcgui.DialogProgress()
-    pDialog.create('Searching for trailer')
-    dialog = xbmcgui.Dialog()
-    try:
-        url = "http://www.hd-trailers.net/movie/" + name
-        response = get_url(url, cache=CACHE_PATH)
-        match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
-        if len(match)==0:
-            url = "http://www.hd-trailers.net/movie/" + name.replace('and','')
-            response = get_url(url, cache=CACHE_PATH)
-            match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
-            if len(match)==0:
-                dialog.ok("Trailer Search", 'No trailers found for:', xbmcname) 
-                return
-        for url, info, title, res in match:
-            if url.find('apple')>0:
-                url = '%s|User-Agent=QuickTime' % ("http://" + url)
-            elif url.find('youtube')>0:
-                video_id = url.replace('www.youtube.com/watch?v=','')
-                url = (
-                    'plugin://plugin.video.youtube/'
-                    '?action=play_video&videoid=%s' % video_id
-                )
-            else:
-                url = "http://" + url
-            if TRAILER_RESTRICT:
-                if url.find('yahoo')<0 and res==TRAILER_QUALITY:
-                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
-                    menu_list_item.append(clean_file_name(title, use_blanks=False))
-                    menu_data.append(url)
-                    menu_res.append(res)
-            else:
-                if url.find('yahoo')<0:
-                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
-                    menu_list_item.append(clean_file_name(title, use_blanks=False))
-                    menu_data.append(url)
-                    menu_res.append(res)
-					
-        if TRAILER_ONECLICK:
-            menu_id =0
-        else:
-            menu_id = dialog.select('Select Trailer', menu_texts)
-        if(menu_id < 0):
-            return (None, None)
-            dialog.close()
-        else:	
-            url = menu_data[menu_id]
-            name = menu_texts[menu_id]
-            list_item = menu_list_item[menu_id]
 			
-        pDialog.close()
-    
-        if not url or not name:
-            if strm:
-                set_resolved_to_dummy()
-            return
-    
-        li = xbmcgui.ListItem(list_item)
-    
-        execute_video(name, url, imdb_id, strm)
-    except:
-        dialog.ok("Trailer Search", 'No trailers found for:', xbmcname) 
-        
-
-	
-def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):
-    items = []
-    files = []
-
-    dialog = xbmcgui.Dialog()
-    my_files = FURK.t_file_get(id, t_files="1")
-    files = my_files.files
-
-    for f in files:
-        try:
-            poster = f.ss_urls_tn[0]
-        except:
-            poster = ""
-        t_files = f.t_files
-
-    all_tf = regex_get_all(str(t_files), "{", "'}")
-    for tf in all_tf:
-        all_td = regex_get_all(tf, "{", "'}")
-        name = regex_from_to(str(all_td), "name': u'", "', u")
-        format = name[len(name)-3:]
-        url = regex_from_to(str(all_td), "url_dl': u'", "', u")
-        size = regex_from_to(str(all_td), "size': u'", "'")
-        size = float(size)/1073741824
-        size = "[%.2fGB]" % size
-        text = "[%s] %s %s" %(format, size, name)
-
-        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
-            mode = "execute video"
-            type = "movie"
-            file_list_tuple = create_file_list_tuple(xbmcname, text, name, mode, url, size, poster, type, imdb_id)
-            items.append(file_list_tuple)
-            setView('movies', 'movies-view')
-    return items;
-
-def t_file_dialog(id, imdb_id, filename, strm=True):
+def t_file_dialog(id, imdb_id, filename, strm=True):################### T FILES ################################
     menu_texts = []
     menu_data = []
     menu_size = []
@@ -2605,8 +2586,9 @@ def t_file_dialog(id, imdb_id, filename, strm=True):
             execute_video(filename, url, imdb_id, strm)
         else:
             execute_video(name, url, imdb_id, strm)
+############################################### END STREAM FROM XBMC LIBRARY ##############################################################	
 
-
+############################################### ONE CLICK STREAMING ##############################################################	
 def one_click_movie(name, imdb_id, strm=False):
     open_playlists = True
     quality = CUSTOMQUALITY
@@ -2616,6 +2598,7 @@ def one_click_movie(name, imdb_id, strm=False):
     files = []
     files = search_furk(str(data.replace("-"," ").replace(" Documentary","").replace(":","")) + '+' + quality)
     if len(files)==0:
+        time.sleep(F_DELAY)
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
         files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
@@ -2698,6 +2681,7 @@ def one_click_episode(data, imdb_id, strm=False):
     files = []
     files = search_furk(str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")) + '+' + quality)
     if len(files)==0:
+        time.sleep(F_DELAY)
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
         files = search_furk(str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")))
@@ -2752,83 +2736,264 @@ def one_click_episode(data, imdb_id, strm=False):
     else:
         execute_video(name, url, imdb_id, strm)
 
+def get_playlist_tracks(playlist_file, open_playlists=False):######### SEARCH TRACKS #####
+    tracks = []
+    size = float(playlist_file.size)/1073741824
+    id = playlist_file.id
+ 		
+    try:
+        if (name.endswith('.avi') or name.endswith('.mkv') or name.endswith('.mp4')) and name.lower().find("sample")<0 and name.lower().find("sampz")<0:
+            tracks = [{'name': "[%.2fGB] " % size + name, 'location': playlist_file.url_dl, 'id': playlist_file.id}]#"[%.2fGB] " % size + 
+        elif open_playlists:
+            playlist_url = playlist_file.url_pls
+            playlist = get_url(playlist_url)
+            tracks = scrape_xspf(playlist, id)#, size, prefix
+    except:
+        pass
+    return tracks
+	
+def scrape_xspf(body, id):############################# SCRAPE ARCHIVES #################
+    all_track = regex_get_all(body, '<track>', '</track>')
+    tracks = []
+    for track in all_track:
+        name = regex_from_to(track, '<title>', '</title>')
+        location = regex_from_to(track, '<location>', '</location>')
+        if (name.endswith('.mp4') or name.endswith('.avi') or name.endswith('.mkv')) and name.lower().find("sample")<0 and name.lower().find("sampz")<0:
+            size = get_file_size(location)
+            tracks.append({'name': "[%.2fGB] %s" % (size, name), 'location': location, 'id': id}) 
+    return tracks
+		
+def track_dialog(tracks):################################# DRILL DOWN TO TRACKS ##########
+    menu_texts = []
+    menu_data = []
+    menu_linkid = []
+    for track in tracks:
+        text = (track['name'])
+        id = (track['id'])
+        menu_texts.append(text)
+        menu_data.append(track['location'])
+        menu_linkid.append(track['id'])
 
-def furksearch_dialog(query, imdb_id=None, strm=False):
-    items = []	
-    files = []
-    if query.startswith('@'):
-        query = ''
+    if len(menu_data) == 0:
+        if mode != "wishlist search":
+            builtin = 'XBMC.Notification(No files found,The search was unable to find any files,3000)'
+            xbmc.executebuiltin(builtin)
+        return (None, None)
+
+    menu_id = 0
+    if mode != "wishlist search":
+        notify = 'XBMC.Notification(Starting stream,Be patient.......,5000)'
+        xbmc.executebuiltin(notify)
+		
+    url = menu_data[menu_id]
+    name = menu_texts[menu_id]
+    id = menu_linkid[menu_id]
     
-    keyboard = xbmc.Keyboard(query, 'Search')
-    keyboard.doModal()
+    return (url, name, id)
+		
+############################################### END ONE CLICK STREAMING ##############################################################	
 
-    if keyboard.isConfirmed():
-        query = keyboard.getText()
-        if len(query) > 0:
-            add_search_query(query, FURK_SEARCH_FILE)
-            files = search_furk(str(query))
-    xbmcname = str(query)
-	
-    if FURK_SEARCH_MF:
-        try:
-            name2 = query[:len(query)-7].replace("The ","").lower()
-            mfiles = []
-            my_files = FURK.file_get('0')
-            mfiles = my_files.files
-            name3 = name2.split(' ')
-            for f in mfiles:
-                if (name2.find(' ')>0 and name3[0] in f.name.lower() and name3[1] in f.name.lower()) or (name2 in f.name.lower()):
-                    count_files = (f.files_num_video)
-                    name = f.name
-                    url = f.url_dl
-                    id = f.id
-                    size = f.size
-                    size = float(size)/1073741824
-                    size = "[%.2fGB]" % size
-                    text = '[COLOR gold]' + "%s %s %s [%s files]" %("MF:",size, f.name, count_files) + '[/COLOR]'
-                    try:
-                        poster = f.ss_urls_tn[0]
-                    except:
-                        poster = ""
-                    xbmcname = f.name
-
-                    mode = "t files menu"
-                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
-                    items.append(archive_tuple)
-        except:
-            pass
-	
-    if len(files) == 0:
-        dialog.ok("File Search", 'No files found for:', query) 
-
-    for f in files:
-        if f.type == "video" and f.video_info.find("mpeg2video")<0:
-            name = f.name.encode('utf-8','ignore')
-            url = f.url_dl
-            id = f.id
-            is_ready = f.is_ready
-            info_hash = f.info_hash
-            size = f.size
-            size = float(size)/1073741824
-            size = "[%.2fGB]" % size
-            text = "%s %s" %(size, name)
-            if is_ready == "1" and f.url_dl != None:
-                text = '[COLOR cyan]' + "%s %s" %(size, name) + '[/COLOR]'
-                try:
-                    poster = f.ss_urls_tn[0]
-                except:
-                    poster = ""
-                mode = "t files menu"
+def execute_video(name, url, list_item, strm=False):
+    imdb_id=list_item
+    list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
+    poster_path = create_directory(META_PATH, META_QUALITY)
+    poster_file = os.path.join(poster_path, "%s_poster.jpg" % (imdb_id))
+    list_item.setThumbnailImage(poster_file)
+    #list_item = set_movie_meta(list_item, imdb_id, META_PATH)
+    if PLAY_MODE == 'stream':
+        if mode == "strm file dialog" or strm:
+            set_resolved_url(int(sys.argv[1]), name, url, imdb_id) 
+        else:
+            play(name, url, list_item)
+    elif PLAY_MODE == 'download and play':
+        if strm:
+            download_and_play(name, url, play=True, handle=int(sys.argv[1]))
+        else:
+            download_and_play(name, url, play=True)
+			
+############################################### CONTEXT MENU FUNCTIONS ##############################################################	
+def add_download(name, info_hash):
+    dialog = xbmcgui.Dialog()
+    if mode == "wishlist search":
+        FURK.dl_add(info_hash)
+    else:
+        if dialog.yesno("Add Download", "Download this file to your Furk account?", "Success depends on number of seeders"):
+            response = FURK.dl_add(info_hash)
+            if response['status'] == 'ok':
+                notify = 'XBMC.Notification(Download added to Furk account,Check status in My Files,3000)'
+                xbmc.executebuiltin(notify)
             else:
-                text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
-                poster = os.path.join(ADDON.getAddonInfo('path'),'art','noentry.png')
-                id = info_hash
-                mode = "add download"
+                notify = 'XBMC.Notification(Error,Unable to add download,3000)'
+                xbmc.executebuiltin(notify)
+			
+def add_wishlist(name, type):
+    name = name.replace("(","").replace(")","")
+    dialog = xbmcgui.Dialog()
+    quality_list = ["Custom","Any", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["custom", "any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_id = dialog.select("Select your preferred quality", quality_list)
+    if(quality_id == 0):
+        quality = name
+        keyboard = xbmc.Keyboard(quality, 'Custom Search')
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            quality = keyboard.getText()
+    else:
+        quality = quality_list_return[quality_id]
+    if(quality_id < 0):
+        return (None, None)
+        dialog.close()
+		
+    action_list = ["Download","Add Stream", "Add to My Files", "Check for new torrents"]
+    action_list_return = ["download","stream", "myfiles", "newtorrents"]
+    action_id = dialog.select("What would you like to do?", action_list)
+    action = action_list_return[action_id]
+    if(action_id < 0):
+        return (None, None)
+        dialog.close()
+    episode = type
+    list_data = "%s %s<|>%s<|>%s" % (name, quality, action, episode)
+    add_search_query(list_data, WISHLIST)
+	
+def add_people(name, data, imdb_id):
+    list_data = "%s<|>%s<|>%s" % (name, data, imdb_id)
+    add_search_query(list_data, PEOPLE_LIST)
 
-            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster,"")
-            items.append(archive_tuple)
-            setView('movies', 'movies-view')
-    return items;
+def view_trailer(name, imdb_id, xbmcname, strm=False):
+    menu_texts = []
+    menu_data = []
+    menu_res = []
+    menu_list_item = []
+    pDialog = xbmcgui.DialogProgress()
+    pDialog.create('Searching for trailer')
+    dialog = xbmcgui.Dialog()
+    try:
+        url = "http://www.hd-trailers.net/movie/" + name
+        response = get_url(url, cache=CACHE_PATH)
+        match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
+        if len(match)==0:
+            url = "http://www.hd-trailers.net/movie/" + name.replace('and','')
+            response = get_url(url, cache=CACHE_PATH)
+            match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
+            if len(match)==0:
+                dialog.ok("Trailer Search", 'No trailers found for:', xbmcname) 
+                return
+        for url, info, title, res in match:
+            if url.find('apple')>0:
+                url = '%s|User-Agent=QuickTime' % ("http://" + url)
+            elif url.find('youtube')>0:
+                video_id = url.replace('www.youtube.com/watch?v=','')
+                url = (
+                    'plugin://plugin.video.youtube/'
+                    '?action=play_video&videoid=%s' % video_id
+                )
+            else:
+                url = "http://" + url
+            if TRAILER_RESTRICT:
+                if url.find('yahoo')<0 and res==TRAILER_QUALITY:
+                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
+                    menu_list_item.append(clean_file_name(title, use_blanks=False))
+                    menu_data.append(url)
+                    menu_res.append(res)
+            else:
+                if url.find('yahoo')<0:
+                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
+                    menu_list_item.append(clean_file_name(title, use_blanks=False))
+                    menu_data.append(url)
+                    menu_res.append(res)
+					
+        if TRAILER_ONECLICK:
+            menu_id =0
+        else:
+            menu_id = dialog.select('Select Trailer', menu_texts)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        else:	
+            url = menu_data[menu_id]
+            name = menu_texts[menu_id]
+            list_item = menu_list_item[menu_id]
+			
+        pDialog.close()
+    
+        if not url or not name:
+            if strm:
+                set_resolved_to_dummy()
+            return
+    
+        li = xbmcgui.ListItem(list_item)
+    
+        execute_video(name, url, imdb_id, strm)
+    except:
+        dialog.ok("Trailer Search", 'No trailers found for:', xbmcname)
+		
+def myfiles_add(name, id):
+    dialog = xbmcgui.Dialog()
+    response = FURK.file_link(id)
+
+    if response['status'] == 'ok':
+        dialog.ok("Add to My Files", name, 'Success - Added to My Files')
+    else:
+        dialog.ok("Add to My Files", name, response['status']) 
+    return (None, None)
+    dialog.close()
+
+def myfiles_remove(name, id):
+    dialog = xbmcgui.Dialog()
+    response = FURK.file_unlink(id)
+    if response['status'] == 'ok':
+        dialog.ok("Remove from My Files", name, 'Success')
+    else:
+        dialog.ok("Remove from My Files", name, 'Error')
+    return (None, None)
+    dialog.close()
+	
+def myfiles_clear(name, id):
+    dialog = xbmcgui.Dialog()
+    response = FURK.file_clear(id)
+
+    if response['status'] == 'ok':
+        dialog.ok("Clear Deleted file", name, 'Success - File removed')
+    else:
+        dialog.ok("Clear Deleted file", name, response['status']) 
+    return (None, None)
+    dialog.close()
+
+
+def myfiles_protect(name, id):
+    dialog = xbmcgui.Dialog()
+    is_protected = '1'
+    response = FURK.file_protect(id, is_protected)
+    if response['status'] == 'ok':
+        dialog.ok("File Protection", name, 'Protected')
+    else:
+        if response['error'] == 'limit exceeded':
+            dialog.ok("File Protection", name, 'Error! Your storage limit for protected files is exceeded','Current usage is ' + response['usage'] + ' GB')
+        elif response['error'] == 'not premium':
+            dialog.ok("File Protection", name, 'Error! This feature is for premium users only')
+        elif response['status'] == 'error':
+            dialog.ok("File Protection", name, response['error'])
+    return (None, None)
+    dialog.close()
+
+
+def myfiles_unprotect(name, id):
+    dialog = xbmcgui.Dialog()
+    is_protected = '0'
+    response = FURK.file_protect(id, is_protected)
+    if response['status'] == 'ok':
+        dialog.ok("File Protection", name, 'Unprotected')
+    else:
+        if response['error'] == 'limit exceeded':
+            dialog.ok("File Protection", name, 'Error! Your storage limit for protected files is exceeded','Current usage is ' + response['usage'] + ' GB')
+        elif response['error'] == 'not premium':
+            dialog.ok("File Protection", name, 'Error! This feature is for premium users only')
+        elif response['status'] == 'error':
+            dialog.ok("File Protection", name, response['error'])
+    return (None, None)
+    dialog.close()	
+
+############################################### END CONTEXT MENU FUNCTIONS ##############################################################
 	
 def one_click_download():
     open_playlists = True
@@ -2906,53 +3071,28 @@ def set_resolved_to_dummy():
     listitem = xbmcgui.ListItem('Dummy data to avoid error message', path=DUMMY_PATH)
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
 
-def track_dialog(tracks):
-    menu_texts = []
-    menu_data = []
-    menu_linkid = []
-    for track in tracks:
-        text = (track['name'])
-        id = (track['id'])
-        menu_texts.append(text)
-        menu_data.append(track['location'])
-        menu_linkid.append(track['id'])
-
-    if len(menu_data) == 0:
-        if mode != "wishlist search":
-            builtin = 'XBMC.Notification(No files found,The search was unable to find any files,3000)'
-            xbmc.executebuiltin(builtin)
-        return (None, None)
-
-    menu_id = 0
-    if mode != "wishlist search":
-        notify = 'XBMC.Notification(Starting stream,Be patient.......,5000)'
-        xbmc.executebuiltin(notify)
-		
-    url = menu_data[menu_id]
-    name = menu_texts[menu_id]
-    id = menu_linkid[menu_id]
-    
-    return (url, name, id)
-
 
 def search_furk(query, sort='cached', filter=FURK_RESULTS, moderated=FURK_MODERATED):
     query = clean_file_name(query)
     query = query.replace('\'', ' ')
-
-    if not login_at_furk():
-        return []
+    try:
+        if not login_at_furk():
+            return []
     
-    files = []
-    if type(query).__name__ == 'list':
-        for q in query:
-            search_result = FURK.search(q, moderated=FURK_MODERATED, filter=FURK_RESULTS)
+        files = []
+        if type(query).__name__ == 'list':
+            for q in query:
+                search_result = FURK.search(q, moderated=FURK_MODERATED, filter=FURK_RESULTS)
+                if search_result.query_changed == None:
+                    files.extend(search_result.files)
+        else:
+            search_result = FURK.search(query, filter=FURK_RESULTS, moderated=FURK_MODERATED)
             if search_result.query_changed == None:
-                files.extend(search_result.files)
-    else:
-        search_result = FURK.search(query, filter=FURK_RESULTS, moderated=FURK_MODERATED)
-        if search_result.query_changed == None:
-            files = search_result.files
-    return files
+                files = search_result.files
+        return files
+    except:
+        xbmc.log("[What the Furk...XBMCHUB.COM] Furk search URL request timed out")
+        display_error("Furk search request timed out", "Is the website down?")
 	
 ###################################################################	
 def myfiles(unlinked, strm=False):
@@ -2990,17 +3130,7 @@ def myfiles(unlinked, strm=False):
             pass
     return items;
 
-def myfiles_add(name, id):
-    dialog = xbmcgui.Dialog()
-    response = FURK.file_link(id)
 
-    if response['status'] == 'ok':
-        dialog.ok("Add to My Files", name, 'Success - Added to My Files')
-    else:
-        dialog.ok("Add to My Files", name, response['status']) 
-    return (None, None)
-    dialog.close()
-	
 def get_downloads(dl_status):
     downloads = str(FURK.dl_get(dl_status))
     dls_all = regex_from_to(str(downloads), "dls': ", ", u'found_dls")
@@ -3031,108 +3161,11 @@ def get_downloads(dl_status):
 
     return items;
 
-def myfiles_remove(name, id):
-    dialog = xbmcgui.Dialog()
-    response = FURK.file_unlink(id)
-    if response['status'] == 'ok':
-        dialog.ok("Remove from My Files", name, 'Success')
-    else:
-        dialog.ok("Remove from My Files", name, 'Error')
-    return (None, None)
-    dialog.close()
-	
-def myfiles_clear(name, id):
-    dialog = xbmcgui.Dialog()
-    response = FURK.file_clear(id)
 
-    if response['status'] == 'ok':
-        dialog.ok("Clear Deleted file", name, 'Success - File removed')
-    else:
-        dialog.ok("Clear Deleted file", name, response['status']) 
-    return (None, None)
-    dialog.close()
-
-
-def myfiles_protect(name, id):
-    dialog = xbmcgui.Dialog()
-    is_protected = '1'
-    response = FURK.file_protect(id, is_protected)
-    if response['status'] == 'ok':
-        dialog.ok("File Protection", name, 'Protected')
-    else:
-        if response['error'] == 'limit exceeded':
-            dialog.ok("File Protection", name, 'Error! Your storage limit for protected files is exceeded','Current usage is ' + response['usage'] + ' GB')
-        elif response['error'] == 'not premium':
-            dialog.ok("File Protection", name, 'Error! This feature is for premium users only')
-        elif response['status'] == 'error':
-            dialog.ok("File Protection", name, response['error'])
-    return (None, None)
-    dialog.close()
-
-
-def myfiles_unprotect(name, id):
-    dialog = xbmcgui.Dialog()
-    is_protected = '0'
-    response = FURK.file_protect(id, is_protected)
-    if response['status'] == 'ok':
-        dialog.ok("File Protection", name, 'Unprotected')
-    else:
-        if response['error'] == 'limit exceeded':
-            dialog.ok("File Protection", name, 'Error! Your storage limit for protected files is exceeded','Current usage is ' + response['usage'] + ' GB')
-        elif response['error'] == 'not premium':
-            dialog.ok("File Protection", name, 'Error! This feature is for premium users only')
-        elif response['status'] == 'error':
-            dialog.ok("File Protection", name, response['error'])
-    return (None, None)
-    dialog.close()
 ######################################################################
-
-
-
-def remove_list_duplicates(list_to_check): 
-    temp_set = {} 
-    map(temp_set.__setitem__, list_to_check, []) 
-    return temp_set.keys()
-
-def filter_playlist_tracks(tracks, track_filters):
-    r = []
-    if type(track_filters).__name__ == 'list':
-        for track in tracks:
-            name = make_string_comparable(track['name'])
-            for f in track_filters:
-                track_filter = make_string_comparable(f)
-                if name.find(track_filter) >= 0:
-                    r.append(track)
-                    break
-    else:
-        track_filter = make_string_comparable(track_filters)
-        for track in tracks:
-            name = make_string_comparable(track['name'])
-            if name.find(track_filter) >= 0:
-                r.append(track)
-    return r
-
-def make_string_comparable(s):
-    s = s.lower()
-    s = ''.join(e for e in s if e.isalnum())
-    return s
-
-def get_playlist_tracks(playlist_file, open_playlists=False):
-    tracks = []
-    size = float(playlist_file.size)/1073741824
-    id = playlist_file.id
- 		
-    try:
-        if (name.endswith('.avi') or name.endswith('.mkv') or name.endswith('.mp4')) and name.lower().find("sample")<0 and name.lower().find("sampz")<0:
-            tracks = [{'name': "[%.2fGB] " % size + name, 'location': playlist_file.url_dl, 'id': playlist_file.id}]#"[%.2fGB] " % size + 
-        elif open_playlists:
-            playlist_url = playlist_file.url_pls
-            playlist = get_url(playlist_url)
-            tracks = scrape_xspf(playlist, id)#, size, prefix
-    except:
-        pass
-    return tracks
-	
+def display_error(text1, text2):
+    dialog = xbmcgui.Dialog()
+    dialog.ok("Houston we have a problem",text1, text2, "Visit www.xbmchub.com/forums/what-furk/ for help")
 
 def create_movie_items(movies):
     items = []
@@ -3347,7 +3380,7 @@ def create_actor_list_item(name, photo, imdb_id, profession):
 	
 def create_movie_list_item(name, imdb_id, rating, votes):
     contextMenuItems = []
-    if mode == "dvd releases menu":
+    if mode == "dvd releases menu" and name!="error (visit www.xbmchub.com)":
         ratings = '[COLOR cyan]' + "[%s: %s %s: %s]" % ("Critics", rating, "User", votes) + '[/COLOR]'
         listname = "%s - %s" % (clean_file_name(name, use_blanks=False), ratings)
     else:
@@ -3647,129 +3680,13 @@ class DownloadFileThreadTV(Thread):
         notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'5000)')
         xbmc.executebuiltin(notify)
 
-
-def get_all_meta():
-    genres = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family',
-          'Fantasy', 'History', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western']
-    groups = ['Now Playing US', 'Oscar Winners', 'Oscar Nominees', 'Oscar Best Picture Winners', 'Oscar Best Director Winners',
-          'Golden Globe Winners', 'Golden Globe Nominees', 'National Film Registry', 'Razzie Winners', 'Top 100', 'Bottom 100']
-    tvgroups = ['Emmy Winners', 'Emmy Nominees', 'Golden Globe Winners', 'Golden Globe Nominees']
-    studios = ['Columbia', 'Disney', 'Dreamworks', 'Fox', 'Mgm', 'Paramount', 'Universal', 'Warner']
-		  
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_all_menu...")
-    items, missing_meta = movies_all_menu()
-    for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading nzbweek_menu...")
-    items, missing_meta = nzbweek_menu()
-    for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading nzbweek_menu...")
-    items, missing_meta = nzbmonth_menu()
-    for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading nzbweek_menu...")
-    items, missing_meta = nzbyear_menu()
-    for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading nzbweek_menu...")
-    items, missing_meta = nzbwatchlist_menu()
-    for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_watchlist_menu...")
-    items, missing_meta = watchlist_menu()
-    for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading tvshows_watchlist_menu...")
-    items, missing_meta = watchlist_tv_menu()
-    for imdb_id in missing_meta:
-            download_tv_show_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-    
-    for genre in genres:  
-        xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_genre_menu %s..." % genre)
-        items, missing_meta = movies_genre_menu(str(genre).lower())
-        for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-        xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-		
-    for group in groups:  
-        xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_group_menu %s..." % group)
-        items, missing_meta = movies_group_menu(str(group).lower())
-        for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-        xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-		
-    for studio in studios:  
-        xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_studio_menu %s..." % studio)
-        items, missing_meta = movies_studio_menu(str(studio).lower())
-        for imdb_id in missing_meta:
-            download_movie_meta(imdb_id, META_PATH)
-        xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-        
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_new_menu...")
-    items, missing_meta = movies_new_menu()
-    for imdb_id in missing_meta:
-                download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading movies_soon_menu...")
-    items, missing_meta = movies_soon_menu()
-    for imdb_id in missing_meta:
-                download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-	
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading blu_ray_menu...")
-    items, missing_meta = blu_ray_menu()
-    for imdb_id in missing_meta:
-                download_movie_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-    
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading tv_shows_all_menu...")
-    items, missing_meta = tv_shows_all_menu()
-    for imdb_id in missing_meta:
-                download_tv_show_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-    
-    for genre in genres:
-        xbmc.log("[What the Furk...XBMCHUB.COM] Downloading tv_shows_genre_menu %s..." % genre)
-        items, missing_meta = tv_shows_genre_menu(str(genre).lower())
-        for imdb_id in missing_meta:
-                download_tv_show_meta(imdb_id, META_PATH)
-        xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-		
-    for tvgroup in tvgroups:  
-        xbmc.log("[What the Furk...XBMCHUB.COM] Downloading tv_shows_group_menu %s..." % tvgroup)
-        items, missing_meta = tv_shows_group_menu(str(tvgroup).lower())
-        for imdb_id in missing_meta:
-            download_tv_show_meta(imdb_id, META_PATH)
-        xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-     
-    xbmc.log("[What the Furk...XBMCHUB.COM] Downloading tv_shows_active_menu...")
-    items, missing_meta = tv_shows_active_menu()
-    for imdb_id in missing_meta:
-                download_tv_show_meta(imdb_id, META_PATH)
-    xbmc.log("[What the Furk...XBMCHUB.COM] ...complete!")
-    xbmc.log("[What the Furk...XBMCHUB.COM] META DOWNLOAD COMPLETE!")    
-
 def setView(content, viewType):
 	# set content type so library shows more views and info
 	if content:
 		xbmcplugin.setContent(int(sys.argv[1]), content)
 	if ADDON.getSetting('auto-view') == 'true':
 		xbmc.executebuiltin("Container.SetViewMode(%s)" % ADDON.getSetting(viewType) )
+
     	    
 def get_menu_items(name, mode, data, imdb_id):
     enable_sort = False
@@ -3990,7 +3907,7 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "t files menu":
         items = t_file_dialog_movie(name, data, imdb_id)
     elif mode == "t files tv menu":
-        items = t_file_dialog_tv(name, data, imdb_id)
+        items = t_file_dialog_movie(name, data, imdb_id)
     elif mode == "subscription menu": #Subscription menu
         items = subscription_menu()
     elif mode == "furk search menu": #Search menu
@@ -4018,7 +3935,10 @@ def get_menu_items(name, mode, data, imdb_id):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_VIDEO_RATING)    
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_DATE)      
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_VIDEO_RUNTIME)
-    return items
+    try:
+        return items
+    except:
+        pass
 
 #Other
 
@@ -4133,11 +4053,7 @@ elif mode == "add moviefile strm":
     create_strm_file(name, data, imdb_id, "strm file dialog", MOVIES_PATH)
     scan_library()
 elif mode == "add episode strm":
-    #data = clean_file_name(data.split('(')[0][:-1])
     create_strm_file(name, data, imdb_id, "strm file dialog", TV_SHOWS_PATH)
-    #list_data = "%s<|>%s" % (name, data_path)
-    #add_search_query(list_data, download_list)
-    #xbmc.executebuiltin("Container.Refresh")
 elif mode == "one-click on":
     ADDON.setSetting('oneclick_search', value='true')
     xbmc.executebuiltin("Container.Refresh")
@@ -4149,14 +4065,12 @@ elif mode == "remove movie strm":
 elif mode == "add tv show strm":
     data = clean_file_name(data.split('(')[0][:-1])
     create_tv_show_strm_files(data, imdb_id, "strm tv show dialog", TV_SHOWS_PATH)
-    #scan_library()
-    #xbmc.executebuiltin("Container.Refresh")
+
 elif mode == "remove tv show strm":
     data = clean_file_name(data.split('(')[0][:-1])
     remove_tv_show_strm_files(data, TV_SHOWS_PATH)
 	
 elif mode == "seasonsearch":
-    #manage_myfiles_true()
     season_dialog(name, imdb_id)
 	
 elif mode == "mf add":
@@ -4219,6 +4133,9 @@ elif mode == "dev message":
 	
 elif mode == "view trailer":
     view_trailer(name, data, imdb_id)
+	
+
+
 
 
 

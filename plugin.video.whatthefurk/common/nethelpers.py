@@ -13,6 +13,7 @@ from filehelpers import get_file_age, read_from_file, write_to_file
 USER_AGENT = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 
 def get_url(url, params=None, referer=None, cookie_jar=None, cache=None, cache_time=3600):
+    print url
     if cache:
         h = hashlib.md5(url).hexdigest()
         cache_file = os.path.join(cache, h)

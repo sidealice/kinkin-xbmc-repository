@@ -78,6 +78,21 @@ def trailer_quality():
     else:
         return '1080p'
 		
+def furkdelay():
+    delay = ADDON.getSetting('furkdelay')
+    if delay == '0':
+        return 0
+    elif delay == '1':
+        return 1
+    elif delay == '2':
+        return 2
+    elif delay == '3':
+        return 3
+    elif delay == '4':
+        return 4
+    else:
+        return 5
+		
 def trailer_one_click():
     if ADDON.getSetting('trailer_one_click') == "true":
         return True

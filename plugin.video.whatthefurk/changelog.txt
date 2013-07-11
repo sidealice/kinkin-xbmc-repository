@@ -1,3 +1,6 @@
+1.4.3a
+Added optional delay to furk searches
+
 1.4.2c
 Fixed search error if My Files is empty...again
 Separated quality list settings for tv and movies

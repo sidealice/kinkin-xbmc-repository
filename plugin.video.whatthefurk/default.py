@@ -965,7 +965,7 @@ def get_imdb_watchlist_result(body):
      
     movies = []
     for tr in all_tr:
-        all_td = regex_get_all(tr, '<ad', 'td>')
+        all_td = regex_get_all(tr, '<td', 'td>')
         imdb_id = regex_from_to(all_td[1], 'title/', '/')
         name = regex_from_to(all_td[1], '/">', '</a>')
         year = regex_from_to(all_td[2], 'year">', '</td>')

@@ -735,7 +735,10 @@ def movies_download_directory():
 		
 def tv_download_directory():
     return ADDON.getSetting('tv_download_directory')
-        
+		
+def music_download_directory():
+    return ADDON.getSetting('music_download_directory')
+		
 def first_time_startup():
     if ADDON.getSetting('first_time_startup') == "true":
         return True

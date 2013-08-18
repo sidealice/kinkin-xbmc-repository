@@ -16,6 +16,7 @@ from meta import TheTVDBInfo, set_movie_meta, download_movie_meta, set_tv_show_m
 from threading import Thread
 import time
 import datetime
+import zipfile
 
 ADDON = settings.addon()
 
@@ -109,6 +110,7 @@ QUALITYSTYLE = settings.qualitystyle()
 QUALITYSTYLE_TV = settings.qualitystyle_tv()
 DOWNLOAD_MOV = settings.movies_download_directory()
 DOWNLOAD_TV = settings.tv_download_directory()
+DOWNLOAD_MUS = settings.music_download_directory()
 DOWNLOAD_SUB = settings.download_subtitles()
 ACTIVE_DOWNLOADS = settings.downloads_file()
 ACTIVE_DOWNLOADS_TV = settings.downloads_file_tv()
@@ -126,17 +128,17 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip1.4.3":
+    if ADDON.getSetting('dev_message')!="skip1.5":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Added optional delay to Furk searches","Set in Settings/Furk", "")
-        ##dialog.ok("Changes in this version continued:", "Separate quality style setting for movies and tv","", "")
+        dialog.ok("Changes in this version:","Fixed incorrect Furk timeout error","", "")
+        dialog.ok("Changes in this version continued:", "Added Music","Visit www.xbmchub.com for details", "")
         #dialog.ok("Changes in this version continued:", "Fixed My Files passing incorrect name to xbmc player", "")
         #dialog.ok("Changes in this version continued:", "Added more options to 'New Movie Days' setting", "Now search up to 360 days")
-        ADDON.setSetting('dev_message', value='skip1.4.3') 
+        ADDON.setSetting('dev_message', value='skip1.5') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -278,7 +280,7 @@ def download_play(name, url, type):
         xbmcgui.Dialog().ok('Download failed', name)
 	
 def download_only(name, url, type):
-
+    
     WAITING_TIME = 5
     if type == "tv":
         data_path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
@@ -310,6 +312,31 @@ def download_only(name, url, type):
                 size = get_file_size(url)
                 list_data = "%s<|>%s<|>%s" % (name, data_path, size)
                 add_search_query(list_data, download_list)
+				
+def download_music(xbmcname, url, filename):
+    if xbmcname.find(' | ')>0:
+        namesplit=xbmcname.split(' | ')
+        artist=namesplit[0]
+        album=namesplit[1]
+    else:
+        artist="My Files Downloads"
+        album=xbmcname
+    if mode=="download song" or (name[len(name)-4:] == ".zip" or name[len(name)-4:] == ".rar"):
+        filename=filename
+        url = "%s%s" % (url, name[len(name)-4:])
+    else:
+        filename = "%s%s" % (filename, ".zip")
+        url = "%s%s" % (url, ".zip")
+    artist_path = create_directory(DOWNLOAD_MUS, clean_file_name(artist, use_blanks=False))
+    album_path = create_directory(artist_path, clean_file_name(album, use_blanks=False))
+    if mode=="download song":
+        data_path = os.path.join(album_path, filename)
+    else:
+        data_path = os.path.join(DOWNLOAD_MUS, filename)
+    dlThread = DownloadMusicThread(filename, url, data_path, album_path)
+    dlThread.start()
+    notify = "%s,%s,%s" % ('XBMC.Notification(Download started',xbmcname,'4000)')
+    xbmc.executebuiltin(notify)
 
 def download_kat(queryname, episode):
     menu_texts = []
@@ -1109,6 +1136,7 @@ def main_menu():
     items = []
     items.append(create_directory_tuple('Movies', 'imdb menu'))
     items.append(create_directory_tuple('TV Shows', 'imdb tv menu'))
+    items.append(create_directory_tuple('Music', 'music menu'))
     items.append(create_directory_tuple('Search', 'search menu'))
     items.append(create_directory_tuple('My Files', 'my files directory menu'))
     items.append(create_directory_tuple('My People', 'people list menu'))
@@ -1148,7 +1176,7 @@ def dvd_release_menu():
     items = []
     lists = ['Top Rentals', 'Current Releases', 'New Releases', 'Upcoming']
     for list in lists:
-        items.append(create_subdirectory_tuple(list, 'dvd releases menu'))
+        items.append(create_subdirectory_tuple(list, 'dvd releases menu', ''))
     return items
 	
 def dvd_releases(list):
@@ -1241,6 +1269,38 @@ def imdb_menu_tv():
     items.append(create_directory_tuple('TV shows by Group', 'tv show groups menu'))	
     items.append(create_directory_tuple('Active TV Shows', 'active tv shows menu'))
     return items
+
+def music_menu():
+    items = []
+    items.append(create_subdirectory_tuple('Search Artist','search artist menu',''))
+    items.append(create_subdirectory_tuple('Search Album','search album menu',''))
+    items.append(create_subdirectory_tuple('Charts','chart menu',''))
+    items.append(create_subdirectory_tuple('My Files (Furk)','my files audio menu',''))
+    return items
+	
+def chart_menu():
+    items = []
+    items.append(create_subdirectory_tuple('UK Album Chart','billboard menu','http://www1.billboard.com/charts/united-kingdom-albums'))
+    items.append(create_subdirectory_tuple('BillBoard 200','billboard menu','http://www1.billboard.com/charts/billboard-200'))
+    items.append(create_subdirectory_tuple('Hot 100 Singles','billboard menu','http://www1.billboard.com/charts/hot-100'))
+    items.append(create_subdirectory_tuple('Country Albums','billboard menu','http://www1.billboard.com/charts/country-albums'))
+    items.append(create_subdirectory_tuple('HeatSeeker Albums','billboard menu','http://www1.billboard.com/charts/heatseekers-albums'))
+    items.append(create_subdirectory_tuple('Independent Albums','billboard menu','http://www1.billboard.com/charts/independent-albums'))
+    items.append(create_subdirectory_tuple('Catalogue Albums','billboard menu','http://www1.billboard.com/charts/catalog-albums'))
+    items.append(create_subdirectory_tuple('Folk Albums','billboard menu','http://www1.billboard.com/charts/folk-albums'))
+    items.append(create_subdirectory_tuple('Blues Albums','billboard menu','http://www1.billboard.com/charts/blues-albums'))
+    items.append(create_subdirectory_tuple('Tastemaker Albums','billboard menu','http://www1.billboard.com/charts/tastemaker-albums'))
+    items.append(create_subdirectory_tuple('Rock Albums','billboard menu','http://www1.billboard.com/charts/rock-albums'))
+    items.append(create_subdirectory_tuple('Alternative Albums','billboard menu','http://www1.billboard.com/charts/alternative-albums'))
+    items.append(create_subdirectory_tuple('Hard Rock Albums','billboard menu','http://www1.billboard.com/charts/hard-rock-albums'))
+    items.append(create_subdirectory_tuple('Digital Albums','billboard menu','http://www1.billboard.com/charts/digital-albums'))
+    items.append(create_subdirectory_tuple('R&B Albums','billboard menu','http://www1.billboard.com/charts/r-b-hip-hop-albums'))
+    items.append(create_subdirectory_tuple('Top R&B/Hip-Hop Albums','billboard menu','http://www1.billboard.com/charts/r-and-b-albums'))
+    items.append(create_subdirectory_tuple('Dance Electronic Albums','billboard menu','http://www1.billboard.com/charts/dance-electronic-albums'))
+	
+    return items
+
+
 	
 def nzbmovie_menu():
     items = []
@@ -1417,7 +1477,7 @@ def movies_genres_menu():
     genres = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family',
               'Fantasy', 'History', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western']
     for genre in genres:
-        items.append(create_subdirectory_tuple(genre, 'movie genre menu'))
+        items.append(create_subdirectory_tuple(genre, 'movie genre menu', ''))
     return items
 
 def movies_genre_menu(genre):
@@ -1437,7 +1497,7 @@ def movies_groups_menu():
     groups = ['Now Playing US', 'Oscar Winners', 'Oscar nominees', 'Oscar Best Picture Winners', 'Oscar Best Director Winners',
           'Golden Globe Winners', 'Golden Globe Nominees', 'National Film Registry', 'Razzie Winners', 'Top 100', 'Bottom 100']
     for group in groups:
-        items.append(create_subdirectory_tuple(group, 'movie group menu'))
+        items.append(create_subdirectory_tuple(group, 'movie group menu', ''))
     return items
 
 def movies_group_menu(group):
@@ -1456,7 +1516,7 @@ def movies_studios_menu():
     items = []
     studios = ['Columbia', 'Disney', 'Dreamworks', 'Fox', 'Mgm', 'Paramount', 'Universal', 'Warner']
     for studio in studios:
-        items.append(create_subdirectory_tuple(studio, 'movie studio menu'))
+        items.append(create_subdirectory_tuple(studio, 'movie studio menu', ''))
     return items
 
 def movies_studio_menu(studio):
@@ -1518,7 +1578,7 @@ def tv_shows_genres_menu():
     genres = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family',
               'Fantasy', 'History', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western']
     for genre in genres:
-        items.append(create_subdirectory_tuple(genre, 'tv show genre menu'))
+        items.append(create_subdirectory_tuple(genre, 'tv show genre menu', ''))
     return items
 
 def tv_shows_genre_menu(genre):
@@ -1537,7 +1597,7 @@ def tv_shows_groups_menu():
     items = []
     tvgroups = ['Emmy Winners', 'Emmy Nominees', 'Golden Globe Winners', 'Golden Globe Nominees']
     for tvgroup in tvgroups:
-        items.append(create_subdirectory_tuple(tvgroup, 'tv show group menu'))
+        items.append(create_subdirectory_tuple(tvgroup, 'tv show group menu', ''))
     return items
 
 def tv_shows_group_menu(tvgroup):
@@ -2102,6 +2162,7 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
         else:
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
         files = search_furk(searchstring)
+    print "searchstring " + searchstring
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
         if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
@@ -2113,7 +2174,7 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
     if FURK_LIM_FS:
         fs_limit = FURK_LIM_FS_NUM
     else:
-        fs_limit = 50
+        fs_limit = 100
     for f in files:
         if float(f.size)/1073741824 < fs_limit and f.type == "video" and f.video_info.find("mpeg2video")<0:
             name = f.name.encode('utf-8','ignore')
@@ -2137,7 +2198,6 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
                 poster = ""
                 id = info_hash
                 mode = "add download"
-
             archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
             items.append(archive_tuple)
             setView('movies', 'movies-view')
@@ -2225,7 +2285,7 @@ def furksearch_dialog(query, imdb_id=None, strm=False):############# FURK SEARCH
 def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### EXPLORE T FILES ##########################################
     items = []
     files = []
-    if mode == "t files menu":
+    if mode == "t files menu" or mode == "t music files menu":
         type = "movie"
         view = "movies-view"
     else:
@@ -2253,8 +2313,14 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### E
         size = float(size)/1073741824
         size = "[%.2fGB]" % size
         text = "[%s] %s %s" %(format, size, name)
+		
+        if mode == "t music files menu":
+            wtf_mode = "execute video"
+            file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb_id)
+            items.append(file_list_tuple)
+            setView('movies', view)
 
-        if name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
+        elif name.lower().find('sample')<0 and (name.endswith('avi') or name.endswith('mp4') or name.endswith('mkv') or name.endswith('flv') or name.endswith('wmv') or (name.endswith('srt') and DOWNLOAD_SUB)):
             wtf_mode = "execute video"
             file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb_id)
             items.append(file_list_tuple)
@@ -3075,24 +3141,20 @@ def set_resolved_to_dummy():
 def search_furk(query, sort='cached', filter=FURK_RESULTS, moderated=FURK_MODERATED):
     query = clean_file_name(query)
     query = query.replace('\'', ' ')
-    try:
-        if not login_at_furk():
-            return []
+    if not login_at_furk():
+        return []
     
-        files = []
-        if type(query).__name__ == 'list':
-            for q in query:
-                search_result = FURK.search(q, moderated=FURK_MODERATED, filter=FURK_RESULTS)
-                if search_result.query_changed == None:
-                    files.extend(search_result.files)
-        else:
-            search_result = FURK.search(query, filter=FURK_RESULTS, moderated=FURK_MODERATED)
+    files = []
+    if type(query).__name__ == 'list':
+        for q in query:
+            search_result = FURK.search(q, moderated=FURK_MODERATED, filter=FURK_RESULTS)
             if search_result.query_changed == None:
-                files = search_result.files
-        return files
-    except:
-        xbmc.log("[What the Furk...XBMCHUB.COM] Furk search URL request timed out")
-        display_error("Furk search request timed out", "Is the website down?")
+                files.extend(search_result.files)
+    else:
+        search_result = FURK.search(query, filter=FURK_RESULTS, moderated=FURK_MODERATED)
+        if search_result.query_changed == None:
+            files = search_result.files
+    return files
 	
 ###################################################################	
 def myfiles(unlinked, strm=False):
@@ -3119,7 +3181,6 @@ def myfiles(unlinked, strm=False):
         except:
             poster = ""
         xbmcname = name
-
 
         mode = "t files menu"
         try:
@@ -3166,6 +3227,345 @@ def get_downloads(dl_status):
 def display_error(text1, text2):
     dialog = xbmcgui.Dialog()
     dialog.ok("Houston we have a problem",text1, text2, "Visit www.xbmchub.com/forums/what-furk/ for help")
+	
+################# MUSIC ########################################################################################
+def search_artist():
+    if mode == 'search artist menu':
+        keyboard = xbmc.Keyboard('', 'Search Artist')
+    else:
+        keyboard = xbmc.Keyboard('', 'Search Album')
+    keyboard.doModal()
+
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if len(query) > 0:
+            search_artists(query)
+
+def search_artists(query):
+    music=[]
+    if mode == 'search artist menu':
+        artist=query.replace(' ', '+')  
+        link = get_url('http://www.allmusic.com/search/artists/'+artist)
+        match=re.compile('<div class="photo">\n.+?a href="(.+?)" data-tooltip=".+?">\n.+?img src="(.+?).jpg.+?" height=".+?" alt="(.+?)">').findall(link)
+        for url,icon,artist in match:
+            url='http://www.allmusic.com'+url+'/discography'
+            iconimage=icon.replace('JPG_170','JPG_400')+'.jpg'
+            addDir(clean_file_name(artist),url,'discography menu',iconimage)
+    else:
+        album=query.replace(' ', '+') 
+        link = get_url('http://www.allmusic.com/search/albums/'+album).replace('\n','')
+        match=re.compile('<div class="cover">.+?href="(.+?)" title="(.+?)".+?<img src="(.+?).jpg.+?".+?<div class="artist">.+?a href=".+?">(.+?)</a>').findall(link)
+        for url,name,icon,artist in match:
+            url='http://www.allmusic.com'+'/album'+url
+            iconimage=icon.replace('JPG_170','JPG_250')+'.jpg'
+            addDir(artist, name,'music file disc menu',iconimage)
+
+def discography(artist,url,icon):
+    music=[]
+    link = get_url(url)
+    match=re.compile('<td class="cover">\n.+?a href="(.+?)"\n.+?title="(.+?)"\n.+?data-tooltip=".+?">\n.+?div class=".+?" style=".+?" ><img class=".+?" src=".+?" data-original="(.+?).jpg.+?"').findall(link)
+    uniques=[]
+    addDir(artist, "Discography",'music file disc menu',icon)
+    for url,name,iconimage in match:
+        if name not in uniques:
+            uniques.append(name)
+            url='http://www.allmusic.com'+'/album'+url
+            iconimage=iconimage.replace('JPG_250','JPG_400').replace('JPG_75','JPG_400')+'.jpg'
+            name=str(name).replace("'",'').replace(',','') .replace(":",'').replace('&amp;','And').replace('.','')
+            addDir(artist, name,'music file disc menu',iconimage)
+			
+def music_lists(url):
+    music = []
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+    response = urllib2.urlopen(req)
+    link=response.read()
+    response.close()
+
+    if mode == "ukofficial menu":
+        all_list = regex_get_all(link, '<div class="previewwindow">', '</div>')
+        for list in all_list:
+            icon = regex_from_to(list, 'src="', '" />')
+            title = clean_file_name(regex_from_to(list, '<h3>', '</h3>')).replace('&#039;',"'")
+            name = clean_file_name(regex_from_to(list, '<h4>', '</h4>')).replace('&#039;',"'")
+            music.append({'name': name, 'title': title, 'icon': icon})
+    elif mode == "billboard menu":
+        match = re.compile('"title" : "(.+?)"\r\n.+?"artist" : "(.+?)"\r\n.+?image" : "(.+?)"\r\n.+?"entityId" : ".+?"\r\n.+?"entityUrl" : "(.+?)"').findall(link)
+        for name, artist, iconimage, url in match:
+            artist=artist.replace('&','And')
+            url='http://www1.billboard.com'+url+'#'+url
+            if re.search('.gif',iconimage):
+                iconimage=""
+            music.append({'name': artist, 'title': name, 'icon': iconimage})
+      
+    return create_music_items(music)
+	
+def music_dialog(name, data, imdb_id):
+    items = []
+    icon=imdb_id
+    name1 = name
+    name2 = "%s %s" % (name, data)
+    if FURK_SEARCH_MF:
+        try:
+            mfiles = []
+            my_files = FURK.file_get('0')
+            mfiles = my_files.files
+            name3 = name.lower()
+            for f in mfiles:
+                if name3.replace(' &', '').replace(' and', '') in f.name.lower():
+                    name = clean_file_name(f.name)
+                    url = f.url_dl
+                    id = f.id
+                    size = f.size
+                    size = float(size)/1073741824
+                    size = "[%.2fGB]" % size
+                    text = '[COLOR gold]' + "%s %s %s" %("MF:",size, clean_file_name(f.name)) + '[/COLOR]'
+                    xbmcname = str("%s | %s" % (name1, data))
+
+                    mode = "t music files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, "", "")
+                    items.append(archive_tuple)
+        except:
+            pass
+        time.sleep(F_DELAY)
+		
+    files = []
+
+    searchstring = name2
+    files = search_furk(searchstring)
+    dialog = xbmcgui.Dialog()
+    if len(files) == 0:
+        dialog.ok("File Search", 'No files found for: ' + searchstring)
+        return (None, None)
+
+    for f in files:
+        if f.type != "video":
+            name = f.name.encode('utf-8','ignore')
+            url = f.url_dl
+            id = f.id
+            is_ready = f.is_ready
+            info_hash = f.info_hash
+            size = f.size
+            size = float(size)/1073741824
+            size = "[%.2fGB]" % size
+            text = "%s %s" %(size, name)
+            poster=icon
+            xbmcname = str("%s | %s" % (name1, data))
+            if  is_ready == "1" and f.url_dl != None:
+                text = '[COLOR cyan]' + "%s %s" %(size, clean_file_name(name)) + '[/COLOR]'
+                mode = "t music files menu"
+            else:
+                text = '[COLOR red]' + "%s %s" %(size, clean_file_name(name))+ '[/COLOR]'
+                poster = ""
+                id = info_hash
+                mode = "add download"
+
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
+            items.append(archive_tuple)
+	
+    return items;
+	
+def t_file_dialog_music(xbmcname, id, imdb_id, clear):################### EXPLORE T FILES ##########################################
+    items = []
+    files = []
+    browse=False
+    thumb=imdb_id
+    try:
+        namesplit=xbmcname.split(' | ')
+        artist=namesplit[0]
+        album=namesplit[1]
+    except:
+        pass
+
+    dialog = xbmcgui.Dialog()
+    my_files = FURK.t_file_get(id, t_files="1")
+    files = my_files.files
+    for f in files:
+        t_files = f.t_files
+    all_tf = regex_get_all(str(t_files), "{", "'}")
+    nItem = len(all_tf)
+    playlist=[]
+    if mode != "t music queue menu":
+        if dialog.yesno("WTF Music", 'Browse songs or play full album?', '', '', 'Play Now','Browse'):
+            browse=True
+    if browse==True:	
+        for tf in all_tf:
+            all_td = regex_get_all(tf, "{", "'}")
+            name = regex_from_to(str(all_td), "name': u'", "', u")
+            if name[len(name)-3:] == 'lac':
+                format = 'flac'
+            else:
+                format = name[len(name)-3:]
+            url = regex_from_to(str(all_td), "url_dl': u'", "', u")
+            size = regex_from_to(str(all_td), "size': u'", "'")
+            size = float(size)/1048576
+            size = "[%.1fMB]" % size
+            text = "[%s] %s %s" %(format, size, clean_file_name(name))
+
+            pl = get_XBMCPlaylist(clear=False)
+            if name[len(name)-3:] == 'lac' or name[len(name)-3:] == 'mp3' or name[len(name)-3:] == 'wma':
+                addLink(clean_file_name(name),url,thumb, xbmcname)
+                liz=xbmcgui.ListItem(name, iconImage=thumb, thumbnailImage=thumb)
+                try:
+                    liz.setInfo('music', {'Artist':artist, 'Album':album})
+                except:
+                    liz.setInfo('music', {'Artist':clean_file_name(xbmcname), 'Album':''})
+                liz.setProperty('mimetype', 'audio/mpeg')
+                liz.setProperty('fanart_image', fanart)
+                liz.setThumbnailImage(thumb)
+                playlist.append((url, liz))
+                
+    else:
+        for tf in all_tf:
+            all_td = regex_get_all(tf, "{", "'}")
+            name = regex_from_to(str(all_td), "name': u'", "', u")
+            if name[len(name)-3:] == 'lac':
+                format = 'flac'
+            else:
+                format = name[len(name)-3:]
+            url = regex_from_to(str(all_td), "url_dl': u'", "', u")
+            size = regex_from_to(str(all_td), "size': u'", "'")
+            size = float(size)/1048576
+            size = "[%.1fMB]" % size
+            text = "[%s] %s %s" %(format, size, clean_file_name(name))
+            dp = xbmcgui.DialogProgress()
+            dp.create("Pearl Jam Live",'Creating Your Playlist')
+            dp.update(0)
+            pl = get_XBMCPlaylist(clear)
+            if name[len(name)-3:] == 'lac' or name[len(name)-3:] == 'mp3' or name[len(name)-3:] == 'wma':
+                addLink(clean_file_name(name),url,thumb, xbmcname)
+                liz=xbmcgui.ListItem(name, iconImage=thumb, thumbnailImage=thumb)
+                try:
+                    liz.setInfo('music', {'Artist':artist, 'Album':album})
+                except:
+                    liz.setInfo('music', {'Artist':clean_file_name(xbmcname), 'Album':''})
+                liz.setProperty('mimetype', 'audio/mpeg')
+                liz.setThumbnailImage(thumb)
+                liz.setProperty('fanart_image', fanart)
+                if format != "flac":
+                    playlist.append((url, liz))
+
+                progress = len(playlist) / float(nItem) * 100               
+                dp.update(int(progress), 'Adding to Your Playlist',name)
+                if dp.iscanceled():
+                    return
+
+        for blob ,liz in playlist:
+            try:
+                if blob:
+                    pl.add(blob,liz)
+            except:
+                pass
+        if clear or (not xbmc.Player().isPlayingAudio()):
+            xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)
+			
+def add_audio_stream(xbmcname, id, imdb_id):
+    items = []
+    files = []
+    if xbmcname.find(' | ')>0:
+        namesplit=xbmcname.split(' | ')
+        artist=namesplit[0]
+        album=namesplit[1]
+    else:
+        artist="My Files Downloads"
+        album=xbmcname
+    notify = "%s,%s,%s" % ('XBMC.Notification(Adding stream files to your Music folder',xbmcname,'2000)')
+    xbmc.executebuiltin(notify)
+    artist_path = create_directory(DOWNLOAD_MUS, clean_file_name(artist, use_blanks=False))
+    album_path = create_directory(artist_path, clean_file_name(album, use_blanks=False))
+
+    my_files = FURK.t_file_get(id, t_files="1")
+    files = my_files.files
+    for f in files:
+        t_files = f.t_files
+    all_tf = regex_get_all(str(t_files), "{", "'}")
+
+    for tf in all_tf:
+        all_td = regex_get_all(tf, "{", "'}")
+        name = regex_from_to(str(all_td), "name': u'", "', u")
+        url = regex_from_to(str(all_td), "url_dl': u'", "', u")
+        text = clean_file_name(name)
+        if name[len(name)-3:] != "jpg" and name[len(name)-3:] != "txt" and name[len(name)-3:] != "nfo":
+            strm_string = str(url)
+            filename = clean_file_name("%s.strm" % name[:-4])
+            path = os.path.join(album_path, filename)
+            stream_file = open(path, 'w')
+            stream_file.write(strm_string)
+            stream_file.close()
+		
+    notify = "%s,%s,%s" % ('XBMC.Notification(Finished Adding Streams',xbmcname,'4000)')
+    xbmc.executebuiltin(notify)
+
+	
+def get_XBMCPlaylist(clear):
+    pl=xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
+    if clear:
+        pl.clear()
+    return pl
+
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Pearl Jam Live", 'Queue album or play now?', '', '', 'Play Now','Queue') == 0:
+        pl.clear()
+    return pl
+	
+def myfiles_audio(unlinked):
+    items = []
+	
+    if not login_at_furk():
+        return []
+		
+    files = []
+    my_files = FURK.file_get(unlinked)
+    files = my_files.files
+	
+    for f in files:
+        if f.type != "video":
+            name = f.name
+            url = f.url_dl
+            id = f.id
+            size = f.size
+            size = float(size)/1048576
+            size = "[%.1fMB]" % size
+            text = "%s %s" %(size, clean_file_name(name))
+            poster = ''
+            xbmcname = name
+
+            mode = "t music files menu"
+            try:
+                archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                items.append(archive_tuple)
+                setView('movies', 'movies-view')
+            except:
+                pass
+    return items;
+	
+def addLink(name,url,iconimage,albumname):
+    contextMenuItems = []
+    ok=True
+    download_url = '%s?name=%s&data=%s&imdb_id=%s&mode=download song' % (sys.argv[0], urllib.quote(albumname), url, name)  
+    contextMenuItems.append(('Download Song', 'XBMC.RunPlugin(%s)' % download_url))
+    liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+    liz.addContextMenuItems(contextMenuItems, replaceItems=False)
+    liz.setInfo( type="Audio", infoLabels={ "Title": name } )
+    liz.setProperty('fanart_image', fanart)
+    ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
+    return ok
+
+def addDir(name,data,mode,imdb_id):
+    contextMenuItems = []
+    u=sys.argv[0]+"?data="+urllib.quote_plus(data)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&imdb_id="+str(imdb_id)
+    ok=True
+    if mode =="music file disc menu":
+        liz=xbmcgui.ListItem("%s | %s" % (name, '[COLOR gold]' + data + '[/COLOR]'), iconImage="DefaultFolder.png", thumbnailImage=imdb_id)
+    else:
+        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=imdb_id)
+    contextMenuItems.append(('Search for music videos', "XBMC.Container.Update(%s?mode=music video menu&name=%s&data=%s&imdb_id=%s)" % (sys.argv[0], urllib.quote(name), "", "" ) ) )
+    liz.addContextMenuItems(contextMenuItems, replaceItems=False)
+    liz.setInfo( type="Audio", infoLabels={ "Title": name } )
+    ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
+    return ok
+
+################# END MUSIC ####################################################################################
 
 def create_movie_items(movies):
     items = []
@@ -3219,6 +3619,33 @@ def create_actor_items(actors):
         items.append(actor_tuple)
     
     return items
+	
+def create_music_items(music):
+    items = []
+
+    for m in music:
+        name = m['name']
+        title = m['title']
+        icon = m['icon']
+        music_tuple = create_music_tuple(name, title, icon)
+        items.append(music_tuple)
+    
+    return items
+	
+def create_music_tuple(name, title, icon):
+    music_url = create_url(name, "music file menu", title, icon)
+    music_list_item = create_music_list_item(name, icon, title);
+    music_tuple = (music_url, music_list_item, True)
+    return music_tuple
+	
+def create_music_list_item(name, icon, title):
+    contextMenuItems = []
+    text = "%s | %s" % (name, '[COLOR gold]' + title + '[/COLOR]')
+    contextMenuItems.append(('Search for music videos', "XBMC.Container.Update(%s?mode=music video menu&name=%s&data=%s&imdb_id=%s)" % (sys.argv[0], urllib.quote(name), "", "" ) ) )
+    li = xbmcgui.ListItem(clean_file_name(text, use_blanks=False))
+    li.addContextMenuItems(contextMenuItems, replaceItems=False)
+    li.setIconImage(icon)
+    return li
 
 def create_actor_tuple(name, photo, imdb_id, profession):
     actor_url = create_url(name, "actor movies menu", imdb_id, "")
@@ -3242,14 +3669,14 @@ def create_movie_directory_tuple(name, mode):
     return movie_directory_tuple
 
 def create_directory_tuple(name, mode):
-    directory_url = create_url(name, mode, "", "")
+    directory_url = create_url(name, mode, data, "")
     directory_list_item = create_directory_list_item(name, mode);
     directory_tuple = (directory_url, directory_list_item, True)
     return directory_tuple
     return directory_tuple
 	
-def create_subdirectory_tuple(name, mode):
-    subdirectory_url = create_url(name, mode, "", "")
+def create_subdirectory_tuple(name, mode, data):
+    subdirectory_url = create_url(name, mode, data, "")
     subdirectory_list_item = create_sub_directory_list_item(name, mode);
     subdirectory_tuple = (subdirectory_url, subdirectory_list_item, True)
     return subdirectory_tuple
@@ -3291,7 +3718,10 @@ def create_imdb_actorsearch_tuple(query):
     return imdb_actorsearch_tuple
 	
 def create_archive_tuple(xbmcname, text, name, mode, url, id, size, poster, imdb_id):
-    archive_url = create_url(xbmcname, mode, id, imdb_id)
+    if mode == "t music files menu" or mode == "t music queue menu":
+        archive_url = create_url(xbmcname, mode, id, poster)
+    else:
+        archive_url = create_url(xbmcname, mode, id, imdb_id)
     archive_list_item = create_archive_list_item(xbmcname, text, name, url, id, size, poster);
     archive_tuple = (archive_url, archive_list_item, True)
     return archive_tuple
@@ -3473,6 +3903,13 @@ def create_season_list_item(name, data, imdb_id, poster, fanart):
 	
 def create_archive_list_item(xbmcname, text, name, url, id, size, poster):
     contextMenuItems = []
+    if mode == 'music file menu' or mode == 'music file disc menu' or mode == 'my files audio menu':
+        download_music = '%s?name=%s&data=%s&imdb_id=%s&mode=download music' % (sys.argv[0], urllib.quote(xbmcname), url, urllib.quote(name))  
+        contextMenuItems.append(('Download Album', 'XBMC.RunPlugin(%s)' % download_music))
+        queue_music = '%s?name=%s&data=%s&imdb_id=%s&mode=t music queue menu' % (sys.argv[0], urllib.quote(xbmcname), id, poster)  
+        contextMenuItems.append(('Queue Album', 'XBMC.RunPlugin(%s)' % queue_music))
+        add_url = '%s?name=%s&data=%s&imdb_id=%s&mode=add audio stream' % (sys.argv[0], urllib.quote(xbmcname), id, urllib.quote(name))
+        contextMenuItems.append(('Add album stream to XBMC library', 'XBMC.RunPlugin(%s)' % add_url))
     if mode == 'my files deleted menu':
         mf_action = '%s?name=%s&data=%s&mode=mf clear' % (sys.argv[0], urllib.quote(name), id)  
         contextMenuItems.append(('Clear deleted file', 'XBMC.RunPlugin(%s)' % mf_action))
@@ -3653,6 +4090,38 @@ class DownloadThread(Thread):
                 download_tv_show_meta(imdb_id, META_PATH)
         xbmc.executebuiltin("Container.Refresh")
 		
+class DownloadMusicThread(Thread):
+    def __init__(self, name, url, data_path, album_path):
+        self.data = url
+        self.path = data_path
+        self.extpath = album_path
+        Thread.__init__(self)
+
+    def run(self):
+        path = str(self.path)
+        data = self.data
+        extract = str(self.extpath)
+        urllib.urlretrieve(data, path)
+        notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'4000)')
+        xbmc.executebuiltin(notify)
+        if mode!="download song":
+            notify = "%s,%s,%s" % ('XBMC.Notification(Extracting songs',clean_file_name(name, use_blanks=False),'4000)')
+            xbmc.executebuiltin(notify)
+            time.sleep(1)
+            extractfiles(path,extract)
+            os.remove(path)
+            notify = "%s,%s,%s" % ('XBMC.Notification(Finished',clean_file_name(name, use_blanks=False),'4000)')
+            xbmc.executebuiltin(notify)
+		
+def extractfiles(filepath, extpath):
+    try:
+        zipn = zipfile.ZipFile(filepath, 'r')
+        zipn.extractall(extpath)
+    except Exception, e:
+        print str(e)
+        return False
+
+    return True
 
 class DownloadFileThread(Thread):
     def __init__(self, name, url, data_path):
@@ -3720,6 +4189,9 @@ def get_menu_items(name, mode, data, imdb_id):
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
+    elif mode == "music video menu":
+        items = movie_dialog(name)
+        setView('movies', 'movies-view')
     elif mode == "download movies menu": #all menu
         items = download_movies_menu()
     elif mode == "download episodes menu": #all menu
@@ -3888,6 +4360,12 @@ def get_menu_items(name, mode, data, imdb_id):
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
         enable_sort = XBMC_SORT
+    elif mode == "music file menu": 
+        items = music_dialog(name, data, imdb_id)
+    elif mode == "music file disc menu": 
+        items = music_dialog(name, data, imdb_id)
+    elif mode == "context artist menu":
+        items = music_dialog(name, "", imdb_id)
     elif mode == "episodes menu":
         items = tv_shows_episodes_menu(data, imdb_id)
         setView('movies', 'episodes-view')
@@ -3898,6 +4376,8 @@ def get_menu_items(name, mode, data, imdb_id):
         items = myfiles_directory()
     elif mode == "my files menu":
         items = myfiles(unlinked='0')
+    elif mode == "my files audio menu":
+        items = myfiles_audio(unlinked='0')
     elif mode == "my files deleted menu":
         items = myfiles(unlinked='1')
     elif mode == "movie dialog menu":
@@ -3906,6 +4386,10 @@ def get_menu_items(name, mode, data, imdb_id):
         items = episode_dialog(data, imdb_id)
     elif mode == "t files menu":
         items = t_file_dialog_movie(name, data, imdb_id)
+    elif mode == "t music files menu":
+        items = t_file_dialog_music(name, data, imdb_id, True)
+    elif mode == "t music queue menu":
+        items = t_file_dialog_music(name, data, imdb_id, False)
     elif mode == "t files tv menu":
         items = t_file_dialog_movie(name, data, imdb_id)
     elif mode == "subscription menu": #Subscription menu
@@ -3926,6 +4410,20 @@ def get_menu_items(name, mode, data, imdb_id):
         items = get_downloads(dl_status='active')
     elif mode == "failed download menu":
         items = get_downloads(dl_status='failed')
+    elif mode == "music menu":
+        items = music_menu()
+    elif mode == "ukofficial menu":
+        items = music_lists(data)
+    elif mode == "billboard menu":
+        items = music_lists(data)
+    elif mode == "search artist menu":
+        items = search_artist()
+    elif mode == "search album menu":
+        items = search_artist()
+    elif mode == "chart menu":
+        items = chart_menu()
+    elif mode == "discography menu":
+        items = discography(name,data,imdb_id)
     else:
         items = []
         
@@ -4094,6 +4592,12 @@ elif mode == "download play":
 elif mode == "download only":
     download_only(name, data, imdb_id)
 	
+elif mode == "download music":
+    download_music(name, data, imdb_id)
+	
+elif mode == "download song":
+    download_music(name, data, imdb_id)
+	
 elif mode == "execute video":
     execute_video(name, data, imdb_id, strm=False)
 	
@@ -4133,6 +4637,22 @@ elif mode == "dev message":
 	
 elif mode == "view trailer":
     view_trailer(name, data, imdb_id)
+	
+elif mode == "add audio stream":
+    add_audio_stream(name, data, imdb_id)
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
 	
 
 

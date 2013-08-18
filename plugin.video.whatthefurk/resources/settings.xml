@@ -43,9 +43,10 @@
         <setting id="furk_limit_result" type="enum" values="1|3|5|10|15|20|25|50" label="30314" default="6" />
 	</category>
     <category label="Download">
-		<setting id="movies_download_directory" type="folder" label="30800" default=""/>
-		<setting id="tv_download_directory" type="folder" label="30801" default=""/>
+		<setting id="movies_download_directory" type="folder" label="30800" default="set"/>
+		<setting id="tv_download_directory" type="folder" label="30801" default="set"/>
         <setting id="download_subtitles" type="bool" label="30802" default="false"/>
+        <setting id="music_download_directory" type="folder" label="30803" default="set"/>
 	</category>
 	<category label="IMDB">
 		<setting id="separator" type="lsep" label="30199"/>

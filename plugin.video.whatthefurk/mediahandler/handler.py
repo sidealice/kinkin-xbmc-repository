@@ -15,7 +15,7 @@ META_QUALITY = settings.meta_quality()
 
 WAITING_TIME = 7
 
-def download(self, url, path, dp=None):
+def download(self, url, path, dp=None):#, dp=None
     if os.path.isfile(path) is True:
         return False
     try: 

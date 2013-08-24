@@ -108,6 +108,10 @@ FURK_SEARCH_MF = settings.furk_search_myfiles()
 ONECLICK_SEARCH = settings.oneclick_search()
 QUALITYSTYLE = settings.qualitystyle()
 QUALITYSTYLE_TV = settings.qualitystyle_tv()
+PREFERRED2 = settings.preferred2()
+CUSTOMQUALITY2 = settings.custom_quality2()
+TVPREFERRED2 = settings.preferred_tv2()
+TVCUSTOMQUALITY2 = settings.tvcustom_quality2()
 DOWNLOAD_MOV = settings.movies_download_directory()
 DOWNLOAD_TV = settings.tv_download_directory()
 DOWNLOAD_MUS = settings.music_download_directory()
@@ -122,6 +126,7 @@ TRAILER_RESTRICT = settings.restrict_trailer()
 TRAILER_QUALITY = settings.trailer_quality()
 TRAILER_ONECLICK = settings.trailer_one_click()
 F_DELAY = settings.furkdelay()
+DOWNLOAD_MUS_VID = settings.music_video_download_directory()
 
 
 fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
@@ -259,59 +264,89 @@ def account_info():
 def download_play(name, url, type):
     WAITING_TIME = 7
     if type == "tv":
-        data_path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
+        directory=DOWNLOAD_TV
+    elif type == "musicvid":
+        directory=DOWNLOAD_MUS_VID
+    else:
+        directory=DOWNLOAD_MOV
+		
+    if type == "tv":
+        data_path = os.path.join(directory, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThreadTV(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS_TV
-    else:
-        data_path = os.path.join(DOWNLOAD_MOV, clean_file_name(name, use_blanks=False))
+    elif type == "musicvid":
+        data_path = os.path.join(directory, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThread(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS
-    dlThread.start()
-    wait(WAITING_TIME, "Starting Download")
-    if os.path.exists(data_path):
-        scan_library()
-        notify = "%s,%s,%s" % ('XBMC.Notification(Added to Library',name,'4000)')
-        xbmc.executebuiltin(notify)
-        size = get_file_size(url)
-        list_data = "%s<|>%s<|>%s" % (name, data_path, size)
-        add_search_query(list_data, download_list)
-        xbmc.Player().play(data_path)
     else:
-        xbmcgui.Dialog().ok('Download failed', name)
+        data_path = os.path.join(directory, clean_file_name(name, use_blanks=False))
+        dlThread = DownloadFileThread(name, url, data_path)
+        download_list = ACTIVE_DOWNLOADS
+    if directory == "set" or directory == "":
+        xbmcgui.Dialog().ok('Download directory not set', 'Set your download path in settings first')
+        ADDON.openSettings()
+    else:
+        dlThread.start()
+        wait(WAITING_TIME, "Starting Download")
+        if os.path.exists(data_path):
+            scan_library()
+            notify = "%s,%s,%s" % ('XBMC.Notification(Added to Library',name,'4000)')
+            xbmc.executebuiltin(notify)
+            size = get_file_size(url)
+            list_data = "%s<|>%s<|>%s" % (name, data_path, size)
+            add_search_query(list_data, download_list)
+            xbmc.Player().play(data_path)
+        else:
+            xbmcgui.Dialog().ok('Download failed', name)
 	
 def download_only(name, url, type):
     
     WAITING_TIME = 5
     if type == "tv":
-        data_path = os.path.join(DOWNLOAD_TV, clean_file_name(name, use_blanks=False))
+        directory=DOWNLOAD_TV
+    elif type == "musicvid":
+        directory=DOWNLOAD_MUS_VID
+    else:
+        directory=DOWNLOAD_MOV
+    if type == "tv":
+        data_path = os.path.join(directory, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThreadTV(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS_TV
-    else:
-        data_path = os.path.join(DOWNLOAD_MOV, clean_file_name(name, use_blanks=False))
+    elif type == "musicvid":
+        data_path = os.path.join(directory, clean_file_name(name, use_blanks=False))
         dlThread = DownloadFileThread(name, url, data_path)
         download_list = ACTIVE_DOWNLOADS
-    dlThread.start()
-    if not name.endswith("srt"):
-        if mode != "wishlist search":
-            wait_dl_only(WAITING_TIME, "Starting Download")
-            if os.path.exists(data_path):
-                notify = "%s,%s,%s" % ('XBMC.Notification(Download started',name,'4000)')
-                xbmc.executebuiltin(notify)
-                scan_library()
-                notify = 'XBMC.Notification(Added to Library,You can play from library now,4000)'
-                xbmc.executebuiltin(notify)
-                size = get_file_size(url)
-                list_data = "%s<|>%s<|>%s" % (name, data_path, size)
-                add_search_query(list_data, download_list)
+    else:
+        data_path = os.path.join(directory, clean_file_name(name, use_blanks=False))
+        dlThread = DownloadFileThread(name, url, data_path)
+        download_list = ACTIVE_DOWNLOADS
+    print data_path[3:]
+    if directory == "set" or directory == "":
+        xbmcgui.Dialog().ok('Download directory not set', 'Set your download path in settings first')
+        ADDON.openSettings()
+    else:
+        dlThread.start()
+        if not name.endswith("srt"):
+            if mode != "wishlist search":
+                wait_dl_only(WAITING_TIME, "Starting Download")
+                if os.path.exists(data_path):
+                    notify = "%s,%s,%s" % ('XBMC.Notification(Download started',name,'4000)')
+                    xbmc.executebuiltin(notify)
+                    scan_library()
+                    notify = 'XBMC.Notification(Added to Library,You can play from library now,4000)'
+                    xbmc.executebuiltin(notify)
+                    size = get_file_size(url)
+                    list_data = "%s<|>%s<|>%s" % (name, data_path, size)
+                    add_search_query(list_data, download_list)
 
+                else:
+                    xbmcgui.Dialog().ok('Download failed', name)
             else:
-                xbmcgui.Dialog().ok('Download failed', name)
-        else:
-            time.sleep(6)
-            if os.path.exists(data_path):
-                size = get_file_size(url)
-                list_data = "%s<|>%s<|>%s" % (name, data_path, size)
-                add_search_query(list_data, download_list)
+                time.sleep(6)
+                if os.path.exists(data_path):
+                    size = get_file_size(url)
+                    list_data = "%s<|>%s<|>%s" % (name, data_path, size)
+                    add_search_query(list_data, download_list)
 				
 def download_music(xbmcname, url, filename):
     if xbmcname.find(' | ')>0:
@@ -1215,7 +1250,6 @@ def dvd_releases(list):
 
 def search_menu():
     items = []
-    items.append(create_directory_tuple('Search IMDB', 'imdb search menu'))
     items.append(create_directory_tuple('Search Furk', 'furk search menu'))
     items.append(create_directory_tuple('Search People', 'imdb actor menu'))
     return items
@@ -1260,6 +1294,7 @@ def imdb_menu():
     items.append(create_directory_tuple('Movies by Studio', 'movie studios menu'))
     items.append(create_directory_tuple('Scene Releases', 'nzbmovie menu'))	
     items.append(create_movie_directory_tuple('Blu-Ray at Amazon', 'blu-ray menu'))
+    items.append(create_directory_tuple('Search', 'imdb search menu'))
     return items
 	
 def imdb_menu_tv():
@@ -1268,6 +1303,7 @@ def imdb_menu_tv():
     items.append(create_directory_tuple('TV shows by Genre', 'tv show genres menu'))
     items.append(create_directory_tuple('TV shows by Group', 'tv show groups menu'))	
     items.append(create_directory_tuple('Active TV Shows', 'active tv shows menu'))
+    items.append(create_directory_tuple('Search', 'imdb search tv menu'))
     return items
 
 def music_menu():
@@ -1784,6 +1820,18 @@ def imdb_search_menu():
 
     return items
 	
+def imdb_search_menu_tv():
+    items = []
+    items.append(create_directory_tuple('@Search...', 'imdb result tv menu'))
+    
+    if os.path.isfile(IMDB_SEARCH_FILE):
+        s = read_from_file(IMDB_SEARCH_FILE)
+        search_queries = s.split('\n')
+        for query in search_queries:
+            items.append(create_imdb_search_tuple_tv(query))
+
+    return items
+	
 def imdb_actor_menu():
     items = []
     items.append(create_directory_tuple('@Search...', 'imdb actor result menu'))
@@ -1933,6 +1981,28 @@ def imdb_result_menu(query):
     if query.startswith('@'):
         query = ''
     
+        keyboard = xbmc.Keyboard(query, 'Search')
+        keyboard.doModal()
+
+        if keyboard.isConfirmed():
+            query = keyboard.getText()
+			
+    if len(query) > 0:
+        add_search_query(query, IMDB_SEARCH_FILE)
+        params = {}
+        params["title"] = query
+        dialog = xbmcgui.Dialog()
+        params["title_type"] = "feature,documentary"
+        search_result = search_imdb(params)
+        setView('movies', 'movies-view')
+        return create_movie_items(search_result)
+
+    return imdb_search_menu(), []
+	
+def imdb_result_menu_tv(query):
+    if query.startswith('@'):
+        query = ''
+    
     keyboard = xbmc.Keyboard(query, 'Search')
     keyboard.doModal()
 
@@ -1943,18 +2013,12 @@ def imdb_result_menu(query):
             params = {}
             params["title"] = query
             dialog = xbmcgui.Dialog()
-            if dialog.yesno("IMDB search", "What do you want to search?", "", '', "TV-shows", "Movies"):
-                params["title_type"] = "feature,documentary"
-                search_result = search_imdb(params)
-                setView('movies', 'movies-view')
-                return create_movie_items(search_result)
-            else:
-                params["title_type"] = "tv_series,mini_series"
-                search_result = search_imdb(params)
-                setView('movies', 'tvshows-view')
-                return create_tv_show_items(search_result)
+            params["title_type"] = "tv_series,mini_series"
+            search_result = search_imdb(params)
+            setView('movies', 'tvshows-view')
+            return create_tv_show_items(search_result)
 
-    #return imdb_search_menu(), []
+    return imdb_search_menu_tv(), []
 	
 def imdb_actor_result_menu(query):
     if query.startswith('@'):
@@ -1973,7 +2037,7 @@ def imdb_actor_result_menu(query):
             setView('movies', 'movies-view')
             return create_actor_items(search_result)
  
-    #return imdb_actor_menu(), []
+    return imdb_actor_menu(), []
 	
 ############################################### WTF BROWSE MEDIA ##############################################################
 def episode_dialog(data, imdb_id, strm=False):################### SEARCH TV ARCHIVES ##########################################
@@ -2036,14 +2100,19 @@ def episode_dialog(data, imdb_id, strm=False):################### SEARCH TV ARCH
         time.sleep(F_DELAY)
 
     if QUALITYSTYLE_TV == "preferred":
-        searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
+        operator="%7C"
+        searchstring = "%s %s %s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY, operator, TVCUSTOMQUALITY2)
         files = search_furk(searchstring)
-        if len(files)==0:
+        count=0
+        for f in files:
+            if f.is_ready == "0":
+                count=count+1
+        if (count == len(files) and len(files)>0) or len(files)==0:
             time.sleep(F_DELAY)
             notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
             xbmc.executebuiltin(notify)
             searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
-            files = search_furk(searchstring)
+            files.extend(search_furk(searchstring))
     else:
         quality_id = dialog.select("Select your preferred option", quality_list)
         quality = quality_list_return[quality_id]
@@ -2109,7 +2178,10 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
     items = []
     if FURK_SEARCH_MF:
         try:
-            name2 = data[:len(data)-7].replace("The ","").lower()
+            if mode=="music video menu":
+                name2 = data
+            else:
+                name2 = data[:len(data)-7].replace("The ","").lower()
             mfiles = []
             my_files = FURK.file_get('0')
             mfiles = my_files.files
@@ -2130,8 +2202,8 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
                         poster = ""
                     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
 
-                    mode = "t files menu"
-                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, "")
+                    mode1 = "t files menu"
+                    archive_tuple = create_archive_tuple(xbmcname, text, name, mode1, url, str(id), size, poster, "")
                     items.append(archive_tuple)
         except:
             pass
@@ -2144,13 +2216,21 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
     quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     
     if QUALITYSTYLE == "preferred":
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), CUSTOMQUALITY)
-            files = search_furk(searchstring)
-            if len(files) == 0:
-                time.sleep(F_DELAY)
-                notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
-                xbmc.executebuiltin(notify)
-                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","").replace("(","").replace(")","")))
+        operator="%7C"
+        if mode=="music video menu":
+            searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")",""))
+        else:
+            searchstring = "%s %s %s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), str(CUSTOMQUALITY), str(operator), str(CUSTOMQUALITY2))
+        files = search_furk(searchstring)
+        count=0
+        for f in files:
+            if f.is_ready == "0":
+                count=count+1
+        if (count == len(files) and len(files)>0) or len(files)==0:
+            time.sleep(F_DELAY)
+            notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
+            xbmc.executebuiltin(notify)
+            files.extend(search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","").replace("(","").replace(")",""))))
     else:
         quality_id = dialog.select("Select your preferred option", quality_list)
         quality = quality_list_return[quality_id]
@@ -2162,7 +2242,6 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
         else:
             searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ").replace("(","").replace(")","")), quality)
         files = search_furk(searchstring)
-    print "searchstring " + searchstring
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
         if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
@@ -2176,7 +2255,7 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
     else:
         fs_limit = 100
     for f in files:
-        if float(f.size)/1073741824 < fs_limit and f.type == "video" and f.video_info.find("mpeg2video")<0:
+        if float(f.size)/1073741824 < fs_limit and ((f.type == "video" and f.video_info.find("mpeg2video")<0) or f.is_ready =="0"):
             name = f.name.encode('utf-8','ignore')
             url = f.url_dl
             id = f.id
@@ -2192,13 +2271,16 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
                     poster = f.ss_urls_tn[0]
                 except:
                     poster = ""
-                mode = "t files menu"
+                if mode == "music video menu":
+                    mode1 = "t music vid files menu"
+                else:
+                    mode1 = "t files menu"
             else:
                 text = '[COLOR red]' + "%s %s" %(size, name)+ '[/COLOR]'
                 poster = ""
                 id = info_hash
-                mode = "add download"
-            archive_tuple = create_archive_tuple(xbmcname, text, name, mode, url, str(id), size, poster, imdb_id)
+                mode1 = "add download"
+            archive_tuple = create_archive_tuple(xbmcname, text, name, mode1, url, str(id), size, poster, imdb_id)
             items.append(archive_tuple)
             setView('movies', 'movies-view')
 		
@@ -2287,6 +2369,9 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### E
     files = []
     if mode == "t files menu" or mode == "t music files menu":
         type = "movie"
+        view = "movies-view"
+    elif mode == "t music vid files menu":
+        type = "musicvid"
         view = "movies-view"
     else:
         type = "tv"
@@ -2394,15 +2479,19 @@ def strm_episode_dialog(data, imdb_id, strm=False):##################### SEARCH 
         files = []
 
         if QUALITYSTYLE_TV == "preferred":
-            searchstring = "%s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY)
+            operator="%7C"
+            searchstring = "%s %s %s %s" % (tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "), TVCUSTOMQUALITY, operator, TVCUSTOMQUALITY2)
             files = search_furk(searchstring)
-            print len(files)
-            if len(files)==0:
+            count-0
+            for f in files:
+                if f.is_ready == "0":
+                    count=count+1
+            if (count == len(files) and len(files)>0) or len(files)==0:
                 time.sleep(F_DELAY)
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
                 searchstring = str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":"," "))
-                files = search_furk(searchstring)
+                files.extend(search_furk(searchstring))
         else:
             quality_id = dialog.select("Select your preferred option", quality_list)
             quality = quality_list_return[quality_id]
@@ -2522,13 +2611,18 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
 		
         files = []
         if QUALITYSTYLE == "preferred":
-            searchstring = "%s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY)
+            operator="%7C"
+            searchstring = "%s %s %s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), CUSTOMQUALITY, operator, CUSTOMQUALITY2)
             files = search_furk(searchstring)
-            if len(files)==0:
+            count=0
+            for f in files:
+                if f.is_ready == "0":
+                    count=count+1
+            if (count == len(files) and len(files)>0) or len(files)==0:
                 time.sleep(F_DELAY)
                 notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
                 xbmc.executebuiltin(notify)
-                files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
+                files.extend(search_furk(str(data.replace("-","").replace(" Documentary","").replace(":",""))))
         else:		
             quality_id = dialog.select("Select your preferred option", quality_list)
             quality = quality_list_return[quality_id]
@@ -2662,8 +2756,14 @@ def one_click_movie(name, imdb_id, strm=False):
     filename=name
 	
     files = []
-    files = search_furk(str(data.replace("-"," ").replace(" Documentary","").replace(":","")) + '+' + quality)
-    if len(files)==0:
+    operator="%7C"
+    searchstring = "%s %s %s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), quality, operator, CUSTOMQUALITY2)
+    files = search_furk(searchstring)
+    count=0
+    for f in files:
+        if f.is_ready == "0":
+            count=count+1
+    if (count == len(files) and len(files)>0) or len(files)==0:
         time.sleep(F_DELAY)
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
@@ -2745,8 +2845,14 @@ def one_click_episode(data, imdb_id, strm=False):
     track_filter = [episode_name, season_episode, season_episode2]
 	
     files = []
-    files = search_furk(str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")) + '+' + quality)
-    if len(files)==0:
+    operator="%7C"
+    searchstring = "%s %s %s %s" % (str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")), TVCUSTOMQUALITY, operator, TVCUSTOMQUALITY2)
+    files = search_furk(searchstring)
+    count=0
+    for f in files:
+        if f.is_ready == "0":
+            count=count+1
+    if (count == len(files) and len(files)>0) or len(files)==0:
         time.sleep(F_DELAY)
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
@@ -3583,6 +3689,7 @@ def create_movie_items(movies):
         except:
             rating = '0'
             votes = '0'
+
         movie_tuple = create_movie_tuple(name, imdb_id, rating, votes)
         items.append(movie_tuple)
         if not meta_exist(imdb_id, META_PATH) or imdb_id==None:
@@ -3707,6 +3814,12 @@ def create_furk_search_tuple(query):
 
 def create_imdb_search_tuple(query):
     imdb_search_url = create_url(query, "imdb result menu", query, "")
+    imdb_search_list_item = create_imdb_search_list_item(query);
+    imdb_search_tuple = (imdb_search_url, imdb_search_list_item, True)
+    return imdb_search_tuple
+	
+def create_imdb_search_tuple_tv(query):
+    imdb_search_url = create_url(query, "imdb result tv menu", query, "")
     imdb_search_list_item = create_imdb_search_list_item(query);
     imdb_search_tuple = (imdb_search_url, imdb_search_list_item, True)
     return imdb_search_tuple
@@ -3931,7 +4044,7 @@ def create_archive_list_item(xbmcname, text, name, url, id, size, poster):
 	
 def create_file_list_item(xbmcname, text, name, url, size, poster, type, imdb_id):
     contextMenuItems = []
-    if LIBRARY_FORMAT:
+    if LIBRARY_FORMAT and mode!="t music vid files menu":
         filename = "%s.%s" % (xbmcname,name[len(name)-3:])
     else:
         filename = name
@@ -4089,6 +4202,7 @@ class DownloadThread(Thread):
             for imdb_id in self.missing_meta:
                 download_tv_show_meta(imdb_id, META_PATH)
         xbmc.executebuiltin("Container.Refresh")
+        
 		
 class DownloadMusicThread(Thread):
     def __init__(self, name, url, data_path, album_path):
@@ -4385,6 +4499,8 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "episode dialog menu":
         items = episode_dialog(data, imdb_id)
     elif mode == "t files menu":
+        items = t_file_dialog_movie(name, data, imdb_id)#
+    elif mode == "t music vid files menu":
         items = t_file_dialog_movie(name, data, imdb_id)
     elif mode == "t music files menu":
         items = t_file_dialog_music(name, data, imdb_id, True)
@@ -4398,8 +4514,14 @@ def get_menu_items(name, mode, data, imdb_id):
         items = furk_search_menu()
     elif mode == "imdb search menu": #Search menu
         items = imdb_search_menu()
+    elif mode == "imdb search tv menu": #Search menu
+        items = imdb_search_menu_tv()
     elif mode == "imdb result menu":
-        items, missing_meta = imdb_result_menu(data)
+        items, missing_meta = imdb_result_menu(name)
+        #get_missing_meta(missing_meta, 'movies')
+    elif mode == "imdb result tv menu":
+        items, missing_meta = imdb_result_menu_tv(data)
+        #get_missing_meta(missing_meta, 'tv shows')
     elif mode == "imdb actor menu": #Search menu
         items = imdb_actor_menu()
     elif mode == "imdb actor result menu":

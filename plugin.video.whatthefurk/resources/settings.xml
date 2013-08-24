@@ -29,8 +29,10 @@
 		<setting id="furk_moderated" type="bool" label="30303" default="true"/>
         <setting id="qualitystyle" type="enum" values="Preferred|Full List" label="30320" default="1" />
 		<setting id="quality" type="enum" values="CAM|TS|TELESYNC|R5|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30305" default="10" />
+        <setting id="quality2" type="enum" values="CAM|TS|TELESYNC|R5|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30326" default="5" />
         <setting id="qualitystyle_tv" type="enum" values="Preferred|Full List" label="30322" default="1" />
-		<setting id="tvquality" type="enum" values="CAM|TS|TELESYNC|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30306" default="5" />
+		<setting id="tvquality" type="enum" values="CAM|TS|TELESYNC|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30306" default="9" />
+        <setting id="tvquality2" type="enum" values="CAM|TS|TELESYNC|DVDSCR|DVDRIP|HDTV|BRRIP|BDRIP|480P|720P|1080P|Any" label="30328" default="5" />
         <setting id="furkdelay" type="enum" values="no delay|1 second|2 seconds|3 seconds|4 seconds|5 seconds" label="30330" default="0" />
 		<setting id="furk_sort" type="enum" values="cached|relevance|size|date" label="30307" default="0" />
 		<setting id="furk_results" type="enum" values="all|cached" label="30308" default="1" />
@@ -47,6 +49,7 @@
 		<setting id="tv_download_directory" type="folder" label="30801" default="set"/>
         <setting id="download_subtitles" type="bool" label="30802" default="false"/>
         <setting id="music_download_directory" type="folder" label="30803" default="set"/>
+        <setting id="music_video_download_directory" type="folder" label="30804" default="set"/>
 	</category>
 	<category label="IMDB">
 		<setting id="separator" type="lsep" label="30199"/>

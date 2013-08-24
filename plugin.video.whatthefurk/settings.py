@@ -260,9 +260,81 @@ def custom_quality():
         return ''
     else:
         return '720P'
+		
+def preferred2():
+    if ADDON.getSetting('search_quality_2') == "true":
+        return True
+    else:
+        return False
+		
+def custom_quality2():
+    quality = ADDON.getSetting('quality2')
+    if quality == '0':
+        return 'CAM'
+    elif quality == '1':
+        return 'TS'
+    elif quality == '2':
+        return 'TELESYNC'
+    elif quality == '3':
+        return 'R5'
+    elif quality == '4':
+        return 'DVDSCR'
+    elif quality == '5':
+        return 'DVDRIP'
+    elif quality == '6':
+        return 'HDTV'
+    elif quality == '7':
+        return 'BRRIP'
+    elif quality == '8':
+        return 'BDRIP'
+    elif quality == '9':
+        return '480P'
+    elif quality == '10':
+        return '720P'
+    elif quality == '11':
+        return '1080P'
+    elif quality == '12':
+        return ''
+    else:
+        return '720P'
 
 def tvcustom_quality():
     quality = ADDON.getSetting('tvquality')
+    if quality == '0':
+        return 'CAM'
+    elif quality == '1':
+        return 'TS'
+    elif quality == '2':
+        return 'TELESYNC'
+    elif quality == '3':
+        return 'DVDSCR'
+    elif quality == '4':
+        return 'DVDRIP'
+    elif quality == '5':
+        return 'HDTV'
+    elif quality == '6':
+        return 'BRRIP'
+    elif quality == '7':
+        return 'BDRIP'
+    elif quality == '8':
+        return '480P'
+    elif quality == '9':
+        return '720P'
+    elif quality == '10':
+        return '1080P'
+    elif quality == '11':
+        return ''
+    else:
+        return '720P'
+		
+def preferred_tv2():
+    if ADDON.getSetting('search_tvquality_2') == "true":
+        return True
+    else:
+        return False
+		
+def tvcustom_quality2():
+    quality = ADDON.getSetting('tvquality2')
     if quality == '0':
         return 'CAM'
     elif quality == '1':
@@ -738,6 +810,9 @@ def tv_download_directory():
 		
 def music_download_directory():
     return ADDON.getSetting('music_download_directory')
+	
+def music_video_download_directory():
+    return ADDON.getSetting('music_video_download_directory')
 		
 def first_time_startup():
     if ADDON.getSetting('first_time_startup') == "true":

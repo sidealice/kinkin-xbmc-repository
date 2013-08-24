@@ -15,13 +15,15 @@ class Search(object):
         self.time = stats['time']
         self.total_found = stats['total_found']
         self.words = stats['words']
-
-        if self.total_found > 0:
-            files_data = data['files']
-            self.files = []
-            for file_data in files_data:
-                self.files.append(File(file_data))
-        else:
+        try:
+            if self.total_found > 0:
+                files_data = data['files']
+                self.files = []
+                for file_data in files_data:
+                    self.files.append(File(file_data))
+            else:
+                self.files = []
+        except:
             self.files = []
 			
 class Get(object):

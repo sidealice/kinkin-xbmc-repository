@@ -17,14 +17,14 @@ class FurkAPI(object):
         self.cookie_file = cookie_file
         
     #search for torrents
-    def search(self, query, filter, limit="25", match="all",
-               moderated="yes", offset="0", sort="cached,size"):#="all"
-        params = {"q": query, "filter": filter, "match": match,
+    def search(self, query, filter, limit="25", match="extended",
+               moderated="yes", offset="0", sort="cached,size"):#="all""q": query, 
+        params = {"filter": filter, "match": match,
                   "moderated": moderated, "offset": offset, "sort": sort}
+        params2 = "&q=%s" % (query)
         #"limit" argument does not seem to work
         command = "/api/plugins/metasearch"
-        response = self._api_call(command, params)
-        #print response
+        response = self._api_call(command, params, params2)
         if self._status_ok(response):
             #print response
             return Search(response)
@@ -35,7 +35,7 @@ class FurkAPI(object):
     def t_file_get(self, id, t_files="1"):
         params = {"id": id, "t_files": t_files}
         command = "/api/file/get"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         if self._status_ok(response):
             return Get(response)
         else:
@@ -46,7 +46,7 @@ class FurkAPI(object):
         #"limit" argument does not seem to work
         params = {"unlinked": unlinked}
         command = "/api/file/get"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         if self._status_ok(response):
             return Get(response)
         else:
@@ -57,7 +57,7 @@ class FurkAPI(object):
     def dl_add(self, info_hash):
         params = {"info_hash": info_hash}
         command = "/api/dl/add"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
 
         
@@ -65,7 +65,7 @@ class FurkAPI(object):
     def dl_get(self, dl_status):
         params = {"dl_status": dl_status}
         command = "/api/dl/get"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
         print response
 
@@ -78,28 +78,28 @@ class FurkAPI(object):
     def file_clear(self, id):
         params = {"id": id}
         command = "/api/file/clear"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
       
     #link files
     def file_link(self, id):
         params = {"id": id}
         command = "/api/file/link"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
 		
     #protect/unprotect files
     def file_protect(self, id, is_protected):
         params = {"id": id, "is_protected": is_protected}
         command = "/api/file/protect"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
            
     #unlink files
     def file_unlink(self, id):
         params = {"id": id}
         command = "/api/file/unlink"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
             
     #edit link (file) properties
@@ -137,28 +137,28 @@ class FurkAPI(object):
     def label_upsert(self):
         params = {"id": id, "id_labels":  id_labels}
         command = "/api/label/upsert"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
             
     #link a label with a file
     def label_link(self, id, id_labels):
         params = {"id_files": id, "id_labels":  id_labels}
         command = "/api/label/link"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
            
     #unlink a label with a file
     def label_unlink(self):
         params = {"id": id, "id_labels":  id_labels}
         command = "/api/label/unlink"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
         
     #login at Furk.net
     def login(self, username, password):
         params = {"login": username, "pwd": password}
         command = "/api/login/login"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         
         if self._status_ok(response):
             return True
@@ -169,7 +169,7 @@ class FurkAPI(object):
     def reg(self, login, pwd, re_pwd, email):
         params = {"login": login, "pwd": pwd, 're_pwd': re_pwd, 'email': email}
         command = "/api/login/reg"
-        response = self._api_call(command, params)
+        response = self._api_call(command, params,"")
         return response
      
     #logout from Furk.net
@@ -195,16 +195,16 @@ class FurkAPI(object):
         else:
             return False
 
-    def _api_call(self, command, params):
+    def _api_call(self, command, params, params2):
         url = "%s%s" % (API_URL, command)
-        body = self._get_url(url, params)
+        body = self._get_url(url, params, params2)
         data = json.loads(body)
         return data
 
 
-    def _get_url(self, url, params):
+    def _get_url(self, url, params, params2):
         params['INVITE'] = '1464627'
-        paramsenc = urllib.urlencode(params)
+        paramsenc = "%s%s" % (urllib.urlencode(params), params2)
         req = urllib2.Request(url, paramsenc)
 
         cj = cookielib.LWPCookieJar()

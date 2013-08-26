@@ -133,17 +133,17 @@ fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip1.5":
+    if ADDON.getSetting('dev_message')!="skip1.5.1a":
         dialog = xbmcgui.Dialog()
         #if dialog.yesno("What the Furk....xbmchub.com", "Current meta data (runtime) is calculated incorrectly", "This is now fixed, but existing meta text files should be deleted", "Posters and fanart will NOT be deleted", "Don't do anything", "Delete meta files"):
             #deletemetafiles()
         #else:
             #dialog.ok("What the Furk....xbmchub.com","No problem","You can run at any time from the maintenance menu")
-        dialog.ok("Changes in this version:","Fixed incorrect Furk timeout error","", "")
-        dialog.ok("Changes in this version continued:", "Added Music","Visit www.xbmchub.com for details", "")
-        #dialog.ok("Changes in this version continued:", "Fixed My Files passing incorrect name to xbmc player", "")
+        dialog.ok("Changes in versions 1.5.1/a:","","", "")
+        dialog.ok("Changes in this version continued:", "Added 2nd quality preference (preferred searches)","Set in settings", "Search will return both options")
+        dialog.ok("Changes in this version continued:", "Added other addon search to one-click play", "")
         #dialog.ok("Changes in this version continued:", "Added more options to 'New Movie Days' setting", "Now search up to 360 days")
-        ADDON.setSetting('dev_message', value='skip1.5') 
+        ADDON.setSetting('dev_message', value='skip1.5.1a') 
 
 ######################## DEV MESSAGE ###########################################################################################
 
@@ -958,7 +958,7 @@ def search_imdb(params):
     setView('movies', 'movies-view')
 	
 def title_search(params, start="1"):
-    print params
+
     params["view"] = VIEW
     params["start"] = start
     params["count"] = COUNT
@@ -971,8 +971,8 @@ def title_search(params, start="1"):
     return body
     
 def get_imdb_search_result(body):
-    all_tr = regex_get_all(body, '<tr class=', '</tr>')
     
+    all_tr = regex_get_all(body, '<tr class=', '</tr>')
     movies = []
     for tr in all_tr:
         all_td = regex_get_all(tr, '<td', '</td>')
@@ -985,6 +985,7 @@ def get_imdb_search_result(body):
         except:
             rating = ""
             votes = ""
+        
         movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
     return movies
 	
@@ -2135,7 +2136,7 @@ def episode_dialog(data, imdb_id, strm=False):################### SEARCH TV ARCH
         files = search_furk(searchstring)
 
     if len(files) == 0:
-        if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+        if dialog.yesno("File Search", 'No files found for:', searchstring.replace('%7C','|'), "Search latest torrents?"):
             download_kat(tv_show_name, season_episode)
             return (None, None)
         else:
@@ -2244,7 +2245,7 @@ def movie_dialog(data, imdb_id=None, strm=False):################### SEARCH MOVI
         files = search_furk(searchstring)
     xbmcname = str(data.replace("-"," ").replace(" Documentary","").replace(":"," "))
     if len(files) == 0:
-        if dialog.yesno("File Search", 'No files found for: ' + searchstring, "Search latest torrents?"):
+        if dialog.yesno("File Search", 'No files found for:', searchstring.replace('%7C','|'), "Search latest torrents?"):
             download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), "dummy")
             return (None, None)
         else:
@@ -2754,6 +2755,9 @@ def one_click_movie(name, imdb_id, strm=False):
     quality = CUSTOMQUALITY
     dialog = xbmcgui.Dialog()
     filename=name
+    name2 = name[:len(data)-7].replace("The ","").lower()
+    customstring="abcdef"
+    menu_texts = []
 	
     files = []
     operator="%7C"
@@ -2768,16 +2772,73 @@ def one_click_movie(name, imdb_id, strm=False):
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
         files = search_furk(str(data.replace("-","").replace(" Documentary","").replace(":","")))
+        count=0
+        for f in files:
+            if f.is_ready == "0":
+                count=count+1
 
-    pDialog = xbmcgui.DialogProgress()
-    pDialog.create('Searching for files 1-Click')
+    if (count == len(files) and len(files)>0) or len(files)==0:
+        menu_texts.append("...Search Easynews")
+        menu_texts.append("...Search 1Channel")
+        menu_texts.append("...Search Icefilms")
+        menu_texts.append("...Search MashUp")
+        menu_texts.append("...Search latest torrents")
+
+        menu_id = dialog.select('No file found....try another addon?', menu_texts)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        if customstring!="abcdef":
+            name=customstring
+            name2=customstring
+        if(menu_id == len(menu_texts)-5):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
+                xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=3&iconimage=%s&fanart=%s&series=None&description=None&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/',name2, iconimage,fanart)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the EasyNews addon to use this function")
+        elif(menu_id == len(menu_texts)-4):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+        elif(menu_id == len(menu_texts)-3):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
+                url='http%3a%2f%2fwww.icefilms.info%2f'
+                xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',url,urllib.quote_plus(name2),"0")))
+            else:
+                dialog.ok("Addon not installed", "", "Install the IceFilms addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.movie25'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=4&url=%s)' %('plugin://plugin.video.movie25/',urllib.quote_plus(name.replace("The ","")))))
+            else:
+                dialog.ok("Addon not installed", "", "Install the MashUp addon to use this function")
+        elif(menu_id == len(menu_texts)-1):
+            download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(":"," ")), "dummy")
+    else:
+
+        pDialog = xbmcgui.DialogProgress()
+        pDialog.create('Searching for files 1-Click')
         
-    tracks = []
-    count = 0
-    for f in files:
-        if f.type == "video" and f.url_dl != None:
-            if FURK_LIM_FS:
-                if int(f.size)/1073741824 < FURK_LIM_FS_NUM:
+        tracks = []
+        count = 0
+        for f in files:
+            if f.type == "video" and f.url_dl != None:
+                if FURK_LIM_FS:
+                    if int(f.size)/1073741824 < FURK_LIM_FS_NUM:
+                        if pDialog.iscanceled(): 
+                            pDialog.close()
+                            break
+                        count = count + 1
+                        if count > FURK_LIMIT:
+                            pDialog.close()
+                            break
+                        percent = int(float(count * 100) / len(files))
+                        text = "%s files found" % len(tracks)
+                        pDialog.update(percent, text)
+                        new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
+                        tracks.extend(new_tracks)
+					
+                else:
                     if pDialog.iscanceled(): 
                         pDialog.close()
                         break
@@ -2790,33 +2851,19 @@ def one_click_movie(name, imdb_id, strm=False):
                     pDialog.update(percent, text)
                     new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
                     tracks.extend(new_tracks)
-					
-            else:
-                if pDialog.iscanceled(): 
-                    pDialog.close()
-                    break
-                count = count + 1
-                if count > FURK_LIMIT:
-                    pDialog.close()
-                    break
-                percent = int(float(count * 100) / len(files))
-                text = "%s files found" % len(tracks)
-                pDialog.update(percent, text)
-                new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
-                tracks.extend(new_tracks)
 
-    (url, name, id) = track_dialog(tracks)
-    pDialog.close()
+        (url, name, id) = track_dialog(tracks)
+        pDialog.close()
      
-    if not url or not name:
-        if strm:
-            set_resolved_to_dummy()
-        return
+        if not url or not name:
+            if strm:
+                set_resolved_to_dummy()
+            return
 	
-    if LIBRARY_FORMAT:    
-        execute_video(filename, url, imdb_id, strm)
-    else:
-        execute_video(name, url, imdb_id, strm)
+        if LIBRARY_FORMAT:    
+            execute_video(filename, url, imdb_id, strm)
+        else:
+            execute_video(name, url, imdb_id, strm)
 	
 def one_click_episode(data, imdb_id, strm=False):
     open_playlists = True
@@ -2825,6 +2872,9 @@ def one_click_episode(data, imdb_id, strm=False):
     menu_linkid = []
     menu_url_pls = []
     quality = TVCUSTOMQUALITY
+    dialog = xbmcgui.Dialog()
+    customstring="abcdef"
+    menu_texts = []
 
     if re.search('<|>',data):
         data = data.split('<|>')
@@ -2857,16 +2907,69 @@ def one_click_episode(data, imdb_id, strm=False):
         notify = 'XBMC.Notification(No custom-quality files found,Now searching for any quality,3000)'
         xbmc.executebuiltin(notify)
         files = search_furk(str(tv_show_episode.replace("-"," ").replace(" Mini-Series","").replace(":","")))
+        count=0
+        for f in files:
+            if f.is_ready == "0":
+                count=count+1
 
-    pDialog = xbmcgui.DialogProgress()
-    pDialog.create('Searching for files 1-Click')
+    if (count == len(files) and len(files)>0) or len(files)==0:
+        menu_texts.append("...Search Easynews")
+        menu_texts.append("...Search 1Channel")
+        menu_texts.append("...Search Icefilms")
+        menu_texts.append("...Search latest torrents")
+
+        menu_id = dialog.select('No file found....try another addon?', menu_texts)
+        iname = "%s %sx%.2d" % (tv_show_name,season_number,episode_number)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        if customstring!="abcdef":
+            easyname=customstring
+            tv_show_name=customstring
+            iname=customstring
+        if(menu_id == len(menu_texts)-4):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.EasyNews'):
+                xbmc.executebuiltin(('Container.Update(%s?name=%s&url=None&mode=13&iconimage=None&fanart=%s&series=%s&description=%s&downloadname=downloadname)' %('plugin://plugin.video.EasyNews/', blank, fanart, easyname,description)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the EasyNews addon to use this function")
+        elif(menu_id == len(menu_texts)-3):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
+                iurl='http%3a%2f%2fwww.icefilms.info%2f'
+                xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
+            else:
+                dialog.ok("Addon not installed", "", "Install the Icefilms addon to use this function")
+        elif(menu_id == len(menu_texts)-1):
+            download_kat(tv_show_name, season_episode)
+    else:
+
+        pDialog = xbmcgui.DialogProgress()
+        pDialog.create('Searching for files 1-Click')
         
-    tracks = []
-    count = 0
-    for f in files:
-        if f.type == "video" and f.url_dl != None:
-            if FURK_LIM_FS_TV:
-                if int(f.size)/1073741824 < FURK_LIM_FS_NUM_TV:
+        tracks = []
+        count = 0
+        for f in files:
+            if f.type == "video" and f.url_dl != None:
+                if FURK_LIM_FS_TV:
+                    if int(f.size)/1073741824 < FURK_LIM_FS_NUM_TV:
+                        if pDialog.iscanceled(): 
+                            pDialog.close()
+                            break
+                        count = count + 1
+                        if count > FURK_LIMIT:
+                            pDialog.close()
+                            break
+                        percent = int(float(count * 100) / len(files))
+                        text = "%s files found" % len(tracks)
+                        pDialog.update(percent, text)
+                        new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
+                        tracks.extend(new_tracks)
+					
+                else:
                     if pDialog.iscanceled(): 
                         pDialog.close()
                         break
@@ -2879,34 +2982,20 @@ def one_click_episode(data, imdb_id, strm=False):
                     pDialog.update(percent, text)
                     new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
                     tracks.extend(new_tracks)
-					
-            else:
-                if pDialog.iscanceled(): 
-                    pDialog.close()
-                    break
-                count = count + 1
-                if count > FURK_LIMIT:
-                    pDialog.close()
-                    break
-                percent = int(float(count * 100) / len(files))
-                text = "%s files found" % len(tracks)
-                pDialog.update(percent, text)
-                new_tracks = get_playlist_tracks(f, open_playlists=open_playlists)
-                tracks.extend(new_tracks)
 
-    (url, name, id) = track_dialog(tracks)
-    pDialog.close()
+        (url, name, id) = track_dialog(tracks)
+        pDialog.close()
      
-    if not url or not name:
-        if strm:
-            set_resolved_to_dummy()
-        return
+        if not url or not name:
+            if strm:
+                set_resolved_to_dummy()
+            return
 	
-    li = xbmcgui.ListItem(clean_file_name(data))
-    if LIBRARY_FORMAT:    
-        execute_video(tv_show_episode, url, imdb_id, strm)
-    else:
-        execute_video(name, url, imdb_id, strm)
+        li = xbmcgui.ListItem(clean_file_name(data))
+        if LIBRARY_FORMAT:    
+            execute_video(tv_show_episode, url, imdb_id, strm)
+        else:
+            execute_video(name, url, imdb_id, strm)
 
 def get_playlist_tracks(playlist_file, open_playlists=False):######### SEARCH TRACKS #####
     tracks = []

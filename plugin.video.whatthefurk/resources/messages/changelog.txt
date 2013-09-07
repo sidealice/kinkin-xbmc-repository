@@ -1,5 +1,7 @@
-[COLOR cyan][B]Changes in version 1.5.2[/B][/COLOR]
+[COLOR cyan][B]Changes in version 1.5.2a[/B][/COLOR]
+Fixed issue where user is asked for rating even if Parental Control is disabled.
 
+[COLOR cyan][B]Changes in version 1.5.2[/B][/COLOR]
 
 [COLOR gold][B]1. Added pagination to all IMDB searches[/B][/COLOR]
 The setting [COLOR cyan][IMDB/NUMBER OF MENU ITEMS][/COLOR] has been changed. You can now 

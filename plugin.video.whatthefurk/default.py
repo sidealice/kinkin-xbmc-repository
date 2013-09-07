@@ -3281,7 +3281,10 @@ def execute_video(name, url, list_item, strm=False):
     now = time.strftime("%H")
     dialog = xbmcgui.Dialog()
     imdb_id=list_item
-    mpaa = parental_control(imdb_id)
+    if PC_ENABLE:
+        mpaa = parental_control(imdb_id)
+    else:
+        mpaa = 0
     pw=''
     if mpaa >= PC_RATING and PC_ENABLE and ((int(now) < int(PC_WATERSHED) and int(now) > 6) or int(PC_WATERSHED) == 25):
         keyboard = xbmc.Keyboard(pw, 'Enter your PIN/Password to play', True)

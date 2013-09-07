@@ -1,0 +1,60 @@
+[COLOR cyan][B]Changes in version 1.5.2[/B][/COLOR]
+
+
+[COLOR gold][B]1. Added pagination to all IMDB searches[/B][/COLOR]
+The setting [COLOR cyan][IMDB/NUMBER OF MENU ITEMS][/COLOR] has been changed. You can now 
+select from 25|50|100|150|200|250 (default is 50).
+All IMDB searches will limit results-per-page based on your setting. A
+"Next page" link has been added to the bottom of each page, giving you the
+option of browsing thousands of titles.
+There is also a link to return to the root Movies or TV section.
+
+[COLOR gold][B]2. Play archives with one click[/B][/COLOR] 
+A new setting [COLOR cyan][FURK/Play archives automatically][/COLOR] has been added.
+Enabling this will reduce the number of clicks required to play a title. If an 
+archive contains only one video file it will be played without first viewing the
+file itself. If the archive contains more than one video file it will switch to
+browse mode.
+A new context menu option has been added to the archive list if you
+want to browse the contents and use download or download_play mode.
+
+[COLOR gold][B]2. Added Parental Controls[/B][/COLOR] 
+[B]Parental Controls are LIVE in this version![/B]
+A new settings section has been added....hidden away after the auto-view settings.
+Set the following:
+[COLOR cyan][Enable Parental Control][/COLOR]: Turn parental control on/off
+[COLOR cyan][Set watershed time][/COLOR]: Set a time between 15:00 and 23:00 or set to "ALWAYS ON"
+Any video will play without needing a PIN after this time, but controls are automatically turned 
+on again at 6AM					  
+[COLOR cyan][Set minimum watershed rating][/COLOR]: There are 4 settings (movie rating first).......
+a. "G or TV-Y/TV-Y7/TV-G"
+b. "PG or TV-Y7-FV/TV-PG"
+c. "PG-13 or TV-14"
+d. "R/NC-17 or TV-MA"
+Any movie or tv show with a rating EQUAL TO OR GREATER THAN your setting will require
+a PIN before playing (unless it is past your watershed time) 
+[COLOR cyan][Set PIN][/COLOR]: PIN is set to "0000" by default. I suggest setting a 4 digit PIN as it's easier to 
+enter on a remote.
+[COLOR cyan][Set action if no rating is available][/COLOR]: Files played directly from "My Files" or "Furk Search" will
+not have an MPAA rating. Set your option here to either play them or require a PIN
+
+You can use the PIN or your Furk account password to play a title.
+[COLOR red]Locking the Parental Control settings[/COLOR]
+If your kids know their way round the settings window you can lock them to your PIN.
+In the MAINTENANCE menu you will see a new link to [LOCK Parental Control Settings]. If you enter the correct
+PIN (or your Furk password) the Parental Control settings tab will be locked. To unlock, perform the same
+action from the maintenance menu.
+
+MPAA ratings are sourced directly from the meta file that's saved when you browse menus (from tvdb or tmdb). 
+If for some reason you don't download meta......or if there is no rating available.....you will be given the
+option to set your own rating when playing the movie/tv show. You will need your PIN to save the rating.
+This rating will be saved for future plays.
+
+Just like to say a big thanks to BSTRDMKR for the text box code. over the next few releases I'll be using it to
+add help sections to each menu.
+
+If you have any questions visit the What the Furk forum on www.xbmchub.com.
+
+kinkin
+
+

@@ -24,6 +24,7 @@
 		<setting id="furk_account" type="bool" label="30300" default="false"/>
 		<setting id="furk_user" type="text" label="30301" default="" enable="!eq(-1,false)"/>
 		<setting id="furk_pass" type="text" option="hidden" label="30302" default="" enable="!eq(-2,false)"/>
+        <setting id="skip_file_browse" type="bool" label="30340" default="false"/>
         <setting id="oneclick_search" type="bool" label="30319" default="false"/>
         <setting id="furk_search_myfiles" type="bool" label="30321" default="true"/>
 		<setting id="furk_moderated" type="bool" label="30303" default="true"/>
@@ -52,8 +53,9 @@
         <setting id="music_video_download_directory" type="folder" label="30804" default="set"/>
 	</category>
 	<category label="IMDB">
+        <setting id="show_rating" type="bool" label="30220" default="false"/>
 		<setting id="separator" type="lsep" label="30199"/>
-		<setting id="number_of_results" type="enum" values="250|500|750|1000" label="30200" default="0" />
+		<setting id="number_of_results" type="enum" values="25|50|100|150|200|250" label="30200" default="1" />
 	    <setting id="separator" type="lsep" label="30201"/>
 		<setting id="release_date" type="bool" label="30202" default="false"/>
 		<setting id="release_date_from" type="text" label="30203" default="YYYY-MM-DD" enable="!eq(-1,false)"/>
@@ -140,5 +142,13 @@
 		<setting id="seasons-view" type="number" label="30603" default="504" enable="!eq(-3,false)"/>	
 		<setting id="episodes-view" type="number" label="30604" default="504" enable="!eq(-4,false)"/>
 		<setting id="default-view" type="number" label="30605" default="50" enable="!eq(-5,false)"/>
-   	</category>	
+   	</category>
+    <category label="Parental Control">
+        <setting id="enable_pc_settings" type="text" label="31000" visible="true" default="UNLOCKED" enable="false"/>
+		<setting id="enable_pc" type="bool" label="31001" default="false" enable="eq(-1,UNLOCKED)"/>
+        <setting id="watershed_pc" type="enum" values="15:00|16:00|17:00|18:00|19:00|20:00|21:00|22:00|23:00|ALWAYS ON" label="31002" default="6" enable="eq(-2,UNLOCKED)"/>
+	    <setting id="pw_required_at" type="enum" values="G or TV-Y/TV-Y7/TV-G|PG or TV-Y7-FV/TV-PG|PG-13 or TV-14|R/NC-17 or TV-MA" label="31003" default="2" enable="eq(-3,UNLOCKED)"/>
+        <setting id="pc_pass" type="text" option="hidden" label="31004" default="0000" enable="eq(-4,UNLOCKED)"/>
+        <setting id="pc_default" type="enum" values="PLAY|REQUIRE PIN" label="31006" default="0" enable="eq(-5,UNLOCKED)"/>
+	</category>
 </settings>

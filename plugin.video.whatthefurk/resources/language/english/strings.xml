@@ -14,6 +14,7 @@
     <string id="30119">    Trailer quality</string>
 	<string id="30120">    One-click play</string>
     <!-- Filters -->
+    <string id="30220">Show IMDB rating</string>
     <string id="30199">General</string>
     <string id="30200">Number of menu items</string>
     <string id="30201">Release date</string>
@@ -77,6 +78,7 @@
 	<string id="30300">Furk account</string>
 	<string id="30301">    Username</string>
     <string id="30302">    Password</string>
+    <string id="30340">Play archive automatically (use context menu to browse)</string>
     <string id="30319">One-Click Play - Furk Search</string>
     <string id="30321">Check My Files when searching</string>
     <string id="30303">Adult filter</string>
@@ -121,11 +123,17 @@
 	<string id="30509">IMDB Search</string>
     <string id="30510">Blu-ray at Amazon</string>
 	<string id="30511">Enable built in XBMC Sort</string>
-	    <!-- Auto View -->
+	<!-- Auto View -->
     <string id="30600">Enable Automatic View</string>
     <string id="30601">Movies View</string>
     <string id="30602">TV Shows View</string>
     <string id="30603">Seasons View</string>
     <string id="30604">Episodes View</string>
     <string id="30605">Default View</string>
+    <!-- Parental Control -->
+    <string id="31001">Enable Parental Control</string>
+    <string id="31002">Set watershed time</string>
+    <string id="31003">Set minimum watershed rating</string>
+    <string id="31004">Set PIN</string>
+    <string id="31006">Set action if no rating is available</string>
 </strings>

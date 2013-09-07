@@ -56,6 +56,18 @@ def meta_path():
         return ADDON.getSetting('meta_path')
     else:
         return create_directory(DATA_PATH, "meta")
+		
+def skip_file_browse():
+    if ADDON.getSetting('skip_file_browse') == "true":
+        return True
+    else:
+        return False
+		
+def show_rating():
+    if ADDON.getSetting('show_rating') == "true":
+        return True
+    else:
+        return False
 
 def furk_moderated():
     if ADDON.getSetting('furk_moderated') == "true":
@@ -622,7 +634,20 @@ def imdb_filter_votes():
         return "2500,"
 
 def imdb_results():
-    return (int(ADDON.getSetting('number_of_results')) + 1) * 250
+    limit = ADDON.getSetting('number_of_results')
+    if limit == '0':
+        return 25
+    elif limit == '1':
+        return 50
+    elif limit == '2':
+        return 100
+    elif limit == '3':
+        return 150
+    elif limit == '4':
+        return 200
+    else:
+        return 250
+
 	
 def imdb_user():
     return ADDON.getSetting('imdb_user')
@@ -881,4 +906,59 @@ def poster_quality():
     elif quality_id == '1':
         return 'cover' 
     else:
-        return 'thumb'    
+        return 'thumb'
+
+def enable_pc():
+    if ADDON.getSetting('enable_pc') == "true":
+        return True
+    else:
+        return False
+		
+def watershed_pc():
+    id = ADDON.getSetting('watershed_pc')
+    if id == '9':
+        return 25
+    elif id == '8':
+        return 23 
+    elif id == '7':
+        return 22 
+    elif id == '6':
+        return 21
+    elif id == '5':
+        return 20
+    elif id == '4':
+        return 19
+    elif id == '3':
+        return 18
+    elif id == '2':
+        return 17
+    elif id == '1':
+        return 16
+    else:
+        return 15
+		
+def pw_required_at():
+    id = ADDON.getSetting('pw_required_at')
+    if id == '3':
+        return 4
+    elif id == '2':
+        return 3
+    elif id == '1':
+        return 2
+    else:
+        return 1
+
+def enable_pc_settings():
+    return ADDON.getSetting('enable_pc_settings')
+		
+def pc_pass():
+    return ADDON.getSetting('pc_pass')
+	
+
+def pc_default():
+    id = ADDON.getSetting('pc_default')
+    if id == '1':
+        return "DO NOT PLAY"
+    else:
+        return "PLAY"
+	

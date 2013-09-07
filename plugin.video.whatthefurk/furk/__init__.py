@@ -26,7 +26,6 @@ class FurkAPI(object):
         command = "/api/plugins/metasearch"
         response = self._api_call(command, params, params2)
         if self._status_ok(response):
-            #print response
             return Search(response)
         else:
             return None
@@ -48,6 +47,7 @@ class FurkAPI(object):
         command = "/api/file/get"
         response = self._api_call(command, params,"")
         if self._status_ok(response):
+            #print response
             return Get(response)
         else:
             return None
@@ -67,7 +67,7 @@ class FurkAPI(object):
         command = "/api/dl/get"
         response = self._api_call(command, params,"")
         return response
-        print response
+        #print response
 
         
     #get files basic info
@@ -158,7 +158,7 @@ class FurkAPI(object):
     def login(self, username, password):
         params = {"login": username, "pwd": password}
         command = "/api/login/login"
-        response = self._api_call(command, params,"")
+        response = self._api_call(command, params,"login")
         
         if self._status_ok(response):
             return True
@@ -204,7 +204,10 @@ class FurkAPI(object):
 
     def _get_url(self, url, params, params2):
         params['INVITE'] = '1464627'
-        paramsenc = "%s%s" % (urllib.urlencode(params), params2)
+        if params2=="login":
+            paramsenc = urllib.urlencode(params)
+        else:
+            paramsenc = "%s%s" % (urllib.urlencode(params), params2)
         req = urllib2.Request(url, paramsenc)
 
         cj = cookielib.LWPCookieJar()

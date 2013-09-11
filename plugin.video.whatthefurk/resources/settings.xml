@@ -1,5 +1,6 @@
 <settings>
 	<category label="Option">
+        <setting id="disable_dialog" type="text" label="Disable Dialog" default="ENABLE" visible="false"/>
         <setting id="service_time" type="text" label="Service Time" default="2000-01-01 00:00:00" visible="false"/>
         <setting id="ga_time" type="text" label="GA Called" default="2000-01-01 00:00:00" visible="false"/>
         <setting id="visitor_ga" type="text" label="GA visitor" default="" visible="false"/>
@@ -123,6 +124,7 @@
 	</category>
 	<category label="Sort (desc)">
 		<setting id="top_movies_sort" type="enum" values="Alphbetical|User Rating|Votes|Year|US Release Date|Box Office Gross|Moviemeter" label="30500" default="5"/>
+        <setting id="mpaa_sort" type="enum" values="Alphbetical|User Rating|Votes|Year|US Release Date|Box Office Gross|Moviemeter" label="30511" default="6"/>
 		<setting id="movie_genre_sort" type="enum" values="Alphbetical|User Rating|Votes|Year|US Release Date|Box Office Gross|Moviemeter" label="30501" default="2"/>
 		<setting id="movie_group_sort" type="enum" values="Alphbetical|User Rating|Votes|Year|US Release Date|Box Office Gross|Moviemeter" label="30502" default="2"/>
 		<setting id="movie_studio_sort" type="enum" values="Alphbetical|User Rating|Votes|Year|US Release Date|Box Office Gross|Moviemeter" label="30503" default="2"/>

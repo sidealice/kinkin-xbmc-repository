@@ -19,8 +19,8 @@ import datetime
 import zipfile
 
 ADDON = settings.addon()
-
-
+ADDON.setSetting('disable_dialog', value='ENABLE')
+DISABLE_DIALOG = settings.disable_dialog()
 DATA_PATH = settings.data_path()
 CACHE_PATH = settings.cache_path()
 COOKIE_JAR = settings.cookie_jar()
@@ -55,6 +55,7 @@ FIRST_TIME_STARTUP = settings.first_time_startup()
 PLAY_MODE = settings.play_mode()
 FURK = FurkAPI(COOKIE_JAR)
 SORT_TOP_MOV = settings.top_movies_sort()
+SORT_MOV_MPAA = settings.mpaa_sort()
 SORT_MOV_GEN = settings.movie_genre_sort()
 SORT_MOV_GRP = settings.movie_group_sort()
 SORT_MOV_STU = settings.movie_studio_sort()
@@ -137,14 +138,14 @@ PC_DEFAULT = settings.pc_default()
 PC_TOGGLE = settings.enable_pc_settings()
 
 
-fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.png')
+fanart = os.path.join(ADDON.getAddonInfo('path'),'art','fanart.jpg')
 
 ######################## DEV MESSAGE ###########################################################################################
 def dev_message():
-    if ADDON.getSetting('dev_message')!="skip1.5.2":
+    if ADDON.getSetting('dev_message')!="skip1.5.3":
         msg = os.path.join(ADDON.getAddonInfo('path'),'resources', 'messages', 'changelog.txt')
         TextBoxes("[B][COLOR red]Changelog[/B][/COLOR]",msg)
-        ADDON.setSetting('dev_message', value='skip1.5.2') 
+        ADDON.setSetting('dev_message', value='skip1.5.3') 
 
 def TextBoxes(heading,anounce):
         class TextBox():
@@ -176,7 +177,18 @@ def TextBoxes(heading,anounce):
                 return
         TextBox()		
 ######################## DEV MESSAGE ###########################################################################################
+def help_menu():
+    addDir3('Changelog',"","help list menu","")
+    addDir3('Parental Control',"","help list menu","")
 
+
+def help(text):
+    header = "[B][COLOR red]" + text + "[/B][/COLOR]"
+    text1 = text.replace(' ', '_').lower() + '.txt'
+    msg = os.path.join(ADDON.getAddonInfo('path'),'resources', 'messages', text1)
+    TextBoxes(header,msg)
+    
+    
 ######################## LOGIN ###########################################################################################
 def login_at_furk():
     if FURK_ACCOUNT:
@@ -732,8 +744,6 @@ def setup_sources():
 
         dialog = xbmcgui.Dialog()
         dialog.ok("Source folders added", "To complete the setup:", " 1) Restart XBMC.", " 2) Set the content type of added sources.")
-        #if dialog.yesno("Restart now?", "Do you want to restart XBMC now?"):
-            #xbmc.restart()
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] Could not edit sources.xml")
 ############################### MAINTENANCE #############################################################################
@@ -967,7 +977,6 @@ def get_nzbmovie_search_result(body):
 
 def search_imdb(url,start,pname):
     movies = []
-    
     try:
         body = get_url(url, cache=CACHE_PATH)
     except:
@@ -991,7 +1000,7 @@ def search_imdb(url,start,pname):
     p_start = int(start) + IMDB_RESULTS
     p_end = (int(start) + (IMDB_RESULTS * 2)) -1
     if pname != "search":
-        movies.append({'imdb_id': pname, 'name': '[COLOR gold]' + "%s (%s-%s)" % (">>> Next Page",str(p_start),str(p_end)) + '[/COLOR]', 'year': "rem", 'rating': start, 'votes': "NP"})
+        movies.append({'imdb_id': str(pname), 'name': '[COLOR gold]' + "%s (%s-%s)" % (">>> Next Page",str(p_start),str(p_end)) + '[/COLOR]', 'year': "rem", 'rating': start, 'votes': "NP"})
 
     return movies
     
@@ -1000,37 +1009,15 @@ def search_imdb(url,start,pname):
 	
 def watchlist_imdb(params):
     movies = []
-    count = 0
-    while count < IMDB_RESULTS:
-        try:
-            body = title_watchlist(params, str(count))
-            movies.extend(get_imdb_watchlist_result(body))
-        except:
-            xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
-        count = count + 250
-        if len(movies) < count:
-            return movies
-        setView('movies', 'movies-view')    
-    return movies
-    setView('movies', 'movies-view')
-	
-def title_watchlist(params, start="1"):
-    print params
     params["view"] = 'compact'
-    params["start"] = start
-    params["count"] = COUNT
+    params["start"] = "1"
     url = "%s%s" % (IMDB_WATCHLIST, urllib.urlencode(params)) + "&sort=listorian:asc"
-    print url
     try:
         body = get_url(url, cache=CACHE_PATH)
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
-    return body
-    
-def get_imdb_watchlist_result(body):
     all_tr = regex_get_all(body, '<tr data-item', '</tr>')
      
-    movies = []
     for tr in all_tr:
         all_td = regex_get_all(tr, '<td', 'td>')
         imdb_id = regex_from_to(all_td[1], 'title/', '/')
@@ -1044,37 +1031,17 @@ def get_imdb_watchlist_result(body):
             votes = ""
         movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
     return movies
+    setView('movies', 'movies-view')
 	
 def customlist_imdb(list):
     movies = []
-    count = 0
-    while count < IMDB_RESULTS:
-        try:
-            body = title_customlist(list, str(count))
-            movies.extend(get_customlist_result(body))
-        except:
-            xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out") 
-        count = count + 250
-        if len(movies) < count:
-            return movies
-        setView('movies', 'movies-view')    
-    return movies
-    setView('movies', 'movies-view')
-	
-def title_customlist(list, start="1"):
-    print list
     url = IMDB_CUSTOMLIST_URL + list + "/?start=1&view=compact&sort=listorian:asc"
-    print url
     try:
         body = get_url(url, cache=CACHE_PATH)
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] IMDB URL request timed out")
-    return body
-    
-def get_customlist_result(body):
     all_tr = regex_get_all(body, '<td class="listorian', '</tr>')
-     
-    movies = []
+
     for tr in all_tr:
         all_td = regex_get_all(tr, '<td', 'td>')
         imdb_id = regex_from_to(all_td[1], 'title/', '/')
@@ -1088,6 +1055,7 @@ def get_customlist_result(body):
             votes = ""
         movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes}),
     return movies
+    setView('movies', 'movies-view')
 	
 def search_actors(params):
     actors = []
@@ -1184,7 +1152,7 @@ def main_menu():
     items.append(create_directory_tuple('Subscriptions', 'subscription menu'))
     items.append(create_directory_tuple('Account Info', 'account info'))
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
-    items.append(create_directory_tuple('[COLOR cyan]' + "View version notes" + '[/COLOR]', 'dev message'))
+    items.append(create_directory_tuple('Help', 'help menu'))
     return items
 
 def imdb_similar_menu(name, data, imdb_id):
@@ -1300,6 +1268,7 @@ def imdb_menu():
     items.append(create_movie_directory_tuple('New Movies', 'new movies menu', '1'))
     items.append(create_movie_directory_tuple('Coming Soon', 'movies soon menu', '1'))
     items.append(create_directory_tuple('DVD Releases', 'dvd release menu'))
+    items.append(create_directory_tuple('Movies by MPAA Rating', 'movie mpaas menu'))
     items.append(create_directory_tuple('Movies by Genre', 'movie genres menu')) 
     items.append(create_directory_tuple('Movies by Group', 'movie groups menu'))
     items.append(create_directory_tuple('Movies by Studio', 'movie studios menu'))
@@ -1347,8 +1316,6 @@ def chart_menu():
 	
     return items
 
-
-	
 def nzbmovie_menu():
     items = []
     items.append(create_movie_directory_tuple('Top Downloads - This Week', 'nzbweek menu', ''))
@@ -1460,7 +1427,7 @@ def watchlist_menu():
 	
 def watchlist_tv_menu():
     params = {}
-    params["title_type"] = "tv_series,mini_series, tv_special"
+    params["title_type"] = "tv_series,mini_series,tv_special"
     tv_shows = watchlist_imdb(params)
     return create_tv_show_items(tv_shows,"","")
 
@@ -1524,7 +1491,31 @@ def list10_menu():
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
+def movies_mpaas_menu():
+    items = []
+    mpaas = ['G', 'PG', 'PG-13', 'R', 'NC-17']
+    for mpaa in mpaas:
+        items.append(create_movie_directory_tuple(mpaa, 'movie mpaa menu', '1'))
+    return items
 
+def movies_mpaa_menu(start, mpaa):
+    mpaa1 = "%s%s" % ("us%7C",mpaa.replace('-','_'))
+    nstart = str(int(start) + IMDB_RESULTS)
+    params = {}
+    params["release_date"] = RELEASE_DATE
+    params["sort"] = SORT_MOV_MPAA
+    params["num_votes"] = NUM_VOTES
+    params["user_rating"] = USER_RATING
+    params["title_type"] = "feature,documentary,tv_movie"
+    params["certificates"] = mpaa1
+    params["production_status"] = PRODUCTION_STATUS
+    params["view"] = VIEW
+    params["start"] = start
+    params["count"] = IMDB_RESULTS
+    url = "%s%s" % (IMDB_TITLE_SEARCH, urllib.urlencode(params))
+    movies = search_imdb(url,start,mpaa)
+    return create_movie_items(movies, nstart, mpaa)
+	
 def movies_genres_menu():
     items = []
     genres = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family',
@@ -4008,6 +3999,13 @@ def addDir2(name,data,mode,imdb_id):
     liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=imdb_id)
     ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
     return ok
+	
+def addDir3(name,data,mode,imdb_id):
+    u=sys.argv[0]+"?data="+urllib.quote_plus(data)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&imdb_id="+str(imdb_id)
+    ok=True
+    liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=imdb_id)
+    ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
+    return ok
 
 ################# END MUSIC ####################################################################################
 
@@ -4032,7 +4030,7 @@ def create_movie_items(movies, start, pname):
         movie_tuple = create_movie_tuple(name, imdb_id, rating, votes)
         items.append(movie_tuple)
 
-        if (not meta_exist(imdb_id, META_PATH) or imdb_id==None) and votes!="NP":
+        if (not meta_exist(imdb_id, META_PATH) or imdb_id==None) and votes!="NP" and votes!="JP":
             missing_meta.append(imdb_id)
 	
     return items, missing_meta
@@ -4554,6 +4552,7 @@ def clean_library():
 
 def get_missing_meta(missing_meta, type):
     if len(missing_meta) > 0 and DOWNLOAD_META:
+        ADDON.setSetting('disable_dialog', value='DISABLE')
         xbmc.log("[What the Furk...XBMCHUB.COM] Downloading missing %s meta data for %d files..." % (type, len(missing_meta)))
         dlThread = DownloadThread(missing_meta, type)
         dlThread.start()
@@ -4573,6 +4572,7 @@ class DownloadThread(Thread):
             for imdb_id in self.missing_meta:
                 download_tv_show_meta(imdb_id, META_PATH)
         xbmc.executebuiltin("Container.Refresh")
+        ADDON.setSetting('disable_dialog', value='ENABLE')
 		
 class DownloadMusicThread(Thread):
     def __init__(self, name, url, data_path, album_path):
@@ -4713,6 +4713,12 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode == "maintenance menu":
         items = maintenance()
 		
+    elif mode == "help menu":
+        items = help_menu()
+		
+    elif mode == "help list menu": 
+        items = help(name)
+		
     elif mode == "download menu":
         items = downloads()
 
@@ -4775,6 +4781,13 @@ def get_menu_items(name, mode, data, imdb_id):
         items, missing_meta = watchlist_tv_menu()
         get_missing_meta(missing_meta, 'tv shows')
         setView('movies', 'tvshows-view')
+        enable_sort = XBMC_SORT
+    elif mode == "movie mpaas menu": #Genres menu
+        items = movies_mpaas_menu()
+    elif mode == "movie mpaa menu": #Genre menu
+        items, missing_meta = movies_mpaa_menu(data, imdb_id)
+        get_missing_meta(missing_meta, 'movies')
+        setView('movies', 'movies-view')
         enable_sort = XBMC_SORT
     elif mode == "movie genres menu": #Genres menu
         items = movies_genres_menu()
@@ -5136,12 +5149,9 @@ elif mode == "view trailer":
 elif mode == "add audio stream":
     add_audio_stream(name, data, imdb_id)
 	
-elif mode == "imdb next page":
-    search_imdb(url,data)
-	
 elif mode == "enable pc setting":
     pc_setting()
-	
+		
 
 	
 

@@ -51,6 +51,9 @@ def furk_search_file():
 def download_path():
     return create_directory(DATA_PATH, "download")
 
+def disable_dialog():
+    return ADDON.getSetting('disable_dialog')
+
 def meta_path():
     if ADDON.getSetting('meta_custom_directory') == "true":
         return ADDON.getSetting('meta_path')
@@ -151,10 +154,6 @@ def nzvmovie_url():
     return "http://www.nzbmovieseeker.com/"
   
 def imdb_actors_url():
-    region = ADDON.getSetting('imdb_region')
-    #if region == '0':
-        #return "http://akas.imdb.com/search/name?"
-    #else:
     return "http://m.imdb.com/search/name?"
 		
 def imdb_search_url():
@@ -461,6 +460,23 @@ def new_movies_sort():
 		
 def blu_ray_sort():
     sort_id = ADDON.getSetting('blu_ray_sort')
+    if sort_id == '1':
+        return 'user_rating,desc'
+    elif sort_id == '2':
+        return 'num_votes,desc'
+    elif sort_id == '3':
+        return 'year,desc'
+    elif sort_id == '4':
+        return 'release_date_us,desc'
+    elif sort_id == '5':
+        return 'boxoffice_gross_us,desc'
+    elif sort_id == '6':
+        return 'moviemeter,desc'
+    else:
+        return 'alpha'
+		
+def mpaa_sort():
+    sort_id = ADDON.getSetting('mpaa_sort')
     if sort_id == '1':
         return 'user_rating,desc'
     elif sort_id == '2':

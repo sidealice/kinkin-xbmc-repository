@@ -112,6 +112,7 @@
     
 	<!-- Sort (desc) -->
     <string id="30500">Top Movies</string>
+    <string id="30511">Movies by MPAA Rating</string>
 	<string id="30501">Movies by Genre</string>
 	<string id="30502">Movies by Group</string>
 	<string id="30503">Movies by Studio</string>

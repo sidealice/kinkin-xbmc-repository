@@ -1,3 +1,6 @@
+v1.1.4
+Fixed some script errors
+
 v1.0.1
 Initial Release
 

@@ -22,35 +22,36 @@ def CATEGORIES():
                     cnt = text.count('GA(') + 1
                     list.append(d)
                     addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
-            directories = os.listdir(addonpath)
-            for sd in directories:
-                subd = os.path.join(check_path, d, sd)
-                for py_file in glob.glob(os.path.join(subd, "*.py")):
-                    text = read_from_file(py_file)
-                    if text.find('google-analytics') > 0 or text.find('GA(') > 0 or text.find('UA-') > 0:
-                        list.append(d)
-                        cnt = text.count('GA(') + 1
-                        addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
-                if os.path.isdir(subd):
-                    directories = os.listdir(subd)
-                    for sd2 in directories:
-                        subd2 = os.path.join(check_path, d, sd, sd2)
-                        for py_file in glob.glob(os.path.join(subd2, "*.py")):
-                            text = read_from_file(py_file)
-                            if text.find('google-analytics') > 0 or text.find('GA(') > 0 or text.find('UA-') > 0:
-                                list.append(d)
-                                cnt = text.count('GA(') + 1
-                                addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
-                        if os.path.isdir(subd2):
-                            directories = os.listdir(subd2)
-                            for sd3 in directories:
-                                subd3 = os.path.join(check_path, d, sd, sd2, sd3)
-                                for py_file in glob.glob(os.path.join(subd3, "*.py")):
-                                    text = read_from_file(py_file)
-                                    if text.find('google-analytics') > 0 or text.find('GA(') > 0 or text.find('UA-') > 0:
-                                        cnt = text.count('GA(') + 1
-                                        list.append(d)
-                                        addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
+            if os.path.isdir(addonpath):
+                directories = os.listdir(addonpath)
+                for sd in directories:
+                    subd = os.path.join(check_path, d, sd)
+                    for py_file in glob.glob(os.path.join(subd, "*.py")):
+                        text = read_from_file(py_file)
+                        if text.find('google-analytics') > 0 or text.find('GA(') > 0 or text.find('UA-') > 0:
+                            list.append(d)
+                            cnt = text.count('GA(') + 1
+                            addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
+                    if os.path.isdir(subd):
+                        directories = os.listdir(subd)
+                        for sd2 in directories:
+                            subd2 = os.path.join(check_path, d, sd, sd2)
+                            for py_file in glob.glob(os.path.join(subd2, "*.py")):
+                                text = read_from_file(py_file)
+                                if text.find('google-analytics') > 0 or text.find('GA(') > 0 or text.find('UA-') > 0:
+                                    list.append(d)
+                                    cnt = text.count('GA(') + 1
+                                    addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
+                            if os.path.isdir(subd2):
+                                directories = os.listdir(subd2)
+                                for sd3 in directories:
+                                    subd3 = os.path.join(check_path, d, sd, sd2, sd3)
+                                    for py_file in glob.glob(os.path.join(subd3, "*.py")):
+                                        text = read_from_file(py_file)
+                                        if text.find('google-analytics') > 0 or text.find('GA(') > 0 or text.find('UA-') > 0:
+                                            cnt = text.count('GA(') + 1
+                                            list.append(d)
+                                            addDir('[COLOR cyan]'+ d + '[/COLOR]' + " (GA tracking " + str(cnt) + " events)",d,2,'','list addons')
 
         						
     #for l in list:

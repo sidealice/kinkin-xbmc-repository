@@ -3,8 +3,7 @@ import shutil, glob
 import os,fnmatch
 import shutil
 
-#ADDON = xbmcaddon.Addon(id='plugin.video.gachecker')
-fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.XMLbackup', 'fanart.jpg'))
+ADDON = xbmcaddon.Addon(id='plugin.video.gachecker')
 check_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 settings_path = os.path.join(xbmc.translatePath('special://home/userdata'), 'addon_data')
 packages_path = os.path.join(xbmc.translatePath('special://home/addons'), 'packages')

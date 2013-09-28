@@ -19,18 +19,23 @@
 
 </addon>
 
-<addon id="plugin.video.gackecker" name="GA Checker" version="1.0.1" provider-name="kinkin">
-  <requires>
-    <import addon="xbmc.python" version="2.0"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource" library="default.py">
-        <provides>video executable</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary lang="en">See what addons are using Google Analytics</summary>
-    <description lang="en">Some addons contain code that automatically tracks your usage and/or displays ads. Use this addon to find them and it's then your choice on what to do.</description>
-    <platform>all</platform>
-  </extension>
+<addon id="plugin.video.gackecker"
+       name="GA Checker"
+       version="1.1.0"
+       provider-name="Kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>See what addons are using Google Analytics</summary>
+        <description>Some addons contain code that automatically tracks your usage and/or displays ads. Use this addon to find them and it's then your choice on what to do.</description>
+    </extension>
+
 </addon>
 
 <addon id="plugin.video.ultimateguitar"

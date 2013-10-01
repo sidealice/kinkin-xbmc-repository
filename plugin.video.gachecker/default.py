@@ -38,7 +38,7 @@ def CATEGORIES():
                     if text.count('GA(') == 0:
                         cnt = '0 events '
                     else:
-                        cnt = "%s $s" % (text.count('GA('), "events")
+                        cnt = "%s %s" % (text.count('GA('), "events ")
                     list.append(d)
                     addDir('[COLOR cyan]'+ d + '[/COLOR]' + gf + cnt + af,d,2,'','list addons', py_file)
             if os.path.isdir(addonpath):
@@ -59,7 +59,7 @@ def CATEGORIES():
                             if text.count('GA(') == 0:
                                 cnt = '0 events '
                             else:
-                                cnt = text.count('GA(')
+                                cnt = "%s %s" % (text.count('GA('), "events ")
                             list.append(d)
                             addDir('[COLOR cyan]'+ d + '[/COLOR]' + gf + cnt + af,d,2,'','list addons', py_file)
                     if os.path.isdir(subd):
@@ -80,7 +80,7 @@ def CATEGORIES():
                                     if text.count('GA(') == 0:
                                         cnt = '0 events '
                                     else:
-                                        cnt = text.count('GA(')
+                                        cnt = "%s %s" % (text.count('GA('), "events ")
                                     list.append(d)
                                     addDir('[COLOR cyan]'+ d + '[/COLOR]' + gf + cnt + af,d,2,'','list addons', py_file)
                             if os.path.isdir(subd2):
@@ -101,7 +101,7 @@ def CATEGORIES():
                                             if text.count('GA(') == 0:
                                                 cnt = '0 events '
                                             else:
-                                                cnt = text.count('GA(')
+                                                cnt = "%s %s" % (text.count('GA('), "events ")
                                             list.append(d)
                                             addDir('[COLOR cyan]'+ d + '[/COLOR]' + gf + cnt + af,d,2,'','list addons', py_file)
 

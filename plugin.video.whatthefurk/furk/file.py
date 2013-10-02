@@ -105,7 +105,13 @@ class File(object):
         try:
             self.ss_urls_tn = data['ss_urls_tn'] 
         except:
-            self.ss_urls_tn = None   
+            self.ss_urls_tn = None
+
+        #bitrate
+        try:
+            self.bitrate = data['bitrate'] 
+        except:
+            self.bitrate = None 			
         
         #av_result - enum('ok', 'warning', 'infected', 'error'), 'ok' if no viruses, 'warning' if a password protected archive was found, 'error' if there's was an internal error while checking (ex. Kaspersky segfaults often)
         try:

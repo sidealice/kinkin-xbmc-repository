@@ -4,22 +4,41 @@ Created on 14 jan 2012
 @author: Batch
 '''
 import  urllib2
+from urllib2 import Request, urlopen
 import re
-from common import regex_from_to, get_url
+import settings
+from common import regex_from_to, get_url, regex_get_all
+import json
+
+META_QUALITY = settings.meta_quality()
+FANART_QUALITY = settings.fanart_quality()
+POSTER_QUALITY = settings.poster_quality()
 
 API_KEY = '1b0d3c6ac6a6c0fa87b55a1069d6c9c8'
+'''
+from urllib2 import Request, urlopen
+headers = {"Accept": "application/json"}
+request = Request("http://themoviedb.apiary.io/3/movie/{id}", headers=headers)
+response_body = urlopen(request).read()
+print response_body
+'''
+base_url = "http://d3gtl9l2a4fn1j.cloudfront.net/t/p/"
+#"poster_sizes":["w92","w154","w185","w342","w500","original"],"backdrop_sizes":["w300","w780","w1280","original"]
 
 class TMDBInfo(object):
     def __init__(self, movie_name=None, imdb_id=None):
         self.api_key = API_KEY
         if imdb_id:
             self.imdb_id = imdb_id
-        else:
-            search_url = 'http://api.themoviedb.org/2.1/Movie.search/en/xml/' + self.api_key + '/' + urllib2.quote(movie_name)
-            search_result = get_url(search_url)
-            self.imdb_id = regex_from_to(search_result, '<id>', '</id>')
-        info_url = 'http://api.themoviedb.org/2.1/Movie.imdbLookup/en/xml/' + self.api_key + '/' + self.imdb_id
-        self.info_result = get_url(info_url)
+            info_url = 'http://api.themoviedb.org/3/movie/' + self.imdb_id + '?api_key=' + self.api_key + '&append_to_response=releases,images'
+            print info_url
+            headers = {"Accept": "application/json"}
+            request = Request(info_url, headers=headers)
+            try:			
+                response_body = urlopen(request).read()
+                self.info_result = response_body 
+            except:
+                pass
         
     def popularity(self):
         return self.getElement('popularity')
@@ -37,7 +56,11 @@ class TMDBInfo(object):
         return self.getElement('original_name')
 
     def name(self):
-        return self.getElement('name')
+        try:
+            n = regex_from_to(self.info_result,'title":"', '",')
+        except:
+            n = None
+        return n
 
     def alternative_name(self):
         return self.getElement('alternative_name')
@@ -55,25 +78,53 @@ class TMDBInfo(object):
         return self.getElement('url')
 
     def overview(self):
-        return self.getElement('overview')
+        try:
+            n = regex_from_to(self.info_result,'overview":"', '",')
+        except:
+            n = None
+        return n
 
     def votes(self):
-        return self.getElement('votes')
+        try:
+            n = regex_from_to(self.info_result,'vote_count":', ',"')
+        except:
+            n = None
+        return n
 
     def rating(self):
-        return self.getElement('rating')
+        try:
+            n = regex_from_to(self.info_result,'vote_average":', ',"')
+        except:
+            n = None
+        return n
 
     def tagline(self):
-        return self.getElement('tagline')
+        try:
+            n = regex_from_to(self.info_result,'tagline":"', '",')
+        except:
+            n = None
+        return n
 
     def certification(self):
-        return self.getElement('certification')
+        try:
+            n = regex_from_to(self.info_result,'iso_3166_1":"US","certification":"', '",')
+        except:
+            n = None
+        return n
 
     def released(self):
-        return self.getElement('released')
+        try:
+            n = regex_from_to(self.info_result,'release_date":"', '",')
+        except:
+            n = None
+        return n
 
     def runtime(self):
-        return self.getElement('runtime')
+        try:
+            n = regex_from_to(self.info_result,'runtime":', ',"')
+        except:
+            n = None
+        return n
     
     def budget(self):
         return self.getElement('budget')
@@ -88,11 +139,13 @@ class TMDBInfo(object):
         return self.getElement('trailer')
     
     def categories(self):
-        text = self.getElement('categories')
-        r = re.findall("(?i)<category type=\"genre\" name=\"([\S\s]+?)\" url=\"", text)
-        
+        try:
+            text = regex_from_to(self.info_result,'genres"', ',"homepage')
+            r = re.compile('name":"(.+?)"').findall(text)
+        except:
+            r = None
         return r
-    
+   
     def keywords(self):
         return self.getElement('keywords')
     
@@ -104,17 +157,33 @@ class TMDBInfo(object):
     
     def countries(self):
         return self.getElement('countries')
-    
-    def images(self):
-        text = self.getElement('images')        
-        r = re.findall("(?i)(?i)<image type=\"([\S\s]+?)\" url=\"([\S\s]+?)\" size=\"([\S\s]+?)\" width=\"([\S\s]+?)\" height=\"([\S\s]+?)\" id=\"([\S\s]+?)\"/>", text)
-
-        images = []
-        for type, url, size, width, height, id in r:
-            images.append({'type': type, 'url': url, 'size': size, 'width': width, 'height': height, 'id': id})
-            
-        return images
-    
+  
+    def poster(self):
+        try:
+            first_poster = regex_from_to(self.info_result,'posters":', '},')
+            path = regex_from_to(first_poster,'file_path":"', '",')
+            url = base_url + POSTER_QUALITY + path
+        except:
+            try:
+                path = regex_from_to(self.info_result,'poster_path":"','",')
+                url = base_url + POSTER_QUALITY + path
+            except:
+                url = None
+        return url
+		
+    def fanart(self):
+        try:
+            first_fanart = regex_from_to(self.info_result,'backdrops":', '},')
+            path = regex_from_to(first_fanart,'file_path":"', '",')
+            url = base_url + FANART_QUALITY + path
+        except:
+            try:
+                path = regex_from_to(self.info_result,'backdrop_path":"','",')
+                url = base_url + FANART_QUALITY + path
+            except:
+                url = None
+        return url
+   
     def cast(self):
         return self.getElement('cast')
     

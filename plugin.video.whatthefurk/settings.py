@@ -54,6 +54,12 @@ def download_path():
 def disable_dialog():
     return ADDON.getSetting('disable_dialog')
 
+def download_speed():
+    return ADDON.getSetting('download_speed')
+	
+def temp_path():
+    return ADDON.getSetting('temp_path')
+
 def meta_path():
     if ADDON.getSetting('meta_custom_directory') == "true":
         return ADDON.getSetting('meta_path')
@@ -62,6 +68,12 @@ def meta_path():
 		
 def skip_file_browse():
     if ADDON.getSetting('skip_file_browse') == "true":
+        return True
+    else:
+        return False
+		
+def download_play_delete():
+    if ADDON.getSetting('download_play_delete') == "true":
         return True
     else:
         return False
@@ -218,6 +230,13 @@ def furk_limit_result():
         return 50
     else:
         return 25
+		
+def theme():
+    theme = ADDON.getSetting('theme')
+    if theme == '0':
+        return "Blazetamer"
+    else:
+        return "no theme"
 
 def furk_sort():
     furk_sort = ADDON.getSetting('furk_sort')
@@ -845,6 +864,9 @@ def tv_show_directory():
 		
 def movies_download_directory():
     return ADDON.getSetting('movies_download_directory')
+	
+def temp_download_directory():
+    return ADDON.getSetting('temp_download_directory')
 		
 def tv_download_directory():
     return ADDON.getSetting('tv_download_directory')
@@ -905,24 +927,24 @@ def meta_quality():
 def fanart_quality():
     quality_id = ADDON.getSetting('meta_quality')
     if quality_id == '3':
-        return 'original' #thumb, poster, original
+        return 'original' #thumb, cover, mid. original
     elif quality_id == '2':
-        return 'original'
+        return 'w1000' 
     elif quality_id == '1':
-        return 'poster'   
+        return 'w500' 
     else:
-        return 'thumb' 
+        return 'w342'
     
 def poster_quality():
     quality_id = ADDON.getSetting('meta_quality')
     if quality_id == '3':
         return 'original' #thumb, cover, mid. original
     elif quality_id == '2':
-        return 'mid' 
+        return 'w1000' 
     elif quality_id == '1':
-        return 'cover' 
+        return 'w500' 
     else:
-        return 'thumb'
+        return 'w342'
 
 def enable_pc():
     if ADDON.getSetting('enable_pc') == "true":

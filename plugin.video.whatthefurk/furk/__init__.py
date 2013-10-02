@@ -17,8 +17,8 @@ class FurkAPI(object):
         self.cookie_file = cookie_file
         
     #search for torrents
-    def search(self, query, filter, limit="25", match="extended",
-               moderated="yes", offset="0", sort="cached,size"):#="all""q": query, 
+    def search(self, query, match, filter, moderated,
+               limit="25", offset="0", sort="cached,size"):#="all""q": query, 
         params = {"filter": filter, "match": match,
                   "moderated": moderated, "offset": offset, "sort": sort}
         params2 = "&q=%s" % (query)

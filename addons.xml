@@ -59,8 +59,8 @@
 
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.5.3"
-       provider-name="Batch,Kinkin,Mikey1234">
+       version="1.5.4"
+       provider-name="Batch,Kinkin,Blazetamer">
     <requires>
         <import addon="xbmc.python" version="2.0"/>
     </requires>
@@ -73,7 +73,7 @@
 	</extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary>An addon which lets the user browse and stream videos from Furk.net.</summary>
+        <summary>An addon which lets the user browse and stream videos from Furk.net. Art by Blazetamer.</summary>
         <description>Visit www.xbmchub.com for support.
 
 What the Furk provides the user the ability do do IMDB powered media searches on Furk.net and gives the user the ability to stream the found media files.</description>

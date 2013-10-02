@@ -1,5 +1,37 @@
-[COLOR cyan][B]Changes in version 1.5.3[/B][/COLOR]
+[COLOR cyan][B]Changes in version 1.5.4 (this is not an advert and will appear only once)[/B][/COLOR]
 
+
+[COLOR gold][B]1. Added Speedtest to Help menu"[/B][/COLOR]
+Test your download speed from Furk.net.
+Latest result is saved to give you a guide when viewing file lists
+
+[COLOR gold][B]2. Added bitrate to search results[/B][/COLOR]
+Bitrate highlighted green if it's less than your latest speedtest
+Highlighted red if bitrate is greater than your speedtest
+
+[COLOR gold][B]3. Added new settings (Download, Play & Delete)[/B][/COLOR]
+Set path in Download Setting. Context menu over file allows you to download
+and play. When the video stops the file is deleted.
+
+WTF will attempt to use your latest speedtest result and the file bitrate to
+pre-download the first 7 seconds of the video.
+
+Setting "Always Download, Play & Delete" will use this function by default...
+...only within the addon. If this option is enabled a new context option to
+stream the file is available
+
+[COLOR gold][B]4. NEW ART BY BLAZETAMER!![/B][/COLOR]
+WTF now includes new fanart and icons by Blazetamer. Only main menu icons are
+available so far.....more to come.
+
+[COLOR gold][B]5. Added Next Page option to Watchlist menus[/B][/COLOR]
+If your watchlist is greater than 250 items you can now see all results
+
+[COLOR gold][B]6. Fixed TMDB api[/B][/COLOR]
+Meta will now refresh for movies.
+
+
+[COLOR cyan][B]Changes in version 1.5.3[/B][/COLOR]
 
 [COLOR gold][B]1. Added new movie menu...."Movies by MPAA Rating"[/B][/COLOR]
 Search for G, PG, PG-13, R or NC-17 movies. Sort preferences can be changed in addon

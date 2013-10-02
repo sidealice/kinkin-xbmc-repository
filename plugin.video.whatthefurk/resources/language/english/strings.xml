@@ -1,5 +1,6 @@
 <strings>
 	<!-- Options -->
+    <string id="30121">Addon Theme</string>
 	<string id="30100">Meta data</string>
 	<string id="30101">Download metadata while browsing</string>
     <string id="30115">Use custom meta directory</string>
@@ -38,6 +39,8 @@
     <!-- Download -->
 	<string id="30800">Download path - Movies</string>
 	<string id="30801">Download path - TV Shows</string>
+    <string id="30806">Download path for Download, Play & Delete</string>
+    <string id="30805">Always use Download, Play & Delete?</string>
     <string id="30802">Download subtitles</string>
     <string id="30803">Download path - Music</string>
     <string id="30804">Download path - Music Videos</string>

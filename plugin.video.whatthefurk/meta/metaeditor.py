@@ -83,12 +83,18 @@ def download_movie_meta(imdb_id, path):
     if not os.path.isfile(data_file) or not os.path.isfile(poster_file) or not os.path.isfile(fanart_file):
             info = TMDBInfo(imdb_id=imdb_id)
             title = info.name()
-            year = info.released().split('-')[0]
+            try:
+                year = info.released().split('-')[0]
+            except:
+                year = ""
             
             genre = ""
-            for category in info.categories():
-                genre += category + ","
-            genre = genre[:-2]
+            try:
+                for category in info.categories():
+                    genre += category + ","
+                genre = genre[:-1]
+            except:
+                genre = ""
     
             tagline = info.tagline()
             overview = info.overview()
@@ -106,42 +112,24 @@ def download_movie_meta(imdb_id, path):
             content = '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s' % (title, year, genre, tagline, overview, duration, rating, votes, premiered, mpaa)
             write_to_file(data_file, content)
             
-            images = info.images()
+            poster_url = info.poster()
             
             if not os.path.isfile(poster_file) or not os.path.isfile(poster_missing):
                 if USE_POSTERS:
-                    poster_url = None
-                    for image in images:
-                        if image['type'] == 'poster':
-                            if image['size'] == POSTER_QUALITY:
-                                poster_url = image['url']
-                                break
-                    if poster_url:
-                        try:
-                            urllib.urlretrieve(poster_url, poster_file)
-                        except:
-                            pass
-                    else:
+                    try:
+                        urllib.urlretrieve(poster_url, poster_file)
+                    except:
                         write_to_file(poster_missing, '')
+
+            
+            fanart_url = info.fanart()
             
             if not os.path.isfile(fanart_file) or not os.path.isfile(fanart_missing):
                 if USE_FANART:
-                    fanart_url = None
-                    for image in images:
-                        if image['type'] == 'backdrop':
-                            if image['size'] == FANART_QUALITY:
-                                fanart_url = image['url']
-                                break
-                    if fanart_url:
-                        try:
-                            urllib.urlretrieve(fanart_url, fanart_file)
-                        except:
-                            pass
-                    else:
-                        try:
-                            write_to_file(fanart_missing, '')
-                        except:
-                            pass
+                    try:
+                        urllib.urlretrieve(fanart_url, fanart_file)
+                    except:
+                        write_to_file(fanart_missing, '')
 
 def set_tv_show_meta(listitem, imdb_id, path):
     (data_file, poster_file, fanart_file, poster_missing, fanart_missing) = _get_meta_paths(imdb_id, path)

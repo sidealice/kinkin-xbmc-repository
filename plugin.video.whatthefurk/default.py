@@ -2658,6 +2658,7 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### E
                 type = format
             else:
                 wtf_mode = "execute video"
+                imdb_id="%s$%s$%s" % (type, MBs, imdb_id)
             file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb_id)
             items.append(file_list_tuple)
             if content=="video" and SKIP_BROWSE and mode != "browse context menu":

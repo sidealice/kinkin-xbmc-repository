@@ -4611,7 +4611,7 @@ def create_archive_list_item(xbmcname, text, name, url, id, size, poster, type):
     if mode == 'my files deleted menu':
         mf_action = '%s?name=%s&data=%s&mode=mf clear' % (sys.argv[0], urllib.quote(name), id)  
         contextMenuItems.append(('Clear deleted file', 'XBMC.RunPlugin(%s)' % mf_action))
-    if mode != 'my files menu' and text.find('[COLOR gold]')<0:
+    if mode != 'my files menu':
         mf_action = '%s?name=%s&data=%s&mode=mf add' % (sys.argv[0], urllib.quote(name), id)  
         contextMenuItems.append(('Add to My Files', 'XBMC.RunPlugin(%s)' % mf_action))
     if mode == 'my files menu' or text.find('[COLOR gold]')==0:

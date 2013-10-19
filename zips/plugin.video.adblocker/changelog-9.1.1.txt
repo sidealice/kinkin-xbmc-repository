@@ -1,0 +1,21 @@
+9.1.1
+Who you gonna call?
+
+<<<<<< Instructions >>>>>>>
+By default, this will update the ad time every 15 minutes so ads won't run.
+Change the frequency in settings
+If the xbmc.ads module name changes just change it in settings
+If the ads settings folder changes just change it in settings
+
+Sets the time in all settings where the setting id contains the word "time"
+Add up to 5 key words if the setting id changes (in case the setting id magically changes)
+
+Option to pre-load all installed addons to try and stop that annoying ad the first time you run the addon.
+
+I can't guarantee this to work for long, but if anything changes...............................
+
+WHO YOU GONNA CALL?
+
+<cue music>
+
+

@@ -1,0 +1,13 @@
+<strings>
+	<!-- Settings -->
+    <string id="29999">Ads settings folder (leave blank for default)</string>
+    <string id="30000">Ads Module Name</string>
+    <string id="30001">Ads Settings File Name</string>
+    <string id="30009">Set Ad Blocker Frequency</string>
+    <string id="30003">Set search strings for time setting</string>
+    <string id="30004">String 1</string>
+    <string id="30005">String 2</string>
+    <string id="30006">String 3</string>
+    <string id="30007">String 4</string>
+    <string id="30008">String 5</string>
+</strings>

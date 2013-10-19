@@ -1,0 +1,14 @@
+<settings>
+	<category label="Options">
+        <setting id="ads_settings_folder" type="folder" label="29999" default=""/>
+        <setting id="ads_addon" type="text" label="30000" default="script.module.xbmc.ads"/>
+        <setting id="ads_file" type="text" label="30001" default="settings.xml"/>
+        <setting id="ads_freq" type="enum" values="1 min|5 mins|15 mins|30 mins|60 mins|2 hours|6 hours|12 hours|18 hours" label="30009" default="2"/>
+        <setting id="separator" type="lsep" label="30003"/>
+        <setting id="string_1" type="text" label="30004" default="time"/>
+        <setting id="string_2" type="text" label="30005" default="donotsearch"/>
+        <setting id="string_3" type="text" label="30006" default="donotsearch"/>
+        <setting id="string_4" type="text" label="30007" default="donotsearch"/>
+        <setting id="string_5" type="text" label="30008" default="donotsearch"/>
+	</category>
+</settings>

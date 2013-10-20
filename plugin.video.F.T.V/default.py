@@ -65,7 +65,7 @@ if not xbmcgui.Window(10000).getProperty("session_id"):
         xbmcgui.Window(10000).setProperty("session_id", session_id)
         keep_session()
             
-FILMON_SESSION = xbmcgui.Window(10000).getProperty("session_id")
+session_id = xbmcgui.Window(10000).getProperty("session_id")
 
 def CATEGORIES():
     addDir('FilmOn','url',121,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
@@ -76,7 +76,8 @@ def CATEGORIES():
 def filmon():
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
-    url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=', (FILMON_SESSION))
+    addDir('Most Watched','url',151,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'featured.png')), '', '')
+    url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=', (session_id))
     link = open_url(url)
     all_groups = regex_get_all(link, '{', 'channels_count')
     for groups in all_groups:
@@ -88,12 +89,12 @@ def filmon():
         setView('episodes', 'episodes-view')
 		
 def group_channels(url, title):
-    url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', FILMON_SESSION)
+    url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', session_id)
     link = open_url(url)
     all_channels = regex_from_to(link, 'channels":', 'channels_count')
     channels = regex_get_all(all_channels, '{"id"', '}}')
-    print channels[0]
     for channel in channels:
+        ch_type = regex_from_to(channel,'type":"', '",')
         channel_id = regex_from_to(channel, '"id":"', '",')
         title = regex_from_to(channel, 'title":"', '",').encode("utf-8")
         description = clean_file_name(regex_from_to(channel, 'description":"', '",'), use_blanks=False)
@@ -107,13 +108,13 @@ def group_channels(url, title):
         setView('episodes', 'episodes-view')
 		
 def favourites():
-    url='http://www.filmon.com/api/favorites?session_key=%s&run=get'% (FILMON_SESSION)
+    url='http://www.filmon.com/api/favorites?session_key=%s&run=get'% (session_id)
     link = open_url(url)
     all_channels = regex_from_to(link, 'result":', ',"reason')
     channel_ids = regex_get_all(all_channels, '{', '}')
     for id in channel_ids:
         channel_id = regex_from_to(id, 'channel_id":"', '",')
-        url='http://www.filmon.com/tv/api/channel/%s?session_key=%s' % (channel_id, FILMON_SESSION)
+        url='http://www.filmon.com/tv/api/channel/%s?session_key=%s' % (channel_id, session_id)
         link = open_url(url)
         channel_id = regex_from_to(link, '"id":"', '",')
         title = regex_from_to(link, 'title":"', '",').encode("utf-8")
@@ -126,23 +127,35 @@ def favourites():
         addDirPlayable(title,channel_id,125,thumb,ch_fanart,description, "", "fav")
         setView('episodes', 'episodes-view')
 		
+def featured():
+    url='http://www.filmon.com/api/featured?session_key=%s&run=get'% (session_id)
+    link = open_url(url)
+    channel_ids = regex_get_all(link, '{', '}')
+    for id in channel_ids:
+        channel_id = regex_from_to(id, 'id":"', '",')
+        title = regex_from_to(id, 'title":"', '",').encode("utf-8")
+        thumb = 'https://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
+        ch_fanart = "" 
+        addDirPlayable(title,channel_id,125,thumb,ch_fanart,"", "", "grp")
+        setView('episodes', 'episodes-view')
+		
 def add_fav(name, ch_id, iconimage):
     dialog = xbmcgui.Dialog()
-    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=add'%(FILMON_SESSION,ch_id)
+    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=add'%(session_id,ch_id)
     link = open_url(url)
     text = regex_from_to(link, 'reason":"', '",').replace('"',' ')
     dialog.ok("Add Favourite",name.upper(),text.upper())  
 
 def delete_fav(name, ch_id, iconimage):
     dialog = xbmcgui.Dialog()
-    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=remove'%(FILMON_SESSION,ch_id)
+    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=remove'%(session_id,ch_id)
     link = open_url(url)
     text = regex_from_to(link, 'reason":"', '",').replace('"',' ')
     dialog.ok("Remove Favourite",name.upper(),text.upper())
     xbmc.executebuiltin("Container.Refresh")
 		
 def tv_guide(name, url, iconimage):
-    url='http://www.filmon.com/tv/api/tvguide/%s?session_key=%s' % (url, FILMON_SESSION)
+    url='http://www.filmon.com/tv/api/tvguide/%s?session_key=%s' % (url, session_id)
     link = open_url(url)
     programmes = regex_get_all(link, '{', 'vendor_id')
     utc_now = datetime.datetime.now()
@@ -180,14 +193,14 @@ def tv_guide(name, url, iconimage):
 
 		
 def play_filmon(name,url,iconimage):
+    session_id = renew_session()
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())
-    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', FILMON_SESSION)
+    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', session_id)
     utc_now = datetime.datetime.now()
     channel_name=name.upper()
     link = open_url(url)
     nowplaying = regex_from_to(link, 'tvguide":', 'upnp_enabled')
-    print nowplaying
     pr_list = regex_get_all(nowplaying, '{"programme', '}')
     for p in pr_list:
         programme_name = regex_from_to(p, 'programme_name":"', '",')
@@ -196,7 +209,7 @@ def play_filmon(name,url,iconimage):
             end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":"', '",')))
             if start_time < utc_now and end_time > utc_now:
                 npet = regex_from_to(p, 'enddatetime":"', '",')
-                programme_name = regex_from_to(p, 'programme_name":"', '",')
+                programme_name = regex_from_to(p, 'programme_name":"', '",').replace("\/", "/")
                 description = regex_from_to(nowplaying, 'programme_description":"', '",').replace('\u2019', "'").replace('\u2013', "-")
                 start_t = start_time.strftime('%H:%M')
                 end_t = end_time.strftime('%H:%M')
@@ -206,7 +219,7 @@ def play_filmon(name,url,iconimage):
                     next = regex_from_to(nowplaying, 'startdatetime":"' +npet, '}')
                     n_start_time = datetime.datetime.fromtimestamp(int(npet))
                     n_end_time = datetime.datetime.fromtimestamp(int(regex_from_to(next, 'enddatetime":"', '",')))
-                    n_programme_name = regex_from_to(next, 'programme_name":"', '",')
+                    n_programme_name = regex_from_to(next, 'programme_name":"', '",').replace("\/", "/")
                     n_start_t = n_start_time.strftime('%H:%M')
                     n_end_t = n_end_time.strftime('%H:%M')
                     n_p_name = "[COLOR cyan]Next: %s (%s-%s)[/COLOR]" % (n_programme_name, n_start_t, n_end_t)
@@ -224,23 +237,34 @@ def play_filmon(name,url,iconimage):
         url = regex_from_to(stream, 'url":"', '",').replace("\/", "/")
         name = regex_from_to(stream, 'name":"', '",')
         if quality == FILMON_QUALITY:
-            STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?' + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?' + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+            STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
 
-    try:    
-        listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-        xbmcPlayer.play(STurl2,listitem)
+    playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+    playlist.clear()
+    handle = str(sys.argv[1])
+    try:
+        listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl2)
+        if handle != "-1":	
+            listitem.setProperty("IsPlayable", "true")
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+        else:
+            xbmcPlayer = xbmc.Player()
+            xbmcPlayer.play(STurl2,listitem)
     except:
         listitem = xbmcgui.ListItem(channel_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-        xbmcPlayer.play(STurl,listitem)
+        if handle != "-1":
+            listitem.setProperty("IsPlayable", "true")
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+        else:
+            xbmcPlayer = xbmc.Player()
+            xbmcPlayer.play(STurl,listitem)
     dp.close()
 
 def record_programme(name,ch_id,p_id,start):
     dialog = xbmcgui.Dialog()
     if dialog.yesno("Record Programme?", '', name.upper()):
-        rec_url ='http://filmon.com/api/dvr-add?session_key=%s&channel_id=%s&programme_id=%s&start_time=%s' % (FILMON_SESSION,ch_id,p_id,start)
+        rec_url ='http://filmon.com/api/dvr-add?session_key=%s&channel_id=%s&programme_id=%s&start_time=%s' % (session_id,ch_id,p_id,start)
         link = open_url(rec_url)
         text = regex_from_to(link, 'reason":"', '"}').replace('"',' ')
         dialog = xbmcgui.Dialog()
@@ -249,7 +273,7 @@ def record_programme(name,ch_id,p_id,start):
 def delete_recording(name,start,iconimage):
     dialog = xbmcgui.Dialog()
     if dialog.yesno("Delete Recording?", '', name.upper()):
-        rec_url ='http://filmon.com/api/dvr-remove?session_key=%s&recording_id=%s' % (FILMON_SESSION, start)
+        rec_url ='http://filmon.com/api/dvr-remove?session_key=%s&recording_id=%s' % (session_id, start)
         link = open_url(rec_url)
         text = regex_from_to(link, 'reason":"', '"}').replace('"',' ')
         dialog = xbmcgui.Dialog()
@@ -258,7 +282,7 @@ def delete_recording(name,start,iconimage):
 
 	
 def recordings(url):
-    recs_url='http://www.filmon.com/api/dvr-list?session_key=%s'%(FILMON_SESSION)
+    recs_url='http://www.filmon.com/api/dvr-list?session_key=%s'%(session_id)
     link = open_url(recs_url)
     match = re.compile('total_time":(.+?),"available_time":(.+?),"recorded_time":(.+?)}').findall(link)
     for t, a, r in match:
@@ -384,6 +408,22 @@ def play(name, url, iconimage):
         playlist.add(stream_url,listitem)
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(playlist)
+		
+def renew_session():
+    link = open_url(session_url)
+    match= re.compile('"session_key":"(.+?)"').findall(link)
+    session_id=match[0]
+    if FILMON_ACCOUNT:
+        login_url = "%s%s%s%s%s%s" % ("http://www.filmon.com/api/login?session_key=", session_id, "&login=", FILMON_USER, "&password=", FILMON_PASS)
+        login = open_url(login_url)
+        print "F.T.V......Logged in"
+        xbmcgui.Window(10000).setProperty("session_id", session_id)
+    else:
+        print "F.T.V......Not logged in"
+        xbmcgui.Window(10000).setProperty("session_id", session_id)
+            
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    return session_id
           
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
@@ -484,10 +524,10 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
         liz.setProperty('fanart_image', fanart)
         contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=None&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],url,iconimage)))
         if function=="grp":
-            contextMenuItems.append(("Add to Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
+            contextMenuItems.append(("Add to My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
         if function=="fav":
-            contextMenuItems.append(("Remove from Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=137&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
-        liz.addContextMenuItems(contextMenuItems, replaceItems=True)
+            contextMenuItems.append(("Remove from My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=137&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
+        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
         
@@ -536,6 +576,9 @@ elif mode==121:
 		
 elif mode==122:
         favourites()
+		
+elif mode==151:
+        featured()
 		
 elif mode==15:
         play(name, url, iconimage)

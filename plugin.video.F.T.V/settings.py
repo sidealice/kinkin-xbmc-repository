@@ -32,4 +32,23 @@ def filmon_quality():
         return "low"
 
 def download_path():
-    return ADDON.getSetting('download_path')	
+    return ADDON.getSetting('download_path')
+
+def my_videos():
+    if ADDON.getSetting('my_videos') == 'true':
+        return True
+    else:
+        return False
+
+def my_audio():
+    if ADDON.getSetting('my_audio') == 'true':
+        return True
+    else:
+        return False
+
+def other_menu():
+    if ADDON.getSetting('other_menu') == 'true':
+        return True
+    else:
+        return False
+		

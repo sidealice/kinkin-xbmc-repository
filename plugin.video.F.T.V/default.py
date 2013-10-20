@@ -19,6 +19,9 @@ FILMON_ACCOUNT = settings.filmon_account()
 FILMON_USER = settings.filmon_user()
 FILMON_QUALITY = settings.filmon_quality()
 FILMON_PASS = md5(settings.filmon_pass()).hexdigest()
+MY_VIDEOS = settings.my_videos()
+MY_AUDIO = settings.my_audio()
+OTHER_MENU = settings.other_menu()
 DOWNLOAD_PATH = settings.download_path()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
@@ -68,12 +71,12 @@ if not xbmcgui.Window(10000).getProperty("session_id"):
 session_id = xbmcgui.Window(10000).getProperty("session_id")
 
 def CATEGORIES():
-    addDir('FilmOn','url',121,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
-    addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
-    addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
-    addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
-
-def filmon():
+    if MY_VIDEOS:
+        addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
+    if MY_AUDIO:
+        addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
+    if OTHER_MENU:
+        addDir('Other Video Links','url',121,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'other_video.png')), '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
     addDir('Most Watched','url',151,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'featured.png')), '', '')
@@ -87,6 +90,9 @@ def filmon():
         url = regex_from_to(groups, 'group_id":"', '",')
         addDir(title,group_id,123,thumb, '','')
         setView('episodes', 'episodes-view')
+
+def other_menu():
+    addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
 		
 def group_channels(url, title):
     url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', session_id)
@@ -572,7 +578,7 @@ if mode==None or url==None or len(url)<1:
         
        
 elif mode==121:
-        filmon()
+        other_menu()
 		
 elif mode==122:
         favourites()

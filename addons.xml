@@ -43,7 +43,7 @@
 
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
-       version="1.0.2"
+       version="1.0.3"
        provider-name="kinkin">
     <requires>
         <import addon="xbmc.python" version="2.0"/>

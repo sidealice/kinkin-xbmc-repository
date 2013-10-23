@@ -27,6 +27,7 @@ addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
 session_url = 'http://www.filmon.com/api/init/'
 base_url = 'http://www.filmon.com/'
+grp_art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art'))
 
 def open_url(url):
     req = urllib2.Request(url)
@@ -114,23 +115,32 @@ def group_channels(url, title):
         setView('episodes', 'episodes-view')
 		
 def favourites():
-    url='http://www.filmon.com/api/favorites?session_key=%s&run=get'% (session_id)
+    fav = []
+    session_id = renew_session()
+    url='http://www.filmon.com/api/favorites?session_key=%s&run=get' % (session_id)
     link = open_url(url)
-    all_channels = regex_from_to(link, 'result":', ',"reason')
-    channel_ids = regex_get_all(all_channels, '{', '}')
-    for id in channel_ids:
-        channel_id = regex_from_to(id, 'channel_id":"', '",')
-        url='http://www.filmon.com/tv/api/channel/%s?session_key=%s' % (channel_id, session_id)
-        link = open_url(url)
-        channel_id = regex_from_to(link, '"id":"', '",')
-        title = regex_from_to(link, 'title":"', '",').encode("utf-8")
-        description = clean_file_name(regex_from_to(link, 'description":"', '",'), use_blanks=False)
-        thumb = regex_from_to(link, 'extra_big_logo":"', '",').replace("\/", "/")
+    print link
+    channels = regex_get_all(link, '{', '}')
+    for c in channels:
+        channel_id = regex_from_to(c, '"channel_id":"', '",')
+        fav.append(channel_id)
+    all_ch(fav)
+ 
+def all_ch(fav):		
+    all_c_url = 'http://www.filmon.com/tv/api/channels?session_key=%s' % (session_id)
+    all_link = open_url(all_c_url)
+    for f in fav:
+        print f
+        fstring = '"id":"%s"' % (f)
+        channel = regex_from_to(all_link, fstring, 'is_favorite')
+        title = regex_from_to(channel, 'title":"', '",').encode("utf-8")
+        description = ""
+        thumb = regex_from_to(channel, 'extra_big_logo":"', '",').replace("\/", "/")
         try:
-            ch_fanart = regex_from_to(link, 'size":"854x480","url":"', '"}').replace('\/', '/')
+            ch_fanart = regex_from_to(channel, 'size":"854x480","url":"', '"}').replace('\/', '/')
         except:
             ch_fanart = "" 
-        addDirPlayable(title,channel_id,125,thumb,ch_fanart,description, "", "fav")
+        addDirPlayable(title,f,125,thumb,ch_fanart,description, "", "fav")
         setView('episodes', 'episodes-view')
 		
 def featured():
@@ -241,10 +251,12 @@ def play_filmon(name,url,iconimage):
     for stream in hl_streams:
         quality = regex_from_to(stream, 'quality":"', '",')
         url = regex_from_to(stream, 'url":"', '",').replace("\/", "/")
+        appfind = url[7:].split('/')
+        app = appfind[2]
         name = regex_from_to(stream, 'name":"', '",')
         if quality == FILMON_QUALITY:
-            STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+            STurl = str(url) + ' playpath=' + name + ' app=live/' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=26'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=live/' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=26' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
 
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()

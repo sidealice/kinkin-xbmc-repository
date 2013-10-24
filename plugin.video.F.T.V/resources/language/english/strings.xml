@@ -4,6 +4,7 @@
     <string id="10002">FilmOn User Name</string>
     <string id="10003">FilmOn Password</string>
     <string id="10004">FilmOn Quality</string>
+    <string id="10010">Play SD stream if timeout value is too low</string>
     <string id="10005">FilmOn Download Path</string>
     <string id="10006">Menu Options</string>
     <string id="10007">My Video Addons</string>

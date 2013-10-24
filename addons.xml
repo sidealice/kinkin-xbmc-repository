@@ -43,7 +43,7 @@
 
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
-       version="1.0.3"
+       version="1.0.4"
        provider-name="kinkin">
     <requires>
         <import addon="xbmc.python" version="2.0"/>
@@ -55,7 +55,7 @@
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
         <summary>Free to view live streaming</summary>
-        <description></description>
+        <description>icon by azad720</description>
     </extension>
 
 </addon>

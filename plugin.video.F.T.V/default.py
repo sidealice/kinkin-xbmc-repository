@@ -18,6 +18,7 @@ FILMON_KEEP = settings.keep_session_flag()
 FILMON_ACCOUNT = settings.filmon_account()
 FILMON_USER = settings.filmon_user()
 FILMON_QUALITY = settings.filmon_quality()
+AUTO_SWITCH = settings.auto_switch()
 FILMON_PASS = md5(settings.filmon_pass()).hexdigest()
 MY_VIDEOS = settings.my_videos()
 MY_AUDIO = settings.my_audio()
@@ -245,18 +246,24 @@ def play_filmon(name,url,iconimage):
             p_name = programme_name
             n_p_name = ""
     
-
     streams = regex_from_to(link, 'streams":', 'logo')
     hl_streams = regex_get_all(streams, '{', '}')
     for stream in hl_streams:
-        quality = regex_from_to(stream, 'quality":"', '",')
+        timeout = regex_from_to(stream, 'watch-timeout":', '}')
+        if len(timeout) < 5 and AUTO_SWITCH:
+            quality = 'donotplay'
+        else:
+            quality = regex_from_to(stream, 'quality":"', '",')
         url = regex_from_to(stream, 'url":"', '",').replace("\/", "/")
-        appfind = url[7:].split('/')
-        app = appfind[2]
         name = regex_from_to(stream, 'name":"', '",')
-        if quality == FILMON_QUALITY:
-            STurl = str(url) + ' playpath=' + name + ' app=live/' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=26'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=live/' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=26' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+        if name.endswith('m4v'):
+            app = 'vodlast'
+        else:
+            appfind = url[7:].split('/')
+            app = 'live/' + appfind[2]
+        if quality == FILMON_QUALITY or (quality == 'low' and AUTO_SWITCH):
+            STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=26'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=26' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
 
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()

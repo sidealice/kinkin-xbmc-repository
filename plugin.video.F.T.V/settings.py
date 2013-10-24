@@ -30,6 +30,12 @@ def filmon_quality():
         return "high"
     else:
         return "low"
+		
+def auto_switch():
+    if ADDON.getSetting('auto_switch') == 'true':
+        return True
+    else:
+        return False
 
 def download_path():
     return ADDON.getSetting('download_path')

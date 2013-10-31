@@ -100,7 +100,7 @@
 
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.5.4c"
+       version="1.5.4d"
        provider-name="Batch,Kinkin,Blazetamer">
     <requires>
         <import addon="xbmc.python" version="2.0"/>

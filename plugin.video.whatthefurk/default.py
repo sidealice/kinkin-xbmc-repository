@@ -1204,7 +1204,7 @@ def setup():
 			
 def setup_FURK():
     dialog = xbmcgui.Dialog()
-    dialog.ok("WTF BY Batch Kinkin Mikey1234","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
+    dialog.ok("WTF BY Batch Kinkin","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
         
     if not FURK_ACCOUNT:
         if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
@@ -2966,7 +2966,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
                 size = float(size)/1073741824
                 size = "[%.2fGB]" % size
                 if  is_ready == "1" and f.type == "video" and f.url_dl != None:
-                    if QUALITYSTYLE_TV == "preferred" or quality_id > 0:
+                    if QUALITYSTYLE == "preferred" or quality_id > 0:
                         text = "[COLOR gold]%s[/COLOR] %s [COLOR cyan]%s[/COLOR] info: %s %s" %(size, bitrate, name, length, vid_info)
                     else:
                         text = "[COLOR gold]%s[/COLOR] [COLOR cyan]%s[/COLOR]" %(size, name)
@@ -3502,10 +3502,11 @@ def execute_video(name, url, list_item, strm=False):
         else:
             pw=''
     if int(now) >= int(PC_WATERSHED) or not(PC_ENABLE) or ((pw == PC_PASS or pw == FURK_PASS) or mpaa < PC_RATING or (int(now) < 6 and int(PC_WATERSHED) != 25)):
-        list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False))
         poster_path = create_directory(META_PATH, META_QUALITY)
         poster_file = os.path.join(poster_path, "%s_poster.jpg" % (imdb_id))
-        list_item.setThumbnailImage(poster_file)
+        list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False), iconImage=poster_file, thumbnailImage=poster_file)
+        
+        #list_item.setThumbnailImage(poster_file)
         if PLAY_MODE == 'stream':
             if mode == "strm file dialog" or strm:
                 set_resolved_url(int(sys.argv[1]), name, url, imdb_id) 

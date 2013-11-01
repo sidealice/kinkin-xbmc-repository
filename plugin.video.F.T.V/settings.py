@@ -3,7 +3,7 @@ import os
 
 ADDON = xbmcaddon.Addon(id='plugin.video.F.T.V')
 DATA_PATH = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.F.T.V'), '')
-ADDON_PATH = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', ''))
+FTV_PATH = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', ''))
 
 def addon():
     return ADDON
@@ -61,7 +61,7 @@ def other_menu():
         return False
 	
 def cookie_jar():
-    return create_file(DATA_PATH, "cookiejar.lwp")
+    return create_file(FTV_PATH, "cookiejar.lwp")
 	
 def create_file(dir_path, file_name=None):
     if file_name:

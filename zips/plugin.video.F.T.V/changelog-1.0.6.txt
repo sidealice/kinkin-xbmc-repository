@@ -22,7 +22,7 @@ Added settings to enable/disable "My Video Addons", "My Audio Addons" and "Other
 1.0.1
 Added Most Watched menu
 Added context option to add to xbmc favourites
-Changed FilmOn option text to "Add to My Channels"
+Changed FilmOn option to "Add to My Channels"
 
 1.0.0
 Initial release

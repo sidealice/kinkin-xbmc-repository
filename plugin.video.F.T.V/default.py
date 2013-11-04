@@ -118,14 +118,15 @@ def group_channels(url, title):
     gt = title
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    channels = regex_get_all(link, '<li class="channel"', '</li>')
+
+    channels = regex_get_all(link, '<li class="channel', '</li>')
     for channel in channels:
         alias = regex_from_to(channel, 'alias="', '" channel_id')
         channel_id = regex_from_to(channel, 'id="', '" alias')
         title = regex_from_to(channel, 'channel_title">', '</')
         description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
-        url = base_url + regex_from_to(channel, 'href="/', '" onclick')
+        url = base_url + regex_from_to(channel, 'href="/', '" class')
         addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
     if gt == 'UK LIVE TV':
         addDirPlayable('Channel 5 + 1','http://www.filmon.com/channel/channel-5',126,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")

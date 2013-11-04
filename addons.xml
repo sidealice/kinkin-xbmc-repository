@@ -43,10 +43,11 @@
 
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
-       version="1.0.7"
+       version="1.0.8"
        provider-name="kinkin">
     <requires>
-        <import addon="xbmc.python" version="2.0"/>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
@@ -81,10 +82,11 @@
 
 <addon id="plugin.video.tvonline.cc"
        name="TVonline"
-       version="2.0.0"
+       version="2.0.1"
        provider-name="kinkin, art by Marquerite">
     <requires>
-        <import addon="xbmc.python" version="2.0"/>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">

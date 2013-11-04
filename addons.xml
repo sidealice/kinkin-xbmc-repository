@@ -79,25 +79,6 @@
 
 </addon>
 
-<addon id="plugin.video.tvonline"
-       name="TVonline"
-       version="1.0.2"
-       provider-name="kinkin, art by Marquerite">
-    <requires>
-        <import addon="xbmc.python" version="2.0"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>Stream your favourite shows from tvonline.cc</summary>
-        <description>Stream your favourite shows from tvonline.cc</description>
-    </extension>
-
-</addon>
-
 <addon id="plugin.video.ultimateguitar"
        name="Ultimate Guitar"
        version="1.0.1"

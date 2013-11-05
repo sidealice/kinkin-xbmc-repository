@@ -207,18 +207,17 @@ def tv_show(name, url, iconimage):
     episodes = []
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    seasonlist = regex_get_all(link, '<ul class="ju_list"', '</ul>')
+    seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
     for s in seasonlist:
         sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
-        eplist = regex_get_all(s, '<li>', '</li>')
-        print sname,eplist
+        eplist = regex_get_all(str(s), '<li>', '</li>')
         addDir(sname, 'url',4,str(iconimage), eplist,name)
 		
 def tv_show_episodes(name, list, iconimage, showname):
     episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(list)
     for epnum, url, epname in episodes:
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')
-        url = 'http://www.tvonline.cc' + url
+        url = 'http://www.tvonline.cc' + url.replace("<>", "'")
         name = "%s - %s" % (epnum, clean_file_name(epname))
         addDirPlayable(name,url,5,iconimage, showname)
     setView('episodes', 'episodes-view')

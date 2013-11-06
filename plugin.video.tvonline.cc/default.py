@@ -165,12 +165,13 @@ def login():
     else:
         notification('Logged in at tvonline.cc', '', '5000', iconart)
 	
-def CATEGORIES():
+def CATEGORIES():#<div class="tv_aes_title">
     login()
+    addDir("Hit TV Shows", 'Hit TV Shows',7,'', '','')
+    addDir("Latest Updates", 'Latest Updates TV Shows',7,'', '','')
+    addDir("Shows with New Episodes", 'New TV Episodes',7,'', '','')
+    addDir("A-Z", 'url',8,'', '','')
     addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Search.png')), '','')	
-    alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
-    for a in alphabet:
-        addDir(a, 'http://www.tvonline.cc/tv/%s.htm' % (a.lower().replace('#', 'num')),2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('#','HASH') + '.png')), '','')
 
 def search():
     keyboard = xbmc.Keyboard('', 'Search TV Show', False)
@@ -179,6 +180,11 @@ def search():
         query = keyboard.getText()
         if len(query) > 0:
             search_show(query)
+			
+def a_to_z(url):
+    alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
+    for a in alphabet:
+        addDir(a, 'http://www.tvonline.cc/tv/%s.htm' % (a.lower().replace('#', 'num')),2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('#','HASH') + '.png')), '','')
 			
 def search_show(query):
     url = 'http://www.tvonline.cc/searchlist.php'
@@ -201,6 +207,21 @@ def shows(url):
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         thumb = regex_from_to(a, '<img src="', '" ')
+        addDir(title, url,3,thumb, '','')
+		
+def grouped_shows(header):
+    url = 'http://www.tvonline.cc'
+    net.set_cookies(cookie_jar)
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    all_shows = regex_from_to(link,str(header), '</ul>')
+    all_shows = regex_get_all(all_shows, '<li>', '</li>')
+    for a in all_shows:
+        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
+        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
+        if header == "Hit TV Shows":
+            thumb = "http://pic.newtvshows.org/" + title.replace(' ', '-') + ".jpg"
+        else:
+            thumb = regex_from_to(a, '<img src="', '" ')
         addDir(title, url,3,thumb, '','')
 		
 def tv_show(name, url, iconimage):
@@ -420,6 +441,12 @@ elif mode==5:
 		
 elif mode==6:
         search()
+		
+elif mode==7:
+        grouped_shows(url)
+		
+elif mode == 8:
+        a_to_z(url)
 
 		
 		

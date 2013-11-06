@@ -1,6 +1,0 @@
-<settings>
-	<category label="Settings">
-        <setting id="tvo_user" type="text" label="10002" default=""/>
-        <setting id="tvo_pass" type="text" label="10003" default=""/>
-	</category>
-</settings>

@@ -23,7 +23,7 @@ TVO_USER = settings.tvo_user()
 TVO_PASSWORD = settings.tvo_pass()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
-fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'fanart.jpg'))
+fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Fanart2.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'icon.png'))
 base_url = 'http://www.tvonline.cc/'
 
@@ -165,13 +165,15 @@ def login():
     else:
         notification('Logged in at tvonline.cc', '', '5000', iconart)
 	
-def CATEGORIES():#<div class="tv_aes_title">
-    login()
+def CATEGORIES(name):
+    if name == None:
+        login()
     addDir("Hit TV Shows", 'Hit TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
     addDir("Latest Updates", 'Latest Updates TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Latestupdates.png')), '','')
     addDir("Shows with New Episodes", 'New TV Episodes',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
     addDir("A-Z", 'url',8,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'A-Z.png')), '','')
-    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')	
+    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
+    addDir("My Watched List", 'http://www.tvonline.cc/wl.php?page=1',9,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Watchedlist.png')), '','')	
 
 def search():
     keyboard = xbmc.Keyboard('', 'Search TV Show', False)
@@ -198,6 +200,24 @@ def search_show(query):
         thumb = regex_from_to(a, '<img src="', '" ')
         addDir(title, url,3,thumb, '','')
 		
+def watched_list(url):
+    net.set_cookies(cookie_jar)
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    match = re.compile('<td><a href="(.+?)">(.+?)</a></td>  <td>(.+?)</td>').findall(link.replace("'", "<>"))
+    matchpg = re.compile('<a class="p_num" href="(.+?)">(.+?)</a>').findall(link)
+    addDir('[COLOR cyan] << Return to Main Menu [/COLOR]', '','','', '','')
+    for url, episode, wtime in match:
+        url = 'http://www.tvonline.cc' + url.replace("<>", "'")
+        name = "%s -%s" % (episode.replace("<>", "'"), wtime)
+        showname = episode[:len(episode)-7]
+        iconimage = "http://pic.newtvshows.org/" + showname.replace(' ', '-') + ".jpg"
+        addDirPlayable(name,url,5,iconimage, showname)
+    for url, page in matchpg:
+        url = 'http://www.tvonline.cc/wl.php' + url
+        title = '[COLOR lime]' + 'Page ' + str(page) + '[/COLOR]'
+        addDir(title, url,9,'', '','')
+    setView('episodes', 'episodes-view')
+		
 def shows(url):
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
@@ -208,6 +228,7 @@ def shows(url):
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         thumb = regex_from_to(a, '<img src="', '" ')
         addDir(title, url,3,thumb, '','')
+    setView('episodes', 'episodes-view')
 		
 def grouped_shows(header):
     url = 'http://www.tvonline.cc'
@@ -219,10 +240,14 @@ def grouped_shows(header):
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         if header == "Hit TV Shows":
-            thumb = "http://pic.newtvshows.org/" + title.replace(' ', '-') + ".jpg"
+            try:
+                thumb = "http://pic.newtvshows.org/" + title.replace(' ', '-') + ".jpg"
+            except:
+                thumb = "http://pic.newtvshows.org/" + title.replace(' ', '.') + ".jpg"
         else:
             thumb = regex_from_to(a, '<img src="', '" ')
         addDir(title, url,3,thumb, '','')
+    setView('episodes', 'episodes-view')
 		
 def tv_show(name, url, iconimage):
     episodes = []
@@ -233,6 +258,7 @@ def tv_show(name, url, iconimage):
         sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
         eplist = regex_get_all(str(s), '<li>', '</li>')
         addDir(sname, 'url',4,str(iconimage), eplist,name)
+    setView('episodes', 'episodes-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
     episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(list)
@@ -242,7 +268,6 @@ def tv_show_episodes(name, list, iconimage, showname):
         name = "%s - %s" % (epnum, clean_file_name(epname))
         addDirPlayable(name,url,5,iconimage, showname)
     setView('episodes', 'episodes-view')
-    xbmc.executebuiltin("Container.SortDirection(Descending)")
 		
 def play(name, url, iconimage, showname):
     dp = xbmcgui.DialogProgress()
@@ -424,7 +449,7 @@ except:
 
 
 if mode==None or url==None or len(url)<1:
-        CATEGORIES()
+        CATEGORIES(name)
         
        
 elif mode==2:
@@ -447,9 +472,11 @@ elif mode==7:
 		
 elif mode == 8:
         a_to_z(url)
+		
+elif mode == 9:
+        watched_list(url)
 
-		
-		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
 

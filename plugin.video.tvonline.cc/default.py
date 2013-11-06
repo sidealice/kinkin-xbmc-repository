@@ -167,11 +167,11 @@ def login():
 	
 def CATEGORIES():#<div class="tv_aes_title">
     login()
-    addDir("Hit TV Shows", 'Hit TV Shows',7,'', '','')
-    addDir("Latest Updates", 'Latest Updates TV Shows',7,'', '','')
-    addDir("Shows with New Episodes", 'New TV Episodes',7,'', '','')
-    addDir("A-Z", 'url',8,'', '','')
-    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Search.png')), '','')	
+    addDir("Hit TV Shows", 'Hit TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Latest Updates", 'Latest Updates TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Latestupdates.png')), '','')
+    addDir("Shows with New Episodes", 'New TV Episodes',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
+    addDir("A-Z", 'url',8,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'A-Z.png')), '','')
+    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')	
 
 def search():
     keyboard = xbmc.Keyboard('', 'Search TV Show', False)

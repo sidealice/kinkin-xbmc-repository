@@ -13,6 +13,12 @@ def tvo_user():
 
 def tvo_pass():
     return ADDON.getSetting('tvo_pass') 
+	
+def tvo_email():
+    return ADDON.getSetting('tvo_email')
+	
+def favourites_file():
+    return create_file(DATA_PATH, "favourites.list")
 		
 def cookie_jar():
     return create_file(TVO_PATH, "cookiejar.lwp")

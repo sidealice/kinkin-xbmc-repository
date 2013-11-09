@@ -21,6 +21,8 @@ net = Net()
 ADDON = settings.addon()
 TVO_USER = settings.tvo_user()
 TVO_PASSWORD = settings.tvo_pass()
+TVO_EMAIL = settings.tvo_email()
+FAV = settings.favourites_file()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Fanart2.jpg'))
@@ -172,8 +174,9 @@ def CATEGORIES(name):
     addDir("Latest Updates", 'Latest Updates TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Latestupdates.png')), '','')
     addDir("Shows with New Episodes", 'New TV Episodes',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
     addDir("A-Z", 'url',8,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'A-Z.png')), '','')
-    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
+    addDir("My Favourites", 'url',12,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Favourites.png')), '','')
     addDir("My Watched List", 'http://www.tvonline.cc/wl.php?page=1',9,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Watchedlist.png')), '','')	
+    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
 
 def search():
     keyboard = xbmc.Keyboard('', 'Search TV Show', False)
@@ -186,7 +189,19 @@ def search():
 def a_to_z(url):
     alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
     for a in alphabet:
-        addDir(a, 'http://www.tvonline.cc/tv/%s.htm' % (a.lower().replace('#', 'num')),2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('#','HASH') + '.png')), '','')
+        addDir(a, 'http://www.tvonline.cc/tv/%s.htm' % (a.lower().replace('#', 'num')),2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('#','HASH') + '.png')), '','menu')
+		
+def favourites():
+    if os.path.isfile(FAV):
+        s = read_from_file(FAV)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('QQ')
+                title = list1[0]
+                url = list1[1]
+                thumb = list1[2]
+                addDir(title, url,3,thumb, list,'sh')
 			
 def search_show(query):
     url = 'http://www.tvonline.cc/searchlist.php'
@@ -227,9 +242,10 @@ def shows(url):
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         thumb = regex_from_to(a, '<img src="', '" ')
-        addDir(title, url,3,thumb, '','')
+        list_data = "%sQQ%sQQ%s" % (title, url, thumb)
+        addDir(str(title), str(url),3,thumb, list_data,'sh')
     setView('episodes', 'episodes-view')
-		
+	
 def grouped_shows(header):
     url = 'http://www.tvonline.cc'
     net.set_cookies(cookie_jar)
@@ -246,7 +262,9 @@ def grouped_shows(header):
                 thumb = "http://pic.newtvshows.org/" + title.replace(' ', '.') + ".jpg"
         else:
             thumb = regex_from_to(a, '<img src="', '" ')
-        addDir(title, url,3,thumb, '','')
+        list_data = "%sQQ%sQQ%s" % (title, url, thumb)
+        addDir(title, url,3,thumb, list_data,'sh')
+        
     setView('episodes', 'episodes-view')
 		
 def tv_show(name, url, iconimage):
@@ -281,15 +299,63 @@ def play(name, url, iconimage, showname):
     playlist.clear()
     listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
     playlist.add(playlink,listitem)
-    xbmcPlayer = xbmc.Player()
+    xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
     try:
         xbmcPlayer.play(playlist)
     except:
         dialog = xbmcgui.Dialog()
         dialog.ok("Playback failed", "Check your account settings")
     dp.close()
-        
+	
+def add_favourite(name, url, iconimage):
+    list_data = iconimage.replace('hhhh', 'http:')
+    splitdata = list_data.split('QQ')
+    name = splitdata[0]
+    thumb = splitdata[2]
+    add_to_list(list_data, FAV)
+    notification(name, "[COLOR lime]Added to Favourites[/COLOR]", '5000', thumb)
+	
+def remove_from_favourites(name, url, iconimage):
+    list_data = iconimage.replace('hhhh', 'http:')
+    splitdata = list_data.split('QQ')
+    name = splitdata[0]
+    thumb = splitdata[2]
+    remove_from_list(list_data, FAV)
+    notification(name, "[COLOR orange]Removed from Favourites[/COLOR]", '5000', thumb)
+    
+	
+def report_error(name, url, showname):
+    email = []
+    pd = []
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    uid = regex_from_to(link, '<input onclick="errorreport(', ')"')
+    if TVO_EMAIL == "":
+        keyboard = xbmc.Keyboard('', 'Enter your email address (only required once)', False)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            email = keyboard.getText()
+            if len(email) > 0:
+                ADDON.setSetting('tvo_email', value=email)
+    email = TVO_EMAIL
+    keyboard = xbmc.Keyboard('', 'Error Description', False)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        pd = keyboard.getText()
 		
+    pn = "%s %s" % (showname, name)
+
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = str(url)
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+    form_data = ({'email': email, 'uid': uid, 'pd': pd, 'pn': pn, 'type': 'error'})
+    net.set_cookies(cookie_jar)
+    req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+    if req == "1":
+        notification('Error reported', pn, '5000', iconart)
+
+
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
         r = re.search("(?i)" + from_string + "([\S\s]+?)" + to_string, text).group(1)
@@ -304,7 +370,47 @@ def regex_get_all(text, start_with, end_with):
 def strip_text(r, f, t, excluding=True):
     r = re.search("(?i)" + f + "([\S\s]+?)" + t, r).group(1)
     return r
-	
+
+
+def find_list(query, search_file):
+    try:
+        content = read_from_file(search_file) 
+        lines = content.split('\n')
+        index = lines.index(query)
+        return index
+    except:
+        return -1
+		
+def add_to_list(list, file):
+    if find_list(list, file) >= 0:
+        return
+
+    if os.path.isfile(file):
+        content = read_from_file(file)
+    else:
+        content = ""
+
+    lines = content.split('\n')
+    s = '%s\n' % list
+    for line in lines:
+        if len(line) > 0:
+            s = s + line + '\n'
+    write_to_file(file, s)
+    xbmc.executebuiltin("Container.Refresh")
+    
+def remove_from_list(list, file):
+    index = find_list(list, file)
+    if index >= 0:
+        content = read_from_file(file)
+        lines = content.split('\n')
+        lines.pop(index)
+        s = ''
+        for line in lines:
+            if len(line) > 0:
+                s = s + line + '\n'
+        write_to_file(file, s)
+        xbmc.executebuiltin("Container.Refresh")
+		
 def write_to_file(path, content, append=False, silent=False):
     try:
         if append:
@@ -359,7 +465,7 @@ def wait_dl_only(time_to_wait, title):
 		
 def notification(title, message, ms, nart):
     xbmc.executebuiltin("XBMC.notification(" + title + "," + message + "," + ms + "," + nart + ")")
-		
+	
 def setView(content, viewType):
 	if content:
 		xbmcplugin.setContent(int(sys.argv[1]), content)
@@ -385,22 +491,33 @@ def get_params():
 
 
 def addDir(name,url,mode,iconimage,list,description):
+        suffix = ""
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&description="+str(description)
         ok=True
         contextMenuItems = []
-        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+        if description == "sh":
+            if find_list(list, FAV) < 0:
+                suffix = ""
+                contextMenuItems.append(("[COLOR lime]Add to TVonline Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=11&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+            else:
+                suffix = ' [COLOR lime]+[/COLOR]'
+                contextMenuItems.append(("[COLOR orange]Remove from TVonline Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=13&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+        liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
+        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
 def addDirPlayable(name,url,mode,iconimage,showname):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
         ok=True
-        #contextMenuItems = []
+        contextMenuItems = []
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)
+        contextMenuItems.append(("[COLOR red]Report an error[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&showname=%s)'%(sys.argv[0],name, url, showname)))
+        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
         
@@ -475,7 +592,18 @@ elif mode == 8:
 		
 elif mode == 9:
         watched_list(url)
-
+		
+elif mode == 10:
+        report_error(name, url, showname)
+		
+elif mode == 11:
+        add_favourite(name, url, list)
+		
+elif mode == 12:
+        favourites()
+		
+elif mode == 13:
+        remove_from_favourites(name, url, list)
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

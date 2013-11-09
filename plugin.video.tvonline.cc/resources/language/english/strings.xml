@@ -1,5 +1,6 @@
 <strings>
 	<!-- Settings -->
-     <string id="10002">TVonline User Name</string>
+    <string id="10002">TVonline User Name</string>
     <string id="10003">TVonline Password</string>
+    <string id="10004">TVonline Email</string>
 </strings>

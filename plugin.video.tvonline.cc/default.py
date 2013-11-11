@@ -11,6 +11,7 @@ from hashlib import md5
 from helpers import clean_file_name
 import json
 import glob
+import shutil
 from threading import Thread
 import cookielib
 from t0mm0.common.net import Net
@@ -22,7 +23,10 @@ ADDON = settings.addon()
 TVO_USER = settings.tvo_user()
 TVO_PASSWORD = settings.tvo_pass()
 TVO_EMAIL = settings.tvo_email()
+ENABLE_SUBS = settings.enable_subscriptions()
+TV_PATH = settings.tv_directory()
 FAV = settings.favourites_file()
+SUB = settings.subscription_file()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Fanart2.jpg'))
@@ -168,13 +172,15 @@ def login():
         notification('Logged in at tvonline.cc', '', '5000', iconart)
 	
 def CATEGORIES(name):
-    if name == None:
-        login()
     addDir("Hit TV Shows", 'Hit TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
     addDir("Latest Updates", 'Latest Updates TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Latestupdates.png')), '','')
     addDir("Shows with New Episodes", 'New TV Episodes',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
     addDir("A-Z", 'url',8,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'A-Z.png')), '','')
     addDir("My Favourites", 'url',12,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Favourites.png')), '','')
+    if ENABLE_SUBS:
+        addDir("My Subscriptions", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Subscriptions.png')), '','')
+    else:
+        addDir("[COLOR orange] My Subscriptions (ENABLE IN SETTINGS)[/COLOR]", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Subscriptions.png')), '','')
     addDir("My Watched List", 'http://www.tvonline.cc/wl.php?page=1',9,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Watchedlist.png')), '','')	
     addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
 
@@ -194,6 +200,18 @@ def a_to_z(url):
 def favourites():
     if os.path.isfile(FAV):
         s = read_from_file(FAV)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('QQ')
+                title = list1[0]
+                url = list1[1]
+                thumb = list1[2]
+                addDir(title, url,3,thumb, list,'sh')
+				
+def subscriptions():
+    if os.path.isfile(SUB):
+        s = read_from_file(SUB)
         search_list = s.split('\n')
         for list in search_list:
             if list != '':
@@ -288,41 +306,107 @@ def tv_show_episodes(name, list, iconimage, showname):
     setView('episodes', 'episodes-view')
 		
 def play(name, url, iconimage, showname):
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = str(url)
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+    form_data = ({'type': 'checkuser'})
+    net.set_cookies(cookie_jar)
+    req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+    handle = str(sys.argv[1])
+    if req != TVO_USER:
+        login()
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name)
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
     linkurl = 'http://www.tvonline.cc' + regex_from_to(link, 'url: "', '"')
     net.set_cookies(cookie_jar)
-    playlink = net.http_GET(linkurl).content.encode("utf-8").rstrip()
+    playlink = net.http_GET(linkurl).content.encode("utf-8").rstrip().replace("getinfo.php", "ip.mp4")
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
-    listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+    listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)
     playlist.add(playlink,listitem)
     xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-    try:
-        xbmcPlayer.play(playlist)
-    except:
-        dialog = xbmcgui.Dialog()
-        dialog.ok("Playback failed", "Check your account settings")
+    
+    if handle != "-1":
+        listitem.setProperty("IsPlayable", "true")
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+    else:
+        try:
+            xbmcPlayer.play(playlist)
+        except:
+            dialog = xbmcgui.Dialog()
+            dialog.ok("Playback failed", "Check your account settings")
     dp.close()
 	
-def add_favourite(name, url, iconimage):
+def add_favourite(name, url, iconimage, dir, text):
     list_data = iconimage.replace('hhhh', 'http:')
     splitdata = list_data.split('QQ')
     name = splitdata[0]
     thumb = splitdata[2]
-    add_to_list(list_data, FAV)
-    notification(name, "[COLOR lime]Added to Favourites[/COLOR]", '5000', thumb)
+    add_to_list(list_data, dir)
+    notification(name, "[COLOR lime]" + text + "[/COLOR]", '5000', thumb)
 	
-def remove_from_favourites(name, url, iconimage):
+def remove_from_favourites(name, url, iconimage, dir, text):
     list_data = iconimage.replace('hhhh', 'http:')
     splitdata = list_data.split('QQ')
     name = splitdata[0]
     thumb = splitdata[2]
-    remove_from_list(list_data, FAV)
-    notification(name, "[COLOR orange]Removed from Favourites[/COLOR]", '5000', thumb)
-    
+    remove_from_list(list_data, dir)
+    notification(name, "[COLOR orange]" + text + "[/COLOR]", '5000', thumb)
+	
+def create_tv_show_strm_files(name, url, iconimage, ntf):
+    dialog = xbmcgui.Dialog()
+    n = name
+    u = url
+    l = iconimage
+    list_data = iconimage.replace('hhhh', 'http:')
+    splitdata = iconimage.split('QQ')
+    name = splitdata[0]
+    thumb = splitdata[2]
+    tv_show_path = create_directory(TV_PATH, name)
+    net.set_cookies(cookie_jar)
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
+    for s in seasonlist:
+        sname = regex_from_to(s, '<strong>', '</strong>')
+        sname = sname[:len(sname)-3]
+        snum = sname.replace("Season ", "")
+        season_path = create_directory(tv_show_path, str(snum))
+        eplist = regex_get_all(str(s), '<li>', '</li>')
+        for e in eplist:
+            episode = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(e)
+            for epnum, url, epname in episode:
+                epnum = epnum.replace(', ', 'x').replace('Ep', '').replace('S', '') 
+                url = 'http://www.tvonline.cc' + url.replace("<>", "'")
+                display = "%s %s" % (epnum, epname)
+                create_strm_file(display, url, "5", season_path, thumb, name)
+    if ntf == "true" and ENABLE_SUBS:
+        if dialog.yesno("Subscribe?", 'Do you want TVonline to automatically add new', '[COLOR gold]' + name + '[/COLOR]' + ' episodes when available?'):
+            add_favourite(n, u, l, SUB, "Added to Library/Subscribed")
+        else:
+            notification(name, "[COLOR lime]Added to Library[/COLOR]", '5000', thumb)
+    if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
+        xbmc.executebuiltin('UpdateLibrary(video)')
+
+
+def remove_tv_show_strm_files(name, url, iconimage, dir_path):
+    dialog = xbmcgui.Dialog()
+    splitname = iconimage.split('QQ')
+    rname = splitname[0]
+    print str(rname), dir_path
+    try:
+        path = os.path.join(dir_path, str(rname))
+        shutil.rmtree(path)
+        remove_from_favourites(name, url, iconimage, SUB, "Removed from Library/Unsubscribed")
+        if xbmc.getCondVisibility('Library.IsScanningVideo') == False:
+            if dialog.yesno("Clean Library?", '', 'Do you want clean the library now?'):		
+                xbmc.executebuiltin('CleanLibrary(video)')		
+    except:
+        xbmc.log("[TVonline] Was unable to remove TV show: %s" % (name)) 
+   
 	
 def report_error(name, url, showname):
     email = []
@@ -354,7 +438,60 @@ def report_error(name, url, showname):
     req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
     if req == "1":
         notification('Error reported', pn, '5000', iconart)
+		
+def create_directory(dir_path, dir_name=None):
+    if dir_name:
+        dir_path = os.path.join(dir_path, dir_name)
+    dir_path = dir_path.strip()
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    return dir_path
 
+def create_file(dir_path, file_name=None):
+    if file_name:
+        file_path = os.path.join(dir_path, file_name)
+    file_path = file_path.strip()
+    if not os.path.exists(file_path):
+        f = open(file_path, 'w')
+        f.write('')
+        f.close()
+    return file_path
+	
+def create_strm_file(name, url, mode, dir_path, iconimage, showname):
+    try:
+        strm_string = create_url(name, mode, url=url, iconimage=iconimage, showname=showname)
+        filename = clean_file_name("%s.strm" % name)
+        path = os.path.join(dir_path, filename)
+        if not os.path.exists(path):
+            stream_file = open(path, 'w')
+            stream_file.write(strm_string)
+            stream_file.close()
+    except:
+        xbmc.log("[TVonline] Error while creating strm file for : " + name)
+		
+def create_url(name, mode, url, iconimage, showname):
+    name = urllib.quote(str(name))
+    data = urllib.quote(str(url))
+    iconimage = urllib.quote(str(iconimage))
+    showname = urllib.quote(str(showname))
+    mode = str(mode)
+    url = sys.argv[0] + '?name=%s&url=%s&mode=%s&iconimage=%s&showname=%s' % (name, data, mode, iconimage, showname)
+    return url
+	
+def get_subscriptions():
+    try:
+        if os.path.isfile(SUB):
+            s = read_from_file(SUB)
+            search_list = s.split('\n')
+            for list in search_list:
+                if list != '':
+                    list1 = list.split('QQ')
+                    title = list1[0]
+                    url = list1[1]
+                    thumb = list1[2]
+                    create_tv_show_strm_files(title, url, list, "false")
+    except:
+        xbmc.log("[TVonline] Failed to fetch subscription")
 
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
@@ -492,9 +629,12 @@ def get_params():
 
 def addDir(name,url,mode,iconimage,list,description):
         suffix = ""
+        suffix2 = ""
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&description="+str(description)
         ok=True
         contextMenuItems = []
+        if name == "My Subscriptions":
+            contextMenuItems.append(("[COLOR cyan]Refresh Subscriptions[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=17&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
         if description == "sh":
             if find_list(list, FAV) < 0:
                 suffix = ""
@@ -502,7 +642,13 @@ def addDir(name,url,mode,iconimage,list,description):
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from TVonline Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=13&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
-        liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+            if find_list(list, SUB) < 0:
+                suffix2 = ""
+                contextMenuItems.append(("[COLOR lime]Add to XBMC Library/Subscribe[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=14&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+            else:
+                suffix2 = ' [COLOR cyan][s][/COLOR]'
+                contextMenuItems.append(("[COLOR orange]Remove from XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=15&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+        liz=xbmcgui.ListItem(name + suffix + suffix2, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
@@ -579,7 +725,7 @@ elif mode==4:
         tv_show_episodes(name, list, iconimage, description)
 		
 elif mode==5:
-        play(name, url, iconimage, showname)
+        play(name, url, iconimage.replace('hhhh', 'http:'), showname)
 		
 elif mode==6:
         search()
@@ -597,14 +743,26 @@ elif mode == 10:
         report_error(name, url, showname)
 		
 elif mode == 11:
-        add_favourite(name, url, list)
+        add_favourite(name, url, list, FAV, "Added to Favourites")
 		
 elif mode == 12:
         favourites()
 		
 elif mode == 13:
-        remove_from_favourites(name, url, list)
-
+        remove_from_favourites(name, url, list, FAV, "Removed from Favourites")
+		
+elif mode == 14:
+        create_tv_show_strm_files(name, url, list, "true")
+		
+elif mode == 15:
+        remove_tv_show_strm_files(name, url, list, TV_PATH)
+		
+elif mode == 16:
+        subscriptions()
+		
+elif mode == 17:
+        get_subscriptions()
+		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 

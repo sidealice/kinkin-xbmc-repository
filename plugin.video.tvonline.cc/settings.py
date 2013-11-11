@@ -17,8 +17,20 @@ def tvo_pass():
 def tvo_email():
     return ADDON.getSetting('tvo_email')
 	
+def enable_subscriptions():
+    if ADDON.getSetting('enable_subscriptions') == "true":
+        return True
+    else:
+        return False
+	
+def tv_directory():
+    return ADDON.getSetting('tv_directory')
+	
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")
+	
+def subscription_file():
+    return create_file(DATA_PATH, "subscriptions.list")
 		
 def cookie_jar():
     return create_file(TVO_PATH, "cookiejar.lwp")

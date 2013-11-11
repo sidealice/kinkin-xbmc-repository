@@ -205,6 +205,7 @@ def favourites():
             if list != '':
                 list1 = list.split('QQ')
                 title = list1[0]
+                title = title.replace('->-', ' & ')
                 url = list1[1]
                 thumb = list1[2]
                 addDir(title, url,3,thumb, list,'sh')
@@ -217,6 +218,7 @@ def subscriptions():
             if list != '':
                 list1 = list.split('QQ')
                 title = list1[0]
+                title = title.replace('->-', ' & ')
                 url = list1[1]
                 thumb = list1[2]
                 addDir(title, url,3,thumb, list,'sh')
@@ -260,7 +262,7 @@ def shows(url):
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         thumb = regex_from_to(a, '<img src="', '" ')
-        list_data = "%sQQ%sQQ%s" % (title, url, thumb)
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
         addDir(str(title), str(url),3,thumb, list_data,'sh')
     setView('episodes', 'episodes-view')
 	
@@ -280,12 +282,13 @@ def grouped_shows(header):
                 thumb = "http://pic.newtvshows.org/" + title.replace(' ', '.') + ".jpg"
         else:
             thumb = regex_from_to(a, '<img src="', '" ')
-        list_data = "%sQQ%sQQ%s" % (title, url, thumb)
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
         addDir(title, url,3,thumb, list_data,'sh')
         
     setView('episodes', 'episodes-view')
 		
 def tv_show(name, url, iconimage):
+    print name, url, iconimage
     episodes = []
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
@@ -297,6 +300,7 @@ def tv_show(name, url, iconimage):
     setView('episodes', 'episodes-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
+    print name, list, iconimage, showname
     episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(list)
     for epnum, url, epname in episodes:
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')
@@ -345,6 +349,7 @@ def add_favourite(name, url, iconimage, dir, text):
     list_data = iconimage.replace('hhhh', 'http:')
     splitdata = list_data.split('QQ')
     name = splitdata[0]
+    name = name.replace('->-', ' & ')
     thumb = splitdata[2]
     add_to_list(list_data, dir)
     notification(name, "[COLOR lime]" + text + "[/COLOR]", '5000', thumb)
@@ -353,6 +358,7 @@ def remove_from_favourites(name, url, iconimage, dir, text):
     list_data = iconimage.replace('hhhh', 'http:')
     splitdata = list_data.split('QQ')
     name = splitdata[0]
+    name = name.replace('->-', ' & ')
     thumb = splitdata[2]
     remove_from_list(list_data, dir)
     notification(name, "[COLOR orange]" + text + "[/COLOR]", '5000', thumb)
@@ -365,6 +371,7 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
     list_data = iconimage.replace('hhhh', 'http:')
     splitdata = iconimage.split('QQ')
     name = splitdata[0]
+    name = name.replace('->-', ' & ')
     thumb = splitdata[2]
     tv_show_path = create_directory(TV_PATH, name)
     net.set_cookies(cookie_jar)
@@ -396,7 +403,7 @@ def remove_tv_show_strm_files(name, url, iconimage, dir_path):
     dialog = xbmcgui.Dialog()
     splitname = iconimage.split('QQ')
     rname = splitname[0]
-    print str(rname), dir_path
+    rname = rname.replace('->-', ' & ')
     try:
         path = os.path.join(dir_path, str(rname))
         shutil.rmtree(path)
@@ -630,7 +637,7 @@ def get_params():
 def addDir(name,url,mode,iconimage,list,description):
         suffix = ""
         suffix2 = ""
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&description="+str(description)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&description="+str(description)
         ok=True
         contextMenuItems = []
         if name == "My Subscriptions":
@@ -743,6 +750,7 @@ elif mode == 10:
         report_error(name, url, showname)
 		
 elif mode == 11:
+        print list
         add_favourite(name, url, list, FAV, "Added to Favourites")
 		
 elif mode == 12:

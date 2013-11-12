@@ -288,7 +288,6 @@ def grouped_shows(header):
     setView('episodes', 'episodes-view')
 		
 def tv_show(name, url, iconimage):
-    print name, url, iconimage
     episodes = []
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
@@ -300,7 +299,6 @@ def tv_show(name, url, iconimage):
     setView('episodes', 'episodes-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
-    print name, list, iconimage, showname
     episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(list)
     for epnum, url, epname in episodes:
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')
@@ -325,7 +323,8 @@ def play(name, url, iconimage, showname):
     dp.create('Opening ' + name)
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    linkurl = 'http://www.tvonline.cc' + regex_from_to(link, 'url: "', '"')
+    linktext = regex_from_to(link, 'var playurl', 'responseText')
+    linkurl = 'http://www.tvonline.cc' + regex_from_to(linktext, 'url: "', '"')
     net.set_cookies(cookie_jar)
     playlink = net.http_GET(linkurl).content.encode("utf-8").rstrip().replace("getinfo.php", "ip.mp4")
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
@@ -750,7 +749,6 @@ elif mode == 10:
         report_error(name, url, showname)
 		
 elif mode == 11:
-        print list
         add_favourite(name, url, list, FAV, "Added to Favourites")
 		
 elif mode == 12:

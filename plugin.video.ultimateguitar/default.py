@@ -10,63 +10,62 @@ FAVOURITES_FILE = settings.favourite_songs_file()
 justin_url = 'http://www.justinguitar.com/'
 youtube_url = 'plugin://plugin.video.youtube/?action=play_video&videoid=%s'
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.ultimateguitar', 'fanart.jpg'))
-pjbootleg_logo = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.ultimateguitar/art', 'pjbootleglogo.gif'))
-pjbootleg_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.ultimateguitar', 'fanart.jpg'))
 audio_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.ultimateguitar', 'fanart.jpg'))
-art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.ultimateguitar/art', ''))
+art1 = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.ultimateguitar/art1', ''))
 
 
 def CATEGORIES():
-        addDir('Lessons - JustinGuitar','url',11,art + 'lessons.png')
-        addDir('Songs etc. - JustinGuitar','url',12,art + 'songs.png')
-        addDir('YouTube Channels','url',15,art + 'youtubemain.png')
-        addDir('Favourites','url',14,art + 'favourites.png')
+        addDir('Lessons - JustinGuitar','url',11,art1 + 'lessons.png')
+        addDir('Songs etc. - JustinGuitar','url',12,art1 + 'songs.png')
+        addDir('YouTube Channels','url',15,art1 + 'youtubemain.png')
+        addDir('Favourites','url',14,art1 + 'favourites.png')
 
 		
 def YOUTUBE_LIST():
         channel="justinsandercoesongs"
-        addDir("Justin Sandercoe",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'youtubejs.png')
+        addDir("Justin Sandercoe",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'youtubejs.png')
         channel="martyzsongs"
-        addDir("Marty Schwartz",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'youtubems.png')
+        addDir("Marty Schwartz",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'youtubems.png')
         channel="rockongoodpeople"
-        addDir("Next Level Guitar",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'youtubenlg.png')
+        addDir("Next Level Guitar",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'youtubenlg.png')
         channel="youcanlearnguitar"
-        addDir("You Can Learn Guitar",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'youtubeyclg.png')
+        addDir("You Can Learn Guitar",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'youtubeyclg.png')
         channel="guitarings"
-        addDir("Guitarings",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'youtubegr.png')
+        addDir("Guitarings",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'youtubegr.png')
         channel="GaragebandandBeyond"
-        addDir("GarageBand & Beyond",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'youtubegb.png')
+        addDir("GarageBand & Beyond",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'youtubegb.png')
         channel="wickedwkd"
-        addDir("Pearl Jam covers by wickedwkd",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art + 'pjcovers.png')
+        addDir("Pearl Jam covers by wickedwkd",'http://gdata.youtube.com/feeds/api/users/'+channel+'/uploads?start-index=1&max-results=20',13,art1 + 'pjcovers.png')
 
 		
 def LESSON_DIR():
-        addDir('Beginners Course',justin_url + 'en/BC-000-BeginnersCourse.php',1,art + 'jsbeginners.png')
-        addDir('Intermediate Course',justin_url + 'en/IM-000-IntermediateMethod.php',1,art + 'jsintermediate.png')
-        addDir('The Basics',justin_url + 'en/TB-000-TheBasics.php',1,art + 'jsbasics.png')
-        addDir('Practice',justin_url + 'en/PC-000-Practice.php',1,art + 'jspractice.png')
-        addDir('Technique',justin_url + 'en/TE-000-Technique.php',1,art + 'jstechnique.png')
-        addDir('Chords',justin_url + 'en/CH-000-Chords.php',1,art + 'jschords.png')
-        addDir('Rhythm Guitar',justin_url + 'en/RH-000-RhythmGuitar.php',1,art + 'jsrhythm.png')
-        addDir('Scales',justin_url + 'en/SC-000-Scales.php',1,art + 'jsscales.png')
-        addDir('Arpeggios',justin_url + 'en/AR-000-Arpeggios.php',1,art + 'jsarpeggios.png')
-        addDir('Aural Training',justin_url + 'en/AU-000-AuralTraining.php',1,art + 'jsaural.png')
-        addDir('Gear and Reviews',justin_url + 'en/GG-000-GuitarGear.php',1,art + 'jsgear.png')
-        #addDir('Recording Techniques',justin_url + 'en/RT-000-RecordingTechniques.php',1,art + 'jsbeginners.png')
-        #addDir('Masterclasses',justin_url + 'en/MA-000-Masterclasses.php',1,art + 'jsbeginners.png')
+        addDir('Beginners Course',justin_url + 'en/BC-000-BeginnersCourse.php',1,art1 + 'jsbeginners.png')
+        addDir('Intermediate Course',justin_url + 'en/IM-000-IntermediateMethod.php',1,art1 + 'jsintermediate.png')
+        addDir('Quick Tips',justin_url + 'en/QT-000-GuitarQuickTips.php',1,art1 + 'jsintermediate.png')
+        addDir('Skills',justin_url + 'en/ES-000-EssentialSkills.php',1,art1 + 'jsbasics.png')
+        addDir('Practice',justin_url + 'en/PC-000-Practice.php',1,art1 + 'jspractice.png')
+        addDir('Technique',justin_url + 'en/TE-000-Technique.php',1,art1 + 'jstechnique.png')
+        addDir('Chords',justin_url + 'en/CH-000-Chords.php',1,art1 + 'jschords.png')
+        addDir('Rhythm Guitar',justin_url + 'en/RH-000-RhythmGuitar.php',1,art1 + 'jsrhythm.png')
+        addDir('Scales',justin_url + 'en/SC-000-Scales.php',1,art1 + 'jsscales.png')
+        addDir('Arpeggios',justin_url + 'en/AR-000-Arpeggios.php',1,art1 + 'jsarpeggios.png')
+        addDir('Aural Training',justin_url + 'en/AU-000-AuralTraining.php',1,art1 + 'jsaural.png')
+        addDir('Gear and Reviews',justin_url + 'en/GG-000-GuitarGear.php',1,art1 + 'jsgear.png')
+        #addDir('Recording Techniques',justin_url + 'en/RT-000-RecordingTechniques.php',1,art1 + 'jsbeginners.png')
+        #addDir('Masterclasses',justin_url + 'en/MA-000-Masterclasses.php',1,art1 + 'jsbeginners.png')
 		
 def SONG_DIR():
-        addDir('Beginners Songs',justin_url + 'en//BS-000-BeginnersSongbook.php',1,art + 'jsbeginners.png')
-        addDir('Intermediate Songs',justin_url + 'en/SB-000-GuitarSongBook.php',1,art + 'jsintermediate.png')
-        addDir('Other Songs',justin_url + 'en/ST-000-SongsTAB.php',1,art + 'jsother.png')
-        addDir('Awesome Riffs',justin_url + 'en/RF-000-GuitarRiffs.php',1,art + 'jsriffs.png')
-        addDir('Awesome Licks',justin_url + 'en/LK-000-GuitarLicks.php',1,art + 'jslicks.png')
-        addDir('Classic Solos',justin_url + 'en/CS-000-ClassicGuitarSolos.php',1,art + 'jssolos.png')
-        addDir('Transcribing',justin_url + 'en/TR-000-Transcribing.php',1,art + 'jstranscribing.png')
-        addDir('Blues (Lead and Rhythm)',justin_url + 'en/BL-000-Blues.php',1,art + 'jsblues.png')
-        addDir('Folk (Fingerstyle)',justin_url + 'en/FO-000-Folk.php',1,art + 'jsfolk.png')
-        addDir('Rock and Metal',justin_url + 'en/RO-000-RockMetal.php',1,art + 'jsrock.png')
-        addDir('Jazz',justin_url + 'en/JA-000-Jazz.php',1,art + 'jsjazz.png')
+        addDir('Beginners Songs',justin_url + 'en//BS-000-BeginnersSongbook.php',1,art1 + 'jsbeginners.png')
+        addDir('Intermediate Songs',justin_url + 'en/SB-000-GuitarSongBook.php',1,art1 + 'jsintermediate.png')
+        addDir('Other Songs',justin_url + 'en/ST-000-SongsTAB.php',1,art1 + 'jsother.png')
+        addDir('Awesome Riffs',justin_url + 'en/RF-000-GuitarRiffs.php',1,art1 + 'jsriffs.png')
+        addDir('Awesome Licks',justin_url + 'en/LK-000-GuitarLicks.php',1,art1 + 'jslicks.png')
+        addDir('Classic Solos',justin_url + 'en/CS-000-ClassicGuitarSolos.php',1,art1 + 'jssolos.png')
+        addDir('Transcribing',justin_url + 'en/TR-000-Transcribing.php',1,art1 + 'jstranscribing.png')
+        addDir('Blues (Lead and Rhythm)',justin_url + 'en/BL-000-Blues.php',1,art1 + 'jsblues.png')
+        addDir('Folk (Fingerstyle)',justin_url + 'en/FO-000-Folk.php',1,art1 + 'jsfolk.png')
+        addDir('Rock and Metal',justin_url + 'en/RO-000-RockMetal.php',1,art1 + 'jsrock.png')
+        addDir('Jazz',justin_url + 'en/JA-000-Jazz.php',1,art1 + 'jsjazz.png')
 
 #########################  PEARL JAM	#################################################	
 def LESSON_LIST(url):
@@ -75,7 +74,7 @@ def LESSON_LIST(url):
         response = urllib2.urlopen(req)
         link=response.read()
         response.close()
-        match=re.compile('<a href="(.+?)">(.+?)</a><br />').findall(link)
+        match=re.compile('<a href="(.+?)">(.+?)</a><br').findall(link)
         for url,name in match:
             if name.find('Songs')>0:
                 name='[COLOR cyan]' + name + ' (see Songs section)' + '[/COLOR]'
@@ -91,8 +90,11 @@ def PLAY_VIDEO(url,name):
         req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
         response = urllib2.urlopen(req)
         link=response.read()
+        link = link.strip(' \t\n\r')
         response.close()
-        match=re.compile('name="movie" value="http://www.youtube.com/v/(.+?)&rel').findall(link)
+        match = re.compile('video_url": (.+?)"').findall(link)
+        for vurl in match:
+            vurl = vurl.replace('"http://www.youtube.com/watch?v=', '')
         if len(match)==0:
             if name.find('Songs')>0:
                 dialog = xbmcgui.Dialog()
@@ -102,10 +104,10 @@ def PLAY_VIDEO(url,name):
                 dialog.ok("Ultimate Guitar", "This is a text lesson", "Please visit www.justinguitar.com to view")
         else:
             playlist=[]
-            for video_id in match:
-                url='plugin://plugin.video.youtube/?action=play_video&videoid=%s' % video_id
-                thumb = ''
+            url='plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vurl
+            thumb = ''
             xbmc.Player().play(url)
+
 			
 def FAVOURITES():
     if os.path.isfile(FAVOURITES_FILE):
@@ -224,6 +226,8 @@ params=get_params()
 url=None
 name=None
 mode=None
+
+
 
 def create_directory(dir_path, dir_name=None):
     if dir_name:

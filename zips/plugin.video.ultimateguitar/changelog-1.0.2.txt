@@ -1,0 +1,9 @@
+1.0.2
+Fixed lessons
+New icons
+
+1.0.1
+Minor bug fix
+
+1.0.0
+First release!

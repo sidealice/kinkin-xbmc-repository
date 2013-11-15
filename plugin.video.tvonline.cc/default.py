@@ -11,29 +11,27 @@ from hashlib import md5
 from helpers import clean_file_name
 import json
 import glob
+import shutil
 from threading import Thread
 import cookielib
 from t0mm0.common.net import Net
+from helpers import clean_file_name
 net = Net()
 
 
 ADDON = settings.addon()
-FILMON_KEEP = settings.keep_session_flag()
-FILMON_ACCOUNT = settings.filmon_account()
-FILMON_USER = settings.filmon_user()
-FILMON_QUALITY = settings.filmon_quality()
-AUTO_SWITCH = settings.auto_switch()
-FILMON_PASS = md5(settings.filmon_pass()).hexdigest()
-FILMON_PASSWORD = settings.filmon_pass()
-MY_VIDEOS = settings.my_videos()
-MY_AUDIO = settings.my_audio()
-OTHER_MENU = settings.other_menu()
-DOWNLOAD_PATH = settings.download_path()
+TVO_USER = settings.tvo_user()
+TVO_PASSWORD = settings.tvo_pass()
+TVO_EMAIL = settings.tvo_email()
+ENABLE_SUBS = settings.enable_subscriptions()
+TV_PATH = settings.tv_directory()
+FAV = settings.favourites_file()
+SUB = settings.subscription_file()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
-fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
-iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'icon.png'))
-base_url = 'http://www.filmon.com/'
+fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Fanart2.jpg'))
+iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'icon.png'))
+base_url = 'http://www.tvonline.cc/'
 
 
 def open_url(url):
@@ -47,513 +45,462 @@ def open_url(url):
 def POST_URL(url, form_data):
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.filmon.com'
-    header_dict['Referer'] = 'http://www.filmon.com/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>'
-    header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
-    header_dict['X-Requested-With'] = 'XMLHttpRequest'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = 'http://www.tvonline.cc/'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
     net.set_cookies(cookie_jar)
-    req = net.http_POST(url, form_data=form_data, headers=header_dict)
-    return req.content
+    req = net.http_POST(url, form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+    return req
 
+def startup():
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Setup account", "This addon requires a tvonline.cc account.", "What do you want to do?", '', "Use existing account", "Create new account"):
+        register()
+    else:
+        keyboard = xbmc.Keyboard('', 'Username', False)
+        keyboard.doModal()
+        username = None
+        if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
+            username = keyboard.getText()
+            password = None
+            keyboard = xbmc.Keyboard('', 'Password')
+            keyboard.doModal()
+            if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
+                password = keyboard.getText()
+                ADDON.setSetting('tvo_user', value=username)
+                ADDON.setSetting('tvo_pass', value=password)
+                time.sleep(1)
+                xbmc.executebuiltin("XBMC.Container.Update(plugin://plugin.video.tvonline.cc)")
+            else:
+                return
+        else:
+            return
+        
+def register():    
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = 'http://www.tvonline.cc/'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+    header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
+    header_dict['Connection'] = 'keep-alive'#
+    #### Get token ###
+    net.set_cookies(cookie_jar)
+    url = 'http://www.tvonline.cc/reg.php'
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    net.save_cookies(cookie_jar)
+
+    tokenparam = re.compile('value="POST"><input type="hidden" name="(.+?)" value="(.+?)" id').findall(link)
+    tokenfields = re.compile('name="(.+?)" value="(.+?)" id="(.+?)"></div></form>').findall(link)
+    for a, b, c in tokenfields:
+        field = a
+        fieldvalue = b
+    for a, b in tokenparam:
+        param1 = a
+        param1value = b
+    header_dict['Referer'] = 'http://www.tvonline.cc/reg.php'
+    ### Register ###
+    keyboard = xbmc.Keyboard('', 'Username', False)
+    keyboard.doModal()
+    username = None
+    if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
+        username = keyboard.getText()
+
+        password = None
+        keyboard = xbmc.Keyboard('', 'Password')
+        keyboard.doModal()
+        if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
+            password = keyboard.getText()
+			
+            email = None
+            keyboard = xbmc.Keyboard('', 'E-mail')
+            keyboard.doModal()
+            if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
+                email = keyboard.getText()
+            else:
+                return
+        else:
+            return
+    else:
+        return
+
+    ### Save settings ###
+    ADDON.setSetting('tvo_user', value=username)
+    ADDON.setSetting('tvo_pass', value=password)
+	
+    form_data = ({param1: param1value, 'UserUsername': username, '_method': 'POST', field: fieldvalue, 'email': email, 'subscriptionsPass': password, 'subscriptionsPassword2': password})	
+    net.set_cookies(cookie_jar)
+    reglink = net.http_POST('http://www.tvonline.cc/reg.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+    net.save_cookies(cookie_jar)
+    if 'Invalid Username/Email or password' in reglink:
+        notification('[COLOR red]Not logged in at tvonline.cc[/COLOR]', 'Check settings', '5000', iconart)
+    else:
+        notification('Logged in at tvonline.cc', '', '5000', iconart)
+		
 def login():
     header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.filmon.com'
-    header_dict['Referer'] = 'http://www.filmon.com/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>'
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = 'http://www.tvonline.cc/'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
     header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
-    header_dict['Connection'] = 'keep-alive'
-    form_data = ({'login': FILMON_USER, 'password': FILMON_PASSWORD,'remember': '1'})	
+    header_dict['Connection'] = 'keep-alive'#
+    #### Get token ###
     net.set_cookies(cookie_jar)
-    login = net.http_POST('http://www.filmon.com/user/login', form_data=form_data, headers=header_dict)
+    url = 'http://www.tvonline.cc/login.php'
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
-    keep_alive()
 
-
-def keep_alive():
-    currentWindow = xbmcgui.getCurrentWindowId()
-    if currentWindow == 10000:
-        url = 'http://www.filmon.com/user/logout'
-        net.set_cookies(cookie_jar)
-        net.http_GET(url)
-        print 'F.T.V..........logged out of Filmon'
-        return
-    url = "http://www.filmon.com/ajax/keepAlive"
+    tokenparam = re.compile('value="POST"><input type="hidden" name="(.+?)"').findall(link)
+    tokenfields = re.compile('name="(.+?)" value="(.+?)" id="(.+?)"></div></form>').findall(link)
+    for a, b, c in tokenfields:
+        field = a
+        fieldvalue = b
+    param1 = tokenparam[0]
+    header_dict['Referer'] = 'http://www.tvonline.cc/login.php'
+    ### Login ###	
+    form_data = ({param1: 'login', 'UserUsername': TVO_USER, '_method': 'POST', field: fieldvalue, 'subscriptionsPass': TVO_PASSWORD})	
     net.set_cookies(cookie_jar)
-    net.http_GET(url)
-    #print 'F.T.V..........Filmon session kept alive'
-    tloop = Timer(60.0, keep_alive)
-    tloop.start()
-	
-def CATEGORIES():
-    login()
-    if MY_VIDEOS:
-        addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
-    if MY_AUDIO:
-        addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
-    if OTHER_MENU:
-        addDir('Other Video Links','url',121,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'other_video.png')), '', '')
-    addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
-    addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
-    addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
-    net.set_cookies(cookie_jar)
-    url = 'http://www.filmon.com/groups'
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    all_groups = regex_get_all(link, '<li class="group-item">', '</li>')
-    for groups in all_groups:
-        group_id = regex_from_to(groups, 'http://static.filmon.com/couch/groups/','/big_logo.png')
-        title = regex_from_to(groups, 'title="', '"')
-        thumb = 'http://static.filmon.com/couch/groups/%s/big_logo.png'	% group_id
-        url = base_url + regex_from_to(groups, '<a href="/', '">')
-        addDir(title,url,123,thumb, '','')
-        setView('episodes', 'episodes-view')
-    if not FILMON_USER in link:
-        notification('Not logged in at Filmon', 'Check settings', '5000', iconart)
+    loginlink = net.http_POST('http://www.tvonline.cc/reg.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+    net.save_cookies(cookie_jar)
+    if 'Invalid Username/Email or password' in loginlink:
+        notification('[COLOR red]Not logged in at tvonline.cc[/COLOR]', 'Check settings', '5000', iconart)
+        startup()
     else:
-        notification('Logged in at Filmon', FILMON_USER, '5000', iconart)
+        notification('Logged in at tvonline.cc', '', '5000', iconart)
+	
+def CATEGORIES(name):
+    addDir("Hit TV Shows", 'Hit TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Latest Updates", 'Latest Updates TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Latestupdates.png')), '','')
+    addDir("Shows with New Episodes", 'New TV Episodes',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
+    addDir("A-Z", 'url',8,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'A-Z.png')), '','')
+    addDir("My Favourites", 'url',12,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Favourites.png')), '','')
+    if ENABLE_SUBS:
+        addDir("My Subscriptions", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Subscriptions.png')), '','')
+    else:
+        addDir("[COLOR orange] My Subscriptions (ENABLE IN SETTINGS)[/COLOR]", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Subscriptions.png')), '','')
+    addDir("My Watched List", 'http://www.tvonline.cc/wl.php?page=1',9,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Watchedlist.png')), '','')	
+    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
 
-		
-def group_channels(url, title):
-    gt = title
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-
-    channels = regex_get_all(link, '<li class="channel', '</li>')
-    for channel in channels:
-        alias = regex_from_to(channel, 'alias="', '" channel_id')
-        channel_id = regex_from_to(channel, 'id="', '" alias')
-        title = regex_from_to(channel, 'channel_title">', '</')
-        description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
-        thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
-        url = base_url + regex_from_to(channel, 'href="/', '" class')
-        addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
-    if gt == 'UK LIVE TV':
-        addDirPlayable('Channel 5 + 1','http://www.filmon.com/channel/channel-5',126,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
-    setView('episodes', 'episodes-view')
-
-def other_menu():
-    addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
+def search():
+    keyboard = xbmc.Keyboard('', 'Search TV Show', False)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if len(query) > 0:
+            search_show(query)
+			
+def a_to_z(url):
+    alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
+    for a in alphabet:
+        addDir(a, 'http://www.tvonline.cc/tv/%s.htm' % (a.lower().replace('#', 'num')),2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('#','HASH') + '.png')), '','menu')
 		
 def favourites():
-    url = base_url + 'my/favorites'
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    channels = regex_get_all(link, '<a class="left"', '/a>')
-    for c in channels:
-        ch_url = regex_from_to(c, 'href="/', '">')
-        ch_id = ch_url.split('/')
-        ch_id = ch_id[1]
-        url = base_url + ch_url
-        title = regex_from_to(c, '>', '<').encode("utf-8")
-        thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(ch_id)
-        addDirPlayable(title,url,125,thumb,str(ch_id),"", title, "fav")
-        setView('episodes', 'episodes-view')
- 
-		
-def add_fav(name, ch_id, iconimage):
-    url = base_url + 'ajax/toggleFavorite'
-    form_data = ({'channel': ch_id})
+    if os.path.isfile(FAV):
+        s = read_from_file(FAV)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('QQ')
+                title = list1[0]
+                title = title.replace('->-', ' & ')
+                url = list1[1]
+                thumb = list1[2]
+                addDir(title, url,3,thumb, list,'sh')
+				
+def subscriptions():
+    if os.path.isfile(SUB):
+        s = read_from_file(SUB)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('QQ')
+                title = list1[0]
+                title = title.replace('->-', ' & ')
+                url = list1[1]
+                thumb = list1[2]
+                addDir(title, url,3,thumb, list,'sh')
+			
+def search_show(query):
+    url = 'http://www.tvonline.cc/searchlist.php'
+    form_data = ({'keyword': query})
     req = POST_URL(url, form_data)
-    text = req.replace('"','').replace('{','').replace('}','').replace(","," - ")
-    print text
-    if "enable" in text and "true" in text:
-        notification('Toggle My Channels', name + ' added', '5000', iconart)
-    if "disable" in text and "true" in text:
-        notification('Toggle My Channels', name.upper() + ' removed', '5000', iconart)
-        xbmc.executebuiltin("Container.Refresh")	
-
-
-def tv_guide(name, url, iconimage):
-    url = base_url + 'tvguide/' + name
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    tvg_list = regex_from_to(link, 'channel_tvguide =', 'current_channel_id')
-    programmes = regex_get_all(tvg_list, '{"programme"', 'vendor_id')
-    utc_now = datetime.datetime.now()
-    for p in programmes:
-        p_id = regex_from_to(p, 'programme":"', '"')
-        try:
-            try:
-                start = regex_from_to(p, 'startdatetime":"', '"')
-            except:
-                start = regex_from_to(p, 'startdatetime":', ',"')
-            start_time = datetime.datetime.fromtimestamp(int(start))
-            end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":"', '"')))
-        except:
-            start_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'startdatetime":', ',')))
-            end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":', ',')))
-        description = regex_from_to(p, 'programme_description":"', '"')
-        p_name = regex_from_to(p, 'programme_name":"', '"')
-        allow_dvr = regex_from_to(p, 'allow_dvr":', ',')
-        channel_id = regex_from_to(p, 'channel_id":"', '",')
-        title = "%s - %s" % (start_time.strftime('%d %b %H:%M'),p_name)
-        try:
-            matchthumb = regex_from_to(p, 'type":"2"', 'cop')
-            thumb = regex_from_to(matchthumb, 'url":"', '"').replace("\/", "/")
-        except:
-            thumb = iconimage
-        if end_time > utc_now:
-            if start_time < utc_now and end_time > utc_now:
-                url = base_url + 'channel/' + str(channel_id)
-                addDirPlayable('[COLOR cyan]' + title + '[/COLOR]',url,125,thumb,"",description, start, "gd")
-            else:
-                if allow_dvr == "true":
-                    addDirPlayable(title,channel_id,129,thumb,p_id,description, start, "gd")
-                else:
-                    addDirPlayable(title + "  [COLOR red](not recordable)[/COLOR]",channel_id,"",thumb,p_id,description, start, "gd")
-            setView('episodes', 'epg')
-
+    all_shows = regex_from_to(req,'<br /> <br />', '</div>')
+    all_shows = regex_get_all(all_shows, '<li>', '</li>')
+    for a in all_shows:
+        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
+        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
+        thumb = regex_from_to(a, '<img src="', '" ')
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
+        addDir(title, url,3,thumb, list_data,'sh')
 		
-def play_filmon(name,url,iconimage):
-    name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
-    dp = xbmcgui.DialogProgress()
-    dp.create('Opening ' + name.upper())
-    utc_now = datetime.datetime.now()
-    channel_name=name
+def watched_list(url):
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    swfplay = 'http://www.filmon.com' + regex_from_to(link, '"streamer":"', '",').replace("\/", "/")
-    nowplaying = regex_from_to(link, 'window.current_channel = {', '} ;')
-    try:
-        timeout = regex_from_to(nowplaying, 'expire_timeout":"', '",')
-    except:
-        timeout = '86500'
-    pr_list = regex_get_all(nowplaying, '{"programme', '}')
-    for p in pr_list:
-        programme_name = regex_from_to(p, 'programme_name":"', '",')
-        try:
-            start_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'startdatetime":"', '",')))
-            end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":"', '",')))
-            if start_time < utc_now and end_time > utc_now:
-                npet = regex_from_to(p, 'enddatetime":"', '",')
-                programme_name = regex_from_to(p, 'programme_name":"', '",').replace("\/", "/")
-                description = regex_from_to(nowplaying, 'programme_description":"', '",').replace('\u2019', "'").replace('\u2013', "-")
-                start_t = start_time.strftime('%H:%M')
-                end_t = end_time.strftime('%H:%M')
-                p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
-                dp.update(50, p_name)
-                try:
-                    next = regex_from_to(nowplaying, 'startdatetime":"' +npet, '}')
-                    n_start_time = datetime.datetime.fromtimestamp(int(npet))
-                    n_end_time = datetime.datetime.fromtimestamp(int(regex_from_to(next, 'enddatetime":"', '",')))
-                    n_programme_name = regex_from_to(next, 'programme_name":"', '",').replace("\/", "/")
-                    n_start_t = n_start_time.strftime('%H:%M')
-                    n_end_t = n_end_time.strftime('%H:%M')
-                    n_p_name = "[COLOR cyan]Next: %s (%s-%s)[/COLOR]" % (n_programme_name, n_start_t, n_end_t)
-                except:
-                    n_p_name = ""
-        except:
-            p_name = programme_name
-            n_p_name = ""
-    
-    streams = regex_from_to(link, 'streams":', 'allowFullscreen')
-    hl_streams = regex_get_all(streams, '{', '}')
-    if int(timeout) < 7200 and AUTO_SWITCH:
-        url = regex_from_to(hl_streams[1], 'url":"', '"}').replace("\/", "/")
-        quality = regex_from_to(hl_streams[1], 'quality":"', '",')
-        name = regex_from_to(hl_streams[1], 'name":"', '",')
-        if name.endswith('m4v'):
-            app = 'vodlast'
-        else:
-            appfind = url[7:].split('/')
-            app = 'live/' + appfind[2]
-        if url.endswith('/'):
-            STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url)  + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-        else:
-            STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-    else:
-        for stream in hl_streams:
-            url = regex_from_to(stream, 'url":"', '"}').replace("\/", "/")
-            quality = regex_from_to(stream, 'quality":"', '",')
-            name = regex_from_to(stream, 'name":"', '",')
-            if name.endswith('m4v'):
-                app = 'vodlast'
-            else:
-                appfind = url[7:].split('/')
-                app = 'live/' + appfind[2]
-            if quality == FILMON_QUALITY:
-                if url.endswith('/'):
-                    STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                    STurl2 = str(url)  + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                else:
-                    STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                    STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-    print STurl, STurl2
-    playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-    playlist.clear()
-    handle = str(sys.argv[1])
-    try:
-        listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl2)
-        if handle != "-1":	
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer = xbmc.Player()
-            xbmcPlayer.play(STurl2,listitem)
-    except:
-        listitem = xbmcgui.ListItem(channel_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        if handle != "-1":
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer = xbmc.Player()
-            xbmcPlayer.play(STurl,listitem)
-    dp.close()
-
-def play_filmon_gb(name,url,iconimage):
-    name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
-    dp = xbmcgui.DialogProgress()
-    dp.create('Opening ' + name.upper())
-    utc_now = datetime.datetime.now()
-    channel_name=name
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    swfplay = 'http://www.filmon.com' + regex_from_to(link, '"streamer":"', '",').replace("\/", "/")
-    nowplaying = regex_from_to(link, 'window.current_channel = {', '} ;')
-    try:
-        timeout = regex_from_to(nowplaying, 'expire_timeout":"', '",')
-    except:
-        timeout = '86500'
-    
-    streams = regex_from_to(link, 'streams":', 'allowFullscreen')
-    hl_streams = regex_get_all(streams, '{', '}')
-    if int(timeout) < 7200 and AUTO_SWITCH:
-        url = regex_from_to(hl_streams[1], 'url":"', '"}').replace("\/", "/").replace('303','308')
-        quality = regex_from_to(hl_streams[1], 'quality":"', '",')
-        name = regex_from_to(hl_streams[1], 'name":"', '",').replace('22','857')
-        appfind = url[7:].split('/')
-        app = 'live/' + appfind[2]
-        STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-        STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-    else:
-        for stream in hl_streams:
-            url = regex_from_to(stream, 'url":"', '"}').replace("\/", "/").replace('303','308')
-            quality = regex_from_to(stream, 'quality":"', '",')
-            name = regex_from_to(stream, 'name":"', '",').replace('22','857')
-            appfind = url[7:].split('/')
-            app = 'live/' + appfind[2]
-            if quality == FILMON_QUALITY:
-                STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-
-    playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-    playlist.clear()
-    handle = str(sys.argv[1])
-    try:
-        listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl2)
-        if handle != "-1":	
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer = xbmc.Player()
-            xbmcPlayer.play(STurl2,listitem)
-    except:
-        listitem = xbmcgui.ListItem(channel_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        if handle != "-1":
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer = xbmc.Player()
-            xbmcPlayer.play(STurl,listitem)
-    dp.close()
-
-def record_programme(name,ch_id,p_id,start):
-    dialog = xbmcgui.Dialog()
-    url = base_url + 'dvr/add'
-    form_data = ({'channel_id': ch_id, 'programme_id': p_id,'start_time': start})	
-    
-    if dialog.yesno("Record Programme?", '', name.upper()):
-        req = POST_URL(url, form_data)
-        text = regex_from_to(req, 'reason":"', '"}').replace('"',' ')
-        notification('Record Programme', name.upper() + ' ' + text.upper(), '5000', iconart)
+    match = re.compile('<td><a href="(.+?)">(.+?)</a></td>  <td>(.+?)</td>').findall(link.replace("'", "<>"))
+    matchpg = re.compile('<a class="p_num" href="(.+?)">(.+?)</a>').findall(link)
+    addDir('[COLOR cyan] << Return to Main Menu [/COLOR]', '','','', '','')
+    for url, episode, wtime in match:
+        url = 'http://www.tvonline.cc' + url.replace("<>", "'")
+        name = "%s -%s" % (episode.replace("<>", "'"), wtime)
+        showname = episode[:len(episode)-7]
+        iconimage = "http://pic.newtvshows.org/" + showname.replace(' ', '-') + ".jpg"
+        addDirPlayable(name,url,5,iconimage, showname)
+    for url, page in matchpg:
+        url = 'http://www.tvonline.cc/wl.php' + url
+        title = '[COLOR lime]' + 'Page ' + str(page) + '[/COLOR]'
+        addDir(title, url,9,'', '','')
+    setView('episodes', 'episodes-view')
 		
-def delete_recording(name,start,iconimage):
-    dialog = xbmcgui.Dialog()
-    url = base_url + 'dvr/remove'
-    form_data = ({'record_id': start})	
-    
-    if dialog.yesno("Delete Recording?", '', name.upper()):
-        req = POST_URL(url, form_data)
-        text = regex_from_to(req, 'reason":"', '"}').replace('"',' ')
-        notification('Delete Recording', name.upper() + ' ' + text.upper(), '5000', iconart)
-        xbmc.executebuiltin("Container.Refresh")
-
-	
-def recordings(url):
-    url = base_url + 'my/recordings'
+def shows(url):
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    match = re.compile('window.user_storage = {"total":(.+?),"available":(.+?),"recorded":(.+?)}').findall(link)
-    for t, a, r in match:
-        acc_status = "Allowed: %shrs - Recorded: %shrs - Available %shrs" % (t, r, a)
-    addLink('[COLOR cyan]'+acc_status+'[/COLOR]',"","","","","", "", "", "")
-    recordings = regex_get_all(link, 'stream_url', 'isSoftDeleted')
-    for r in recordings:
-        STname = regex_from_to(r, 'stream_name":"', '",').replace("\/", "/")
-        STurl = regex_from_to(r, 'stream_url":"', '",').replace("\/", "/") + " playpath=" + "mp4:" + STname + " swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf pageUrl=http://www.filmon.com/my/recordings"
-        p_id = regex_from_to(r, 'id":"', '",')
-        p_name = regex_from_to(r, 'title":"', '",')
-        description = regex_from_to(r, 'description":"', '",')
-        channel_id = regex_from_to(r, 'channel_id":"', '",')
-        logo = 'https://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
-        start = regex_from_to(r, 'start_timestamp":"', '",')
-        start_time = datetime.datetime.fromtimestamp(int(regex_from_to(r, 'start_timestamp":"', '",')))
-        duration = regex_from_to(r, 'duration":"', '",')
-        status = regex_from_to(r, 'status":"', '",')
-        try:
-            download_link = 'http://s2.dvr.gv.filmon.com/' + STname
-        except:
-            download_link = "error"
-        text = "[COLOR gold]%s[/COLOR] %s (%s)" % (p_name, start_time.strftime('%d %b %H:%M'), status)
-        addLink(text,STurl,logo,description,status,download_link, p_id, start,p_name)
-        setView('episodes', 'episodes-view')
-
-def download_rec(name, url, iconimage):
-    WAITING_TIME = 5
-    directory=DOWNLOAD_PATH
-    filename = "%s.%s" % (name, url[len(url)-3:])
-    data_path = os.path.join(directory, filename)
-    dlThread = DownloadThread(name, url, data_path)
-    if directory == "notset" or directory == "":
-        xbmcgui.Dialog().ok('Download directory not set', 'Set your download path in settings first')
-        ADDON.openSettings()
-    else:
-        dlThread.start()
-        wait_dl_only(WAITING_TIME, "Starting Download")
-        if os.path.exists(data_path):
-            notification('F.T.V - Download started', name.upper(), '5000', iconart)
-        else:
-            notification('F.T.V - Download failed', name.upper(), '5000', iconart)
-       
-
-class DownloadThread(Thread):
-    def __init__(self, name, url, data_path):
-        self.data = url
-        self.path = data_path
-        Thread.__init__(self)
-
-    def run(self):
-        path = str(self.path)
-        data = self.data
-        urllib.urlretrieve(data, path)
-        notification('F.T.V - Download finished', name.upper(), '5000', iconart)
-        xbmc.executebuiltin(notify)	
-		
-def on_demand()	:
-    url = "http://demand.filmon.com"
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    all_cat = regex_from_to(link, '<div class="categories-list', '</div>')
-    categories = regex_get_all(all_cat, '<a', '</a>')
-    for c in categories:
-        title = regex_from_to(c, '>', '</').strip()
-        url = "http://demand.filmon.com/" + regex_from_to(c, 'href="', '"')
-        addDir(title,url,201,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '','')
-        setView('episodes', 'episodes-view')
-
-def on_demand_list(url):
-    if "page=" in url:
-        np_url = url[:len(url)-1] + str(int(url[len(url)-1:]) + 1)
-    else:
-        np_url = url + "?page=1"
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    all_videos = regex_get_all(link, '<div class="product-item col', '<div class="popover-content-bottom">')
-    for video in all_videos:
-        title = regex_from_to(video, 'popover-title">', '</span>')
-        url = "http://demand.filmon.com" + regex_from_to(video, 'product-item-info" href="', '"')
-        thumb = regex_from_to(video, 'img src="', '"')
-        try:
-            description = regex_from_to(video, '<p>', '</p>')
-        except:
-            description = ""
-        addDirPlayable(title,url,203,thumb,"",description, "", "od")
-    addDir("[COLOR gold]>> Next Page[/COLOR]",np_url,201,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'next.png')), '','')
+    all_shows = regex_from_to(link,'<br /> <br />', '</div>')
+    all_shows = regex_get_all(all_shows, '<li>', '</li>')
+    for a in all_shows:
+        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
+        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
+        thumb = regex_from_to(a, '<img src="', '" ')
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
+        addDir(str(title), str(url),3,thumb, list_data,'sh')
     setView('episodes', 'episodes-view')
 	
-def play_od(name, url, iconimage):
-    dp = xbmcgui.DialogProgress()
-    dp.create('Opening ' + name.upper())
+def grouped_shows(header):
+    url = 'http://www.tvonline.cc'
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    swf = "%s%s" % ('http://demand.filmon.com/sites/all/modules/demand/flash/FilmonPlayer.swf?', 'mvfu3k')
-    stream = re.compile('livehttp":{(.+?),"url":"(.+?)","name":"(.+?)"}').findall(link)
-    for vast, stUrl, playpath in stream:
-        RTurl = stUrl.replace("\\/", "/").replace("\/", "/")
-    STurl = RTurl
+    all_shows = regex_from_to(link,str(header), '</ul>')
+    all_shows = regex_get_all(all_shows, '<li>', '</li>')
+    for a in all_shows:
+        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
+        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
+        if header == "Hit TV Shows":
+            try:
+                thumb = "http://pic.newtvshows.org/" + title.replace(' ', '-') + ".jpg"
+            except:
+                thumb = "http://pic.newtvshows.org/" + title.replace(' ', '.') + ".jpg"
+        else:
+            thumb = regex_from_to(a, '<img src="', '" ')
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
+        addDir(title, url,3,thumb, list_data,'sh')
+        
+    setView('episodes', 'episodes-view')
+		
+def tv_show(name, url, iconimage):
+    episodes = []
+    net.set_cookies(cookie_jar)
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
+    for s in seasonlist:
+        sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
+        eplist = regex_get_all(str(s), '<li>', '</li>')
+        addDir(sname, 'url',4,str(iconimage), eplist,name)
+    setView('episodes', 'episodes-view')
+		
+def tv_show_episodes(name, list, iconimage, showname):
+    episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(list)
+    for epnum, url, epname in episodes:
+        epnum = epnum.replace(', ', '-').replace('Ep', 'E')
+        url = 'http://www.tvonline.cc' + url.replace("<>", "'")
+        name = "%s - %s" % (epnum, clean_file_name(epname))
+        addDirPlayable(name,url,5,iconimage, showname)
+    setView('episodes', 'episodes-view')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+		
+def play(name, url, iconimage, showname):
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = str(url)
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+    form_data = ({'type': 'checkuser'})
+    net.set_cookies(cookie_jar)
+    req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
     handle = str(sys.argv[1])
-    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-    if handle != "-1":	
+    if req != TVO_USER:
+        login()
+    dp = xbmcgui.DialogProgress()
+    dp.create('Opening ' + name)
+    net.set_cookies(cookie_jar)
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    linktext = regex_from_to(link, 'var playurl', 'responseText')
+    linkurl = 'http://www.tvonline.cc' + regex_from_to(linktext, 'url: "', '"')
+    net.set_cookies(cookie_jar)
+    playlink = net.http_GET(linkurl).content.encode("utf-8").rstrip().replace("getinfo.php", "ip.mp4")
+    playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+    playlist.clear()
+    listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)
+    playlist.add(playlink,listitem)
+    xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
+    
+    if handle != "-1":
         listitem.setProperty("IsPlayable", "true")
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
     else:
-        xbmcPlayer = xbmc.Player()
-        xbmcPlayer.play(STurl,listitem)
+        try:
+            xbmcPlayer.play(playlist)
+        except:
+            dialog = xbmcgui.Dialog()
+            dialog.ok("Playback failed", "Check your account settings")
     dp.close()
+	
+def add_favourite(name, url, iconimage, dir, text):
+    list_data = iconimage.replace('hhhh', 'http:')
+    splitdata = list_data.split('QQ')
+    name = splitdata[0]
+    name = name.replace('->-', ' & ')
+    thumb = splitdata[2]
+    add_to_list(list_data, dir)
+    notification(name, "[COLOR lime]" + text + "[/COLOR]", '5000', thumb)
+	
+def remove_from_favourites(name, url, iconimage, dir, text):
+    list_data = iconimage.replace('hhhh', 'http:')
+    splitdata = list_data.split('QQ')
+    name = splitdata[0]
+    name = name.replace('->-', ' & ')
+    thumb = splitdata[2]
+    remove_from_list(list_data, dir)
+    notification(name, "[COLOR orange]" + text + "[/COLOR]", '5000', thumb)
+	
+def create_tv_show_strm_files(name, url, iconimage, ntf):
+    dialog = xbmcgui.Dialog()
+    n = name
+    u = url
+    l = iconimage
+    list_data = iconimage.replace('hhhh', 'http:')
+    splitdata = iconimage.split('QQ')
+    name = splitdata[0]
+    name = name.replace('->-', ' & ')
+    thumb = splitdata[2]
+    tv_show_path = create_directory(TV_PATH, name)
+    net.set_cookies(cookie_jar)
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
+    for s in seasonlist:
+        sname = regex_from_to(s, '<strong>', '</strong>')
+        sname = sname[:len(sname)-3]
+        snum = sname.replace("Season ", "")
+        season_path = create_directory(tv_show_path, str(snum))
+        eplist = regex_get_all(str(s), '<li>', '</li>')
+        for e in eplist:
+            episode = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(e)
+            for epnum, url, epname in episode:
+                epnum = epnum.replace(', ', 'x').replace('Ep', '').replace('S', '') 
+                url = 'http://www.tvonline.cc' + url.replace("<>", "'")
+                display = "%s %s" % (epnum, epname)
+                create_strm_file(display, url, "5", season_path, thumb, name)
+    if ntf == "true" and ENABLE_SUBS:
+        if dialog.yesno("Subscribe?", 'Do you want TVonline to automatically add new', '[COLOR gold]' + name + '[/COLOR]' + ' episodes when available?'):
+            add_favourite(n, u, l, SUB, "Added to Library/Subscribed")
+        else:
+            notification(name, "[COLOR lime]Added to Library[/COLOR]", '5000', thumb)
+    if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
+        xbmc.executebuiltin('UpdateLibrary(video)')
 
 
-def my_addons():
-    addons = os.listdir(addon_path)
-    for a in addons:
-        if a.startswith('plugin.video') and a != 'plugin.video.F.T.V'  and a != 'plugin.video.adblocker' and a != 'plugin.video.gachecker' and not a.endswith('zip'):
-            plugin_path = os.path.join(addon_path, a)
-            iconimage = os.path.join(addon_path, a, 'icon.png')
-            xml = os.path.join(addon_path, a, 'addon.xml')
-            text = open(xml, 'r')
-            r = text.read()
-            text.close()
-            try:
-                id = strip_text(r, ' id="', '"')
-            except:
-                id = strip_text(r, " id='", "'")
-            try:
-                name = strip_text(r, ' name="', '"')
-            except:
-                name = strip_text(r, " name='", "'")
-
-            addDirPlayable(name,a,143,iconimage,"","","","")
-			
-def my_addons_audio():
-    addons = os.listdir(addon_path)
-    for a in addons:
-        if a.startswith('plugin.audio'):
-            plugin_path = os.path.join(addon_path, a)
-            iconimage = os.path.join(addon_path, a, 'icon.png')
-            xml = os.path.join(addon_path, a, 'addon.xml')
-            text = open(xml, 'r')
-            r = text.read()
-            text.close()
-            try:
-                id = strip_text(r, ' id="', '"')
-            except:
-                id = strip_text(r, " id='", "'")
-            try:
-                name = strip_text(r, ' name="', '"')
-            except:
-                name = strip_text(r, " name='", "'")
-
-            addDirPlayable(name,a,143,iconimage,"","","","")
-
-def run_addon(name, url, iconimage):
-    url = "XBMC.Container.Update(plugin://%s)" % url
-    xbmc.executebuiltin(url)
-
- 
-def play(name, url, iconimage):
-    link = open_url(url)
-    match = re.compile('src="(.+?)" FlashVars="controlbar=over&skin=(.+?)&bufferlength=(.+?)&autostart=(.+?)&fullscreen=(.+?)&file=(.+?)&height').findall(link)
-    for swf, nonswf, buffer, autostart, fullscreen, rtmp in match:
-        stream_url = rtmp + ' swfUrl=' + swf + ' live=true timeout=45'
-        playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-        playlist.clear()
-        listitem = xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
-        playlist.add(stream_url,listitem)
-        xbmcPlayer = xbmc.Player()
-        xbmcPlayer.play(playlist)
+def remove_tv_show_strm_files(name, url, iconimage, dir_path):
+    dialog = xbmcgui.Dialog()
+    splitname = iconimage.split('QQ')
+    rname = splitname[0]
+    rname = rname.replace('->-', ' & ')
+    try:
+        path = os.path.join(dir_path, str(rname))
+        shutil.rmtree(path)
+        remove_from_favourites(name, url, iconimage, SUB, "Removed from Library/Unsubscribed")
+        if xbmc.getCondVisibility('Library.IsScanningVideo') == False:
+            if dialog.yesno("Clean Library?", '', 'Do you want clean the library now?'):		
+                xbmc.executebuiltin('CleanLibrary(video)')		
+    except:
+        xbmc.log("[TVonline] Was unable to remove TV show: %s" % (name)) 
+   
+	
+def report_error(name, url, showname):
+    email = []
+    pd = []
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    uid = regex_from_to(link, '<input onclick="errorreport(', ')"')
+    if TVO_EMAIL == "":
+        keyboard = xbmc.Keyboard('', 'Enter your email address (only required once)', False)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            email = keyboard.getText()
+            if len(email) > 0:
+                ADDON.setSetting('tvo_email', value=email)
+    email = TVO_EMAIL
+    keyboard = xbmc.Keyboard('', 'Error Description', False)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        pd = keyboard.getText()
 		
+    pn = "%s %s" % (showname, name)
+
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    header_dict['Host'] = 'www.tvonline.cc'
+    header_dict['Referer'] = str(url)
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+    form_data = ({'email': email, 'uid': uid, 'pd': pd, 'pn': pn, 'type': 'error'})
+    net.set_cookies(cookie_jar)
+    req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+    if req == "1":
+        notification('Error reported', pn, '5000', iconart)
+		
+def create_directory(dir_path, dir_name=None):
+    if dir_name:
+        dir_path = os.path.join(dir_path, dir_name)
+    dir_path = dir_path.strip()
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    return dir_path
+
+def create_file(dir_path, file_name=None):
+    if file_name:
+        file_path = os.path.join(dir_path, file_name)
+    file_path = file_path.strip()
+    if not os.path.exists(file_path):
+        f = open(file_path, 'w')
+        f.write('')
+        f.close()
+    return file_path
+	
+def create_strm_file(name, url, mode, dir_path, iconimage, showname):
+    try:
+        strm_string = create_url(name, mode, url=url, iconimage=iconimage, showname=showname)
+        filename = clean_file_name("%s.strm" % name)
+        path = os.path.join(dir_path, filename)
+        if not os.path.exists(path):
+            stream_file = open(path, 'w')
+            stream_file.write(strm_string)
+            stream_file.close()
+    except:
+        xbmc.log("[TVonline] Error while creating strm file for : " + name)
+		
+def create_url(name, mode, url, iconimage, showname):
+    name = urllib.quote(str(name))
+    data = urllib.quote(str(url))
+    iconimage = urllib.quote(str(iconimage))
+    showname = urllib.quote(str(showname))
+    mode = str(mode)
+    url = sys.argv[0] + '?name=%s&url=%s&mode=%s&iconimage=%s&showname=%s' % (name, data, mode, iconimage, showname)
+    return url
+	
+def get_subscriptions():
+    try:
+        if os.path.isfile(SUB):
+            s = read_from_file(SUB)
+            search_list = s.split('\n')
+            for list in search_list:
+                if list != '':
+                    list1 = list.split('QQ')
+                    title = list1[0]
+                    url = list1[1]
+                    thumb = list1[2]
+                    create_tv_show_strm_files(title, url, list, "false")
+    except:
+        xbmc.log("[TVonline] Failed to fetch subscription")
+
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
         r = re.search("(?i)" + from_string + "([\S\s]+?)" + to_string, text).group(1)
@@ -568,7 +515,47 @@ def regex_get_all(text, start_with, end_with):
 def strip_text(r, f, t, excluding=True):
     r = re.search("(?i)" + f + "([\S\s]+?)" + t, r).group(1)
     return r
-	
+
+
+def find_list(query, search_file):
+    try:
+        content = read_from_file(search_file) 
+        lines = content.split('\n')
+        index = lines.index(query)
+        return index
+    except:
+        return -1
+		
+def add_to_list(list, file):
+    if find_list(list, file) >= 0:
+        return
+
+    if os.path.isfile(file):
+        content = read_from_file(file)
+    else:
+        content = ""
+
+    lines = content.split('\n')
+    s = '%s\n' % list
+    for line in lines:
+        if len(line) > 0:
+            s = s + line + '\n'
+    write_to_file(file, s)
+    xbmc.executebuiltin("Container.Refresh")
+    
+def remove_from_list(list, file):
+    index = find_list(list, file)
+    if index >= 0:
+        content = read_from_file(file)
+        lines = content.split('\n')
+        lines.pop(index)
+        s = ''
+        for line in lines:
+            if len(line) > 0:
+                s = s + line + '\n'
+        write_to_file(file, s)
+        xbmc.executebuiltin("Container.Refresh")
+		
 def write_to_file(path, content, append=False, silent=False):
     try:
         if append:
@@ -623,7 +610,7 @@ def wait_dl_only(time_to_wait, title):
 		
 def notification(title, message, ms, nart):
     xbmc.executebuiltin("XBMC.notification(" + title + "," + message + "," + ms + "," + nart + ")")
-		
+	
 def setView(content, viewType):
 	if content:
 		xbmcplugin.setContent(int(sys.argv[1]), content)
@@ -647,42 +634,44 @@ def get_params():
                                 
         return param
 
-def addLink(name,url,iconimage,description,status,download_link, p_id, start, p_name):
+
+def addDir(name,url,mode,iconimage,list,description):
+        suffix = ""
+        suffix2 = ""
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&description="+str(description)
         ok=True
         contextMenuItems = []
-        liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+        if name == "My Subscriptions":
+            contextMenuItems.append(("[COLOR cyan]Refresh Subscriptions[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=17&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+        if description == "sh":
+            if find_list(list, FAV) < 0:
+                suffix = ""
+                contextMenuItems.append(("[COLOR lime]Add to TVonline Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=11&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+            else:
+                suffix = ' [COLOR lime]+[/COLOR]'
+                contextMenuItems.append(("[COLOR orange]Remove from TVonline Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=13&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+            if find_list(list, SUB) < 0:
+                suffix2 = ""
+                contextMenuItems.append(("[COLOR lime]Add to XBMC Library/Subscribe[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=14&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+            else:
+                suffix2 = ' [COLOR cyan][s][/COLOR]'
+                contextMenuItems.append(("[COLOR orange]Remove from XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=15&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+        liz=xbmcgui.ListItem(name + suffix + suffix2, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
-        liz.setProperty("IsPlayable","true")
-        contextMenuItems.append(("Delete Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=133&iconimage=%s)'%(sys.argv[0],p_name,str(p_id),iconimage)))
-        if status == "Recorded" and download_link != "error":
-            contextMenuItems.append(("Download Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=139&iconimage=%s)'%(sys.argv[0],p_name,str(download_link),iconimage)))
-        liz.addContextMenuItems(contextMenuItems, replaceItems=True)
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz,isFolder=False)
-        return ok
-
-
-def addDir(name,url,mode,iconimage,ch_fanart,description):
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
-        ok=True
-        contextMenuItems = []
-        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
-        liz.setProperty('fanart_image', fanart)
+        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
-def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, function):
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&start="+str(start)+"&ch_fanart="+str(ch_fanart)
+def addDirPlayable(name,url,mode,iconimage,showname):
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
         ok=True
         contextMenuItems = []
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
+        liz.setInfo( type="Video", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)
-        if function != 'od' and function != 'gb':
-            contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],ch_fanart, start,iconimage)))
-            contextMenuItems.append(("Toggle My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,ch_fanart,iconimage)))
-            liz.addContextMenuItems(contextMenuItems, replaceItems=False)
+        contextMenuItems.append(("[COLOR red]Report an error[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&showname=%s)'%(sys.argv[0],name, url, showname)))
+        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
         
@@ -701,7 +690,7 @@ try:
 except:
         pass
 try:
-        name=str(params["name"])
+        name=urllib.unquote_plus(params["name"])
 except:
         pass
 try:
@@ -717,79 +706,71 @@ try:
 except:
         pass
 try:
-        ch_fanart=urllib.unquote_plus(params["ch_fanart"])
+        list=urllib.unquote_plus(params["list"])
+except:
+        pass
+try:
+        showname=urllib.unquote_plus(params["showname"])
+except:
+        pass
+try:
+        description=urllib.unquote_plus(params["description"])
 except:
         pass
 
 
 if mode==None or url==None or len(url)<1:
-        CATEGORIES()
+        CATEGORIES(name)
         
        
-elif mode==121:
-        other_menu()
+elif mode==2:
+        shows(url)
 		
-elif mode==122:
+elif mode==3:
+        tv_show(name, url, iconimage)
+		
+elif mode==4:
+        tv_show_episodes(name, list, iconimage, description)
+		
+elif mode==5:
+        play(name, url, iconimage.replace('hhhh', 'http:'), showname)
+		
+elif mode==6:
+        search()
+		
+elif mode==7:
+        grouped_shows(url)
+		
+elif mode == 8:
+        a_to_z(url)
+		
+elif mode == 9:
+        watched_list(url)
+		
+elif mode == 10:
+        report_error(name, url, showname)
+		
+elif mode == 11:
+        add_favourite(name, url, list, FAV, "Added to Favourites")
+		
+elif mode == 12:
         favourites()
 		
-elif mode==151:
-        featured()
+elif mode == 13:
+        remove_from_favourites(name, url, list, FAV, "Removed from Favourites")
 		
-elif mode==15:
-        play(name, url, iconimage)
+elif mode == 14:
+        create_tv_show_strm_files(name, url, list, "true")
 		
-elif mode==2:
-        other()
+elif mode == 15:
+        remove_tv_show_strm_files(name, url, list, TV_PATH)
 		
-elif mode==123:
-        group_channels(url, name)
+elif mode == 16:
+        subscriptions()
 		
-elif mode==125:
-        login()
-        play_filmon(name, url, iconimage)
+elif mode == 17:
+        get_subscriptions()
 		
-elif mode==126:
-        login()
-        play_filmon_gb(name, url, iconimage)
-		
-elif mode==127:
-        tv_guide(name, url, iconimage)
-		
-elif mode == 129:
-        record_programme(name,url,ch_fanart,start)
-
-elif mode == 131:
-        recordings(url)
-		
-elif mode == 133:
-        delete_recording(name,url,iconimage)
-        recordings(url)
-		
-elif mode == 135:
-        add_fav(name, url, iconimage)
-		
-elif mode == 137:
-        delete_fav(name, url, iconimage)
-		
-elif mode == 139:
-        download_rec(name, url, iconimage)
-
-elif mode == 141:
-        my_addons()
-
-elif mode == 145:
-        my_addons_audio()		
-
-elif mode == 143:
-        run_addon(name, url, iconimage)	
-
-elif mode == 199:
-        on_demand()
-
-elif mode == 201:
-        on_demand_list(url)
-
-elif mode == 203:
-        play_od(name, url, iconimage)		
-
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
+
+

@@ -81,7 +81,7 @@ def LESSON_LIST(url):
             name=name.replace("&amp;","&").replace("&quot;","'")
             prefix=u'\u2714'.encode('utf-8')#U+2714
             url='en/' + (url.replace('http://justinguitar.com/en','').replace('" target="_blank',''))
-            thumb = art + 'ugdefault.png'
+            thumb = art1 + 'ugdefault.png'
             addDirVideo(prefix, name,justin_url+url,2,thumb)
 				
 def PLAY_VIDEO(url,name):
@@ -119,7 +119,7 @@ def FAVOURITES():
                 name = list[0]
                 url = list[1]
                 prefix = ''
-                addDirVideo(prefix, name,url,2,art + 'ugdefault.png')
+                addDirVideo(prefix, name,url,2,art1 + 'ugdefault.png')
 
 
 ################################Youtube Channels#####################################				

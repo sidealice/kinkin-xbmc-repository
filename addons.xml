@@ -82,7 +82,7 @@
 
 <addon id="plugin.video.tvonline.cc"
        name="TVonline"
-       version="2.1.5"
+       version="2.1.6"
        provider-name="kinkin, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

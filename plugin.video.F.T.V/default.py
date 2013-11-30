@@ -128,8 +128,8 @@ def group_channels(url, title):
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
         url = base_url + regex_from_to(channel, 'href="/', '" class')
         addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
-    if gt == 'UK LIVE TV':
-        addDirPlayable('Channel 5 + 1','http://www.filmon.com/channel/channel-5',126,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
+    #if gt == 'UK LIVE TV':
+        #addDirPlayable('Channel 5 + 1','http://www.filmon.com/channel/channel-5',126,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
     setView('episodes', 'episodes-view')
 
 def other_menu():
@@ -205,83 +205,73 @@ def tv_guide(name, url, iconimage):
             setView('episodes', 'epg')
 
 		
-def play_filmon(name,url,iconimage):
+def play_filmon(name,url,iconimage,ch_id):
+    streamerlink = net.http_GET(url).content.encode("utf-8").rstrip()
+    swfplay = 'http://www.filmon.com' + regex_from_to(streamerlink, '"streamer":"', '",').replace("\/", "/")
+    slink = open_url('http://www.filmon.com/api/init/')
+    smatch= re.compile('"session_key":"(.+?)"').findall(slink)
+    session_id=smatch[0]
     name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())
     utc_now = datetime.datetime.now()
     channel_name=name
     net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    swfplay = 'http://www.filmon.com' + regex_from_to(link, '"streamer":"', '",').replace("\/", "/")
-    nowplaying = regex_from_to(link, 'window.current_channel = {', '} ;')
+    url='http://www.filmon.com/api/channel/%s?session_key=%s' % (ch_id,session_id)
+    link = net.http_GET(url).content
+    link = json.loads(link)
+    link = str(link)
+	
+    next_p = regex_from_to(link, "next_playing'", "u'title")
     try:
-        timeout = regex_from_to(nowplaying, 'expire_timeout":"', '",')
+        n_start_time = datetime.datetime.fromtimestamp(int(regex_from_to(next_p, "startdatetime': u'", "',")))
+        n_end_time = datetime.datetime.fromtimestamp(int(regex_from_to(next_p, "enddatetime': u'", "',")))
+        n_programme_name = regex_from_to(next_p, "programme_name': u'", "',")
+        n_start_t = n_start_time.strftime('%H:%M')
+        n_end_t = n_end_time.strftime('%H:%M')
+        n_p_name = "[COLOR cyan]Next: %s (%s-%s)[/COLOR]" % (n_programme_name, n_start_t, n_end_t)
+    except:
+        n_p_name = ""
+		
+    now_p = regex_from_to(link, "now_playing':", "u'tvguide")
+    try:
+        start_time = datetime.datetime.fromtimestamp(int(regex_from_to(now_p, "startdatetime': u'", "',")))
+        end_time = datetime.datetime.fromtimestamp(int(regex_from_to(now_p, "enddatetime': u'", "',")))
+        programme_name = regex_from_to(now_p, "programme_name': u'", "',")
+        description = ""
+        start_t = start_time.strftime('%H:%M')
+        end_t = end_time.strftime('%H:%M')
+        p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
+        dp.update(50, p_name)
+    except:
+        try:
+            p_name = programme_name
+        except:
+            p_name = name
+		
+    streams = regex_from_to(link, "streams'", "u'tvguide")
+    hl_streams = regex_get_all(streams, '{', '}')
+    url = regex_from_to(hl_streams[0], "url': u'", "',")
+    name = regex_from_to(hl_streams[0], "name': u'", "',")
+    try:
+        timeout = regex_from_to(hl_streams[0], "watch-timeout': u'", "',")
     except:
         timeout = '86500'
-    pr_list = regex_get_all(nowplaying, '{"programme', '}')
-    for p in pr_list:
-        programme_name = regex_from_to(p, 'programme_name":"', '",')
-        try:
-            start_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'startdatetime":"', '",')))
-            end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":"', '",')))
-            if start_time < utc_now and end_time > utc_now:
-                npet = regex_from_to(p, 'enddatetime":"', '",')
-                programme_name = regex_from_to(p, 'programme_name":"', '",').replace("\/", "/")
-                description = regex_from_to(nowplaying, 'programme_description":"', '",').replace('\u2019', "'").replace('\u2013', "-")
-                start_t = start_time.strftime('%H:%M')
-                end_t = end_time.strftime('%H:%M')
-                p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
-                dp.update(50, p_name)
-                try:
-                    next = regex_from_to(nowplaying, 'startdatetime":"' +npet, '}')
-                    n_start_time = datetime.datetime.fromtimestamp(int(npet))
-                    n_end_time = datetime.datetime.fromtimestamp(int(regex_from_to(next, 'enddatetime":"', '",')))
-                    n_programme_name = regex_from_to(next, 'programme_name":"', '",').replace("\/", "/")
-                    n_start_t = n_start_time.strftime('%H:%M')
-                    n_end_t = n_end_time.strftime('%H:%M')
-                    n_p_name = "[COLOR cyan]Next: %s (%s-%s)[/COLOR]" % (n_programme_name, n_start_t, n_end_t)
-                except:
-                    n_p_name = ""
-        except:
-            p_name = programme_name
-            n_p_name = ""
-    
-    streams = regex_from_to(link, 'streams":', 'allowFullscreen')
-    hl_streams = regex_get_all(streams, '{', '}')
-    if int(timeout) < 7200 and AUTO_SWITCH:
-        url = regex_from_to(hl_streams[1], 'url":"', '"}').replace("\/", "/")
-        quality = regex_from_to(hl_streams[1], 'quality":"', '",')
-        name = regex_from_to(hl_streams[1], 'name":"', '",')
-        if name.endswith('m4v'):
-            app = 'vodlast'
-        else:
-            appfind = url[7:].split('/')
-            app = 'live/' + appfind[2]
-        if url.endswith('/'):
-            STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url)  + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-        else:
-            STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-            STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+    if (int(timeout) < 7200 and AUTO_SWITCH) or FILMON_QUALITY == 'false':
+        name = name.replace('high', 'low')
+    if name.endswith('m4v'):
+        app = 'vodlast'
     else:
-        for stream in hl_streams:
-            url = regex_from_to(stream, 'url":"', '"}').replace("\/", "/")
-            quality = regex_from_to(stream, 'quality":"', '",')
-            name = regex_from_to(stream, 'name":"', '",')
-            if name.endswith('m4v'):
-                app = 'vodlast'
-            else:
-                appfind = url[7:].split('/')
-                app = 'live/' + appfind[2]
-            if quality == FILMON_QUALITY:
-                if url.endswith('/'):
-                    STurl = str(url) + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                    STurl2 = str(url)  + name + ' playpath=' + name + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                else:
-                    STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27'+' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-                    STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=27' + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
-    print STurl, STurl2
+        appfind = url[7:].split('/')
+        app = 'live/' + appfind[2]
+		
+    if url.endswith('/'):
+        STurl = str(url) + ' playpath=' + name + ' swfUrl=' + swfplay + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+        STurl2 = str(url)  + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+    else:
+        STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
+        STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' tcUrl='+ str(url) + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'	
+		
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     handle = str(sys.argv[1])
@@ -302,6 +292,7 @@ def play_filmon(name,url,iconimage):
             xbmcPlayer = xbmc.Player()
             xbmcPlayer.play(STurl,listitem)
     dp.close()
+
 
 def play_filmon_gb(name,url,iconimage):
     name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
@@ -673,6 +664,7 @@ def addDir(name,url,mode,iconimage,ch_fanart,description):
         return ok
 		
 def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, function):
+        print ch_fanart
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&start="+str(start)+"&ch_fanart="+str(ch_fanart)
         ok=True
         contextMenuItems = []
@@ -746,7 +738,7 @@ elif mode==123:
 		
 elif mode==125:
         login()
-        play_filmon(name, url, iconimage)
+        play_filmon(name, url, iconimage, ch_fanart)
 		
 elif mode==126:
         login()

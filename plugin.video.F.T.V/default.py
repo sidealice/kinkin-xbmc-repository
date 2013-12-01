@@ -34,6 +34,7 @@ addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'icon.png'))
 base_url = 'http://www.filmon.com/'
+disneyjrurl = 'http://www.disney.co.uk/disney-junior/content/video.jsp?b='
 
 
 def open_url(url):
@@ -77,11 +78,19 @@ def keep_alive():
         url = 'http://www.filmon.com/user/logout'
         net.set_cookies(cookie_jar)
         net.http_GET(url)
+        session_id = xbmcgui.Window(10000).getProperty("session_id")
+        lourl = "http://www.filmon.com/api/logout?session_key=%s" % (session_id)
+        open_url(lourl)
+        xbmcgui.Window(10000).clearProperty("session_id")
         print 'F.T.V..........logged out of Filmon'
         return
     url = "http://www.filmon.com/ajax/keepAlive"
     net.set_cookies(cookie_jar)
     net.http_GET(url)
+    if xbmcgui.Window(10000).getProperty("session_id"):
+        session_id = xbmcgui.Window(10000).getProperty("session_id")
+        url = "http://www.filmon.com/api/keep-alive?session_key=%s" % (session_id)
+        open_url(url)
     #print 'F.T.V..........Filmon session kept alive'
     tloop = Timer(60.0, keep_alive)
     tloop.start()
@@ -92,8 +101,9 @@ def CATEGORIES():
         addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
     if MY_AUDIO:
         addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
-    if OTHER_MENU:
-        addDir('Other Video Links','url',121,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'other_video.png')), '', '')
+    #if OTHER_MENU:
+        #addDir('Other Video Links','url',121,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'other_video.png')), '', '')
+    addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
@@ -128,12 +138,13 @@ def group_channels(url, title):
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
         url = base_url + regex_from_to(channel, 'href="/', '" class')
         addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
-    #if gt == 'UK LIVE TV':
+    if gt == 'UK LIVE TV':
+        addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
         #addDirPlayable('Channel 5 + 1','http://www.filmon.com/channel/channel-5',126,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
     setView('episodes', 'episodes-view')
 
-def other_menu():
-    addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
+#def other_menu():
+    #addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
 		
 def favourites():
     url = base_url + 'my/favorites'
@@ -156,7 +167,6 @@ def add_fav(name, ch_id, iconimage):
     form_data = ({'channel': ch_id})
     req = POST_URL(url, form_data)
     text = req.replace('"','').replace('{','').replace('}','').replace(","," - ")
-    print text
     if "enable" in text and "true" in text:
         notification('Toggle My Channels', name + ' added', '5000', iconart)
     if "disable" in text and "true" in text:
@@ -207,10 +217,13 @@ def tv_guide(name, url, iconimage):
 		
 def play_filmon(name,url,iconimage,ch_id):
     streamerlink = net.http_GET(url).content.encode("utf-8").rstrip()
+    net.save_cookies(cookie_jar)
     swfplay = 'http://www.filmon.com' + regex_from_to(streamerlink, '"streamer":"', '",').replace("\/", "/")
     slink = open_url('http://www.filmon.com/api/init/')
     smatch= re.compile('"session_key":"(.+?)"').findall(slink)
     session_id=smatch[0]
+    xbmcgui.Window(10000).setProperty("session_id", session_id)
+    keep_alive()
     name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())
@@ -533,7 +546,7 @@ def run_addon(name, url, iconimage):
     xbmc.executebuiltin(url)
 
  
-def play(name, url, iconimage):
+def play(name, url, iconimage):  
     link = open_url(url)
     match = re.compile('src="(.+?)" FlashVars="controlbar=over&skin=(.+?)&bufferlength=(.+?)&autostart=(.+?)&fullscreen=(.+?)&file=(.+?)&height').findall(link)
     for swf, nonswf, buffer, autostart, fullscreen, rtmp in match:
@@ -544,6 +557,76 @@ def play(name, url, iconimage):
         playlist.add(stream_url,listitem)
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(playlist)
+		
+def disney_jr(url):
+    link = open_url(url)#.replace('\n','')
+    categories = regex_get_all(link, '<li class="video_brand_promo">', '</li>')
+    for c in categories:
+        url = 'http://www.disney.co.uk' + regex_from_to(c, 'href="', '"')
+        name = regex_from_to(c, 'data-originpromo="', '"').replace('-',' ').upper()
+        thumb = 'http://www.disney.co.uk' + regex_from_to(c, 'data-hover="', '"')
+        if name == 'A POEM IS HOME IN THE FASHION':
+            thumb = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg'))
+        addDir(name,url,302,thumb, '','')
+		
+def disney_jr_links(name, url):
+    link = open_url(url).replace('\t', '').replace('\n', '')
+    videos = regex_get_all(link, 'div class="promo" style', 'img src="/cms_res/disney-junior/images/promo')
+    for v in videos:
+        url = 'http://www.disney.co.uk' + regex_from_to(v, 'href="', '"')
+        name = regex_from_to(v, 'data-itemName="', '"').replace('-',' ').upper()
+        thumb = 'http://www.disney.co.uk' + regex_from_to(v, 'img src="', '"')
+        addDirPlayable(name,url,310,thumb,'', '', '', 'djr')
+	
+def disney_play(name, url, iconimage):
+    urlid = url.replace('http://www.disney.co.uk/disney-junior/content/video.jsp?v=','')
+    link = open_url(url)
+    stream = regex_from_to(link, urlid, 'progressive')
+    server = regex_from_to(stream,'server":"', '"')
+    strm = regex_from_to(stream, 'program":"', '"')
+    url = server + strm + ' swfVfy=1'
+    title = regex_from_to(stream, 'pageTitle":"', '"').replace('Disney Junior | Videos - ', '')
+    liz=xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+    liz.setInfo( type="Video", infoLabels={ "Title": name} )
+    liz.setProperty("IsPlayable","true")
+    pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+    pl.clear()
+    pl.add(url, liz)
+    xbmc.Player().play(pl)
+	
+def disney_playlist(name, url, iconimage):
+    dp = xbmcgui.DialogProgress()
+    dp.create("F.T.V",'Creating Playlist')
+    playlist = []
+    link = open_url(url)
+    stream = regex_get_all(link, 'analyticsAssetName', 'progressive')
+    nItem = len(stream)
+    for s in stream:
+        server = regex_from_to(s,'server":"', '"')
+        strm = regex_from_to(s, 'program":"', '"')
+        url = server + strm + ' swfVfy=1'
+        title = regex_from_to(s, 'pageTitle":"', '"').replace('Disney Junior | Videos - ', '')
+        liz=xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+        liz.setInfo( type="Video", infoLabels={ "Title": title} )
+        liz.setProperty("IsPlayable","true")
+        pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+        pl.clear()
+        playlist.append((url, liz))
+        progress = len(playlist) / float(nItem) * 100  
+        dp.update(int(progress), 'Adding to Your Playlist',title)
+
+        if dp.iscanceled():
+            return
+    dp.close()
+    for blob ,liz in playlist:
+        try:
+            if blob:
+                pl.add(blob,liz)
+        except:
+            pass
+    if not xbmc.Player().isPlayingVideo():
+        xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(pl)
+
 		
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
@@ -664,17 +747,18 @@ def addDir(name,url,mode,iconimage,ch_fanart,description):
         return ok
 		
 def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, function):
-        print ch_fanart
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&start="+str(start)+"&ch_fanart="+str(ch_fanart)
         ok=True
         contextMenuItems = []
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
-        if function != 'od' and function != 'gb':
+        if function != 'od' and function != 'gb'and function != 'djr':
             contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],ch_fanart, start,iconimage)))
             contextMenuItems.append(("Toggle My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,ch_fanart,iconimage)))
-            liz.addContextMenuItems(contextMenuItems, replaceItems=False)
+        if function == 'djr':
+            contextMenuItems.append(("Play All Videos",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=303&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),iconimage)))
+        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
         
@@ -782,6 +866,18 @@ elif mode == 201:
         on_demand_list(url)
 
 elif mode == 203:
-        play_od(name, url, iconimage)		
+        play_od(name, url, iconimage)
+
+elif mode == 301:
+        disney_jr(url)	
+
+elif mode == 302:
+        disney_jr_links(name, url)
+		
+elif mode == 303:
+        disney_playlist(name, url, iconimage)
+
+elif mode == 310:
+        disney_play(name, url, iconimage)		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

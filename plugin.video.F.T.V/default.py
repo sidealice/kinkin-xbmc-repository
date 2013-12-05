@@ -74,27 +74,10 @@ def login():
 
 
 def keep_alive():
-
-    currentWindow = xbmcgui.getCurrentWindowId()
-    if currentWindow == 10000:
-        url = 'http://www.filmon.com/user/logout'
-        net.set_cookies(cookie_jar)
-        net.http_GET(url)
-        session_id = xbmcgui.Window(10000).getProperty("session_id")
-        lourl = "http://www.filmon.com/api/logout?session_key=%s" % (session_id)
-        open_url(lourl)
-        xbmcgui.Window(10000).clearProperty("session_id")
-        print 'F.T.V..........logged out of Filmon'
-        return
     url = "http://www.filmon.com/ajax/keepAlive"
     net.set_cookies(cookie_jar)
     net.http_GET(url)
     net.save_cookies(cookie_jar)
-    #if xbmcgui.Window(10000).getProperty("session_id"):
-        #session_id = xbmcgui.Window(10000).getProperty("session_id")
-        #url = "http://www.filmon.com/api/keep-alive?session_key=%s" % (session_id)
-        #open_url(url)
-    #print 'F.T.V..........Filmon session kept alive'
     tloop = Timer(60.0, keep_alive)
     tloop.start()
 	
@@ -104,8 +87,6 @@ def CATEGORIES():
         addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
     if MY_AUDIO:
         addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
-    #if OTHER_MENU:
-        #addDir('Other Video Links','url',121,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'other_video.png')), '', '')
     addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
@@ -257,11 +238,7 @@ def play_filmon(name,url,iconimage,ch_id):
     streamerlink = net.http_GET(url).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
     swfplay = 'http://www.filmon.com' + regex_from_to(streamerlink, '"streamer":"', '",').replace("\/", "/")
-    #slink = open_url('http://www.filmon.com/api/init/')
-    #smatch= re.compile('"session_key":"(.+?)"').findall(slink)
-    #session_id=smatch[0]
-    #xbmcgui.Window(10000).setProperty("session_id", session_id)
-    #keep_alive()
+
     name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())

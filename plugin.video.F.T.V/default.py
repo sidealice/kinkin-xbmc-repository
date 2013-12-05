@@ -129,7 +129,7 @@ def CATEGORIES():
 		
 def group_channels(url, title):
     gt = title
-    ch_lst = []
+    name_lst = []
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
 
@@ -137,13 +137,14 @@ def group_channels(url, title):
     for channel in channels:
         alias = regex_from_to(channel, 'alias="', '" channel_id')
         channel_id = regex_from_to(channel, 'id="', '" alias')
-        ch_lst.append(channel_id)
         title = regex_from_to(channel, 'channel_title">', '</')
+        name_lst.append(title)
         description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
         url = base_url + regex_from_to(channel, 'href="/', '" class')
         addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
     # read from channel list
+
     s = read_from_file(channel_list)
     search_list = s.split('\n')
     for list in search_list:
@@ -152,12 +153,12 @@ def group_channels(url, title):
             st_grp = list1[0]
             st_name = list1[1]
             st_id = list1[2]
-            thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id)
-            if st_grp == gt and not st_id in ch_lst:
+            thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
+            if st_grp == gt and st_name not in name_lst:
                 addDirPlayable(st_name,gt,125,thumb,st_id,"", "", "grp")
 
     if gt == 'UK LIVE TV':
-        addDirPlayable('Channel 5 + 1','http://www.filmon.com/channel/channel-5',125,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
+        addDirPlayable('Channel 5 + 1','UK LIVE TV',125,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
         addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
     setView('episodes', 'episodes-view')
 		
@@ -233,6 +234,7 @@ def tv_guide(name, url, iconimage):
 def play_filmon(name,url,iconimage,ch_id):
     swap_ch = ch_id
     grpurl = url
+
     if url == "LOCAL TV":
         url = 'http://www.filmon.com/channel/live'
         ch_id = '689'
@@ -304,7 +306,6 @@ def play_filmon(name,url,iconimage,ch_id):
             p_name = name
 		
     url = regex_from_to(link, "serverURL': u'", "',")
-    print "original " + url
     if swap_ch == '857':
         url = url.replace('303','308')
     if swap_ch == '2707' or swap_ch == '1039':
@@ -312,7 +313,9 @@ def play_filmon(name,url,iconimage,ch_id):
     if grpurl == "UK LIVE TV" and swap_ch != '2707' and swap_ch != '1039':
         url = url.replace('live303.edge.filmon.com','204.107.27.248')
     name = regex_from_to(link, "streamName': u'", "',")
-    name = name.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream').replace('689', swap_ch).replace('22', swap_ch)
+    name = name.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
+    if grpurl == "UK LIVE TV" or grpurl == "LOCAL TV":
+        name = name.replace('689', swap_ch).replace('22', swap_ch)
 
     try:
         timeout = regex_from_to(link, "expire_timeout': u'", "',")
@@ -330,8 +333,8 @@ def play_filmon(name,url,iconimage,ch_id):
         STurl = str(url) + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
         STurl2 = str(url)  + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1' 
     else:
-        STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
-        STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'	
+        STurl = str(url) + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
+        STurl2 = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'	
 		
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()

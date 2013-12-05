@@ -153,12 +153,16 @@ def group_channels(url, title):
             st_grp = list1[0]
             st_name = list1[1]
             st_id = list1[2]
+            try:
+                st_url = list1[3]
+            except:
+                st_url = "blank"
+            par = "%s<>%s" % (st_id, st_url)
             thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
             if st_grp == gt and st_name not in name_lst:
-                addDirPlayable(st_name,gt,125,thumb,st_id,"", "", "grp")
+                addDirPlayable(st_name,gt,125,thumb,par,"", "", "grp")
 
     if gt == 'UK LIVE TV':
-        addDirPlayable('Channel 5 + 1','UK LIVE TV',125,'http://static.filmon.com/couch/channels/857/extra_big_logo.png','857','', '', "gb")
         addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
     setView('episodes', 'episodes-view')
 		
@@ -232,8 +236,15 @@ def tv_guide(name, url, iconimage):
 
 		
 def play_filmon(name,url,iconimage,ch_id):
-    swap_ch = ch_id
+    print url, ch_id
     grpurl = url
+    if url == "LOCAL TV" or url == "UK LIVE TV":
+        parsplit = ch_id.split('<>')
+        swap_ch = parsplit[0]
+        swap_url = parsplit[1]
+    else:
+        swap_ch = ch_id
+
 
     if url == "LOCAL TV":
         url = 'http://www.filmon.com/channel/live'
@@ -256,12 +267,13 @@ def play_filmon(name,url,iconimage,ch_id):
     dp.create('Opening ' + name.upper())
     utc_now = datetime.datetime.now()
     channel_name=name
+    cl= 23 + len(ch_id)
     net.set_cookies(cookie_jar)
     header_dict = {}
     header_dict['Accept'] = 'application/json, text/javascript, */*; q=0.01'
     header_dict['Accept-Encoding'] = 'gzip, deflate'
     header_dict['Accept-Language'] = 'en-US,en;q=0.5'
-    header_dict['Content-Length'] = '25'
+    header_dict['Content-Length'] = str(cl)
     header_dict['Host'] = 'www.filmon.com'
     header_dict['Connection'] = 'keep-alive'
     header_dict['Pragma'] = '	no-cache'
@@ -269,10 +281,7 @@ def play_filmon(name,url,iconimage,ch_id):
     header_dict['User-Agent'] = 'AppleWebKit/<WebKit Rev>'
     header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
     header_dict['X-Requested-With'] = 'XMLHttpRequest'
-    if grpurl == "UK LIVE TV":
-        form_data = ({'channel_id': '22', 'quality': 'low'})
-    else:
-        form_data = ({'channel_id': ch_id, 'quality': 'low'})
+    form_data = ({'channel_id': ch_id, 'quality': 'low'})
     churl = 'http://www.filmon.com/ajax/getChannelInfo'
     link = net.http_POST(churl, form_data=form_data, headers=header_dict).content
     link = json.loads(link)
@@ -306,16 +315,16 @@ def play_filmon(name,url,iconimage,ch_id):
             p_name = name
 		
     url = regex_from_to(link, "serverURL': u'", "',")
-    if swap_ch == '857':
-        url = url.replace('303','308')
-    if swap_ch == '2707' or swap_ch == '1039':
-        url = url.replace('303','307')
-    if grpurl == "UK LIVE TV" and swap_ch != '2707' and swap_ch != '1039':
-        url = url.replace('live303.edge.filmon.com','204.107.27.248')
+    url2 = url.split('/')
+    url2 = url2[2]
     name = regex_from_to(link, "streamName': u'", "',")
     name = name.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
-    if grpurl == "UK LIVE TV" or grpurl == "LOCAL TV":
-        name = name.replace('689', swap_ch).replace('22', swap_ch)
+    if grpurl == "UK LIVE TV":
+        name = name.replace('22', swap_ch)
+        url = url.replace(url2, swap_url)
+    if grpurl == "LOCAL TV":
+        name = name.replace('689', swap_ch)
+        url = url.replace(url2, swap_url)
 
     try:
         timeout = regex_from_to(link, "expire_timeout': u'", "',")

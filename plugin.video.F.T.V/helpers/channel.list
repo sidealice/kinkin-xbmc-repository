@@ -1,237 +1,46 @@
-LOCAL TV<>FilmOn TV Live<>689
-LOCAL TV<>Filmon Studio<>1676
-LOCAL TV<>World<>233
-LOCAL TV<>WGBH 2.1 Boston<>2575
-LOCAL TV<>WLVI 56.1 Boston<>2572
-LOCAL TV<>WBPX 68.1 Boston<>2569
-LOCAL TV<>TUFF<>216
-LOCAL TV<>WWOR 9.3 NY<>821
-LOCAL TV<>WNBC 4.2 NY<>1630
-LOCAL TV<>WNYW 5 NY<>136
-LOCAL TV<>WCBS 2 NY<>196
-LOCAL TV<>WNBC 4 NY<>154
-LOCAL TV<>WABC 7 NY<>124
-LOCAL TV<>WPIX 11 NY<>209
-LOCAL TV<>WNET Kids 13.2 NY<>863
-LOCAL TV<>WNET 13.1 NY<>392
-LOCAL TV<>KDOC 56.1 Los Angeles<>200
-SPORTS<>FilmOn Tennis<>1948
-SPORTS<>FilmOn Football <>374
-SPORTS<>Game Time<>1756
-SPORTS<>UFC Next<>713
-SPORTS<>1 on 1 Boxing TV<>1988
-SPORTS<>MLB Network: Intentional Talk<>1477
-SPORTS<>AFL Classic<>980
-SPORTS<>Cheer Channel<>1019
-SPORTS<>X-Treme Sports<>326
-SPORTS<>NWA Wrestling<>373
-SPORTS<>Masked Republic AAA Lucha Libre<>802
-SPORTS<>Freeskier Magazine Podcast<>1484
-SPORTS<>shralp! snowboarding video news<>1479
-SPORTS<>Pursuit channel<>349
-SPORTS<>The Best of the UFC®<>1483
-SPORTS<>Correr es Vivir<>1254
-SPORTS<>Element<>1487
-BIKINI BABE<>After Dark TV<>345
-BIKINI BABE<>Hooters' Calendar Girls<>1970
-BIKINI BABE<>Player TV<>2684
-BIKINI BABE<>Bikini Beach TV<>2726
-BIKINI BABE<>Miss Top of the World <>2638
-BIKINI BABE<>Bikini TeeVee<>380
-BIKINI BABE<>Party TeeVee<>790
-BIKINI BABE<>Bikini Kitchen<>2000
-BIKINI BABE<>College hotties<>1858
-BIKINI BABE<>MiamiTV<>866
-NEWS TV<>France24<>298
-NEWS TV<>BBC News<>27
-NEWS TV<>FilmOn Breaking News<>302
-NEWS TV<>Al Jazeera<>4
-NEWS TV<>Bloomberg<>81
-NEWS TV<>DW English<>2641
-NEWS TV<>Russia Today<>93
-NEWS TV<>What America Thinks<>1759
-NEWS TV<>VoA Persian TV<>1951
-NEWS TV<>CCTV News<>1675
-NEWS TV<>Free Speech TV<>697
-NEWS TV<>DVIDs TV<>725
-NEWS TV<>Press TV<>905
-NEWS TV<>Job Channel Network<>1678
-NEWS TV<>The Pentagon<>333
-NEWS TV<>NASA HD<>330
-NEWS TV<>BizTV<>343
-NEWS TV<>President Obama's Weekly Address<>1394
-NEWS TV<>Washington Week Video Podcast | PBS<>1395
-NEWS TV<>NYT's World News (Video)<>2218
-FEATURE MOVIE<>Action Cinema<>500
-FEATURE MOVIE<>Sprockets & Splices<>2690
-FEATURE MOVIE<>Hitchshock<>2716
-FEATURE MOVIE<>Movie Loft TV<>2719
-FEATURE MOVIE<>FilmOn Classics<>206
-FEATURE MOVIE<>FilmOn Martial Arts<>10
-FEATURE MOVIE<>Cultra<>336
-FEATURE MOVIE<>iFlix TV<>1991
-FEATURE MOVIE<>Mini Movies<>290
-FEATURE MOVIE<>Filmon Stars<>494
-FEATURE MOVIE<>Kung Fu Classics<>1967
-FEATURE MOVIE<>Double Feature TV<>1693
-FEATURE MOVIE<>Hollywood Fast Lane<>1964
-FEATURE MOVIE<>Moxie<>2020
-FEATURE MOVIE<>Oldie Goldie<>2023
-FEATURE MOVIE<>Linkct Network<>390
-FEATURE MOVIE<>Film 4<>13
-FEATURE MOVIE<>American Primetime Television<>707
-FEATURE MOVIE<>Action Zone<>1045
-FEATURE MOVIE<>FilmOn Grab Bag TV<>310
-FEATURE MOVIE<>Sci-Fi Telly<>382
-FEATURE MOVIE<>Hollywoodland Channel<>411
-FEATURE MOVIE<>The Western Channel<>384
-FEATURE MOVIE<>Matriarch TV<>1052
-FEATURE MOVIE<>Threshold <>514
-COMEDY<>Old Jews Telling Jokes<>1117
-COMEDY<>Dilbert Animated Cartoons<>1114
-COMEDY<>The New Yorker Animated Cartoons<>1111
-COMEDY<>The Ricky Gervais Podcast<>1108
-COMEDY<>Rhett and Link<>1209
-COMEDY<>College Humor<>1099
-COMEDY<>Supa Pirate Booty Hunt<>1013
-COMEDY<>Fun Little Movies<>1727
-COMEDY<>Friday Night Cranks<>1198
-COMEDY<>Kevin Pollak's Chat Show<>1102
-COMEDY<>Urban Comedy <>497
-COMEDY<>Popcorn TV<>716
-COMEDY<>ComedyTime TV<>344
-COMEDY<>Eye for an Eye<>911
-LIFESTYLE<>GrateTV<>1216
-LIFESTYLE<>MEGA DESTINATIONS<>2678
-LIFESTYLE<>Psychic Today<>1711
-LIFESTYLE<>30a TV<>1714
-LIFESTYLE<>Home and Green Living<>1753
-LIFESTYLE<>Caribbean Lifestyle Channel<>1946
-LIFESTYLE<>Simply Ming Video Podcast<>1213
-LIFESTYLE<>NYT's Circuits with David Pogue (Video)<>1536
-LIFESTYLE<>Cooking Everything Outdoors<>1212
-LIFESTYLE<>OBXTV<>1049
-LIFESTYLE<>Simply Me<>1022
-LIFESTYLE<>The Walk TV<>340
-LIFESTYLE<>PCC Natural Markets Videos<>1217
-LIFESTYLE<>GrapeRadio – Wine Talk Show<>1218
-LIFESTYLE<>Wine Channel TV<>263
-LIFESTYLE<>Start Cooking<>1219
-LIFESTYLE<>Travel with Rick<>1562
-LIFESTYLE<>Q with Jian Ghomeshi<>1456
-LIFESTYLE<>Monocle<>1452
-LIFESTYLE<>DadLabs<>1404
-LIFESTYLE<>Eco-Rico<>710
-LIFESTYLE<>The Miki Show<>728
-LIFESTYLE<>Steel Dreams<>784
-LIFESTYLE<>Distant Roads<>787
-LIFESTYLE<>Veg TV<>383
-LIFESTYLE<>GeoBeats Travel<>386
-LIFESTYLE<>Time TV<>414
-LIFESTYLE<>UNRELIABLE SOURCES<>239
-LIFESTYLE<>Celebrity Buzz<>2236
-CANADIAN TV<>CTV Two Vancouver Island<>2062
-CANADIAN TV<>AMI-TV East<>2047
-CANADIAN TV<>CTV Winnipeg<>2053
-CANADIAN TV<>CTV Montreal<>2056
-CANADIAN TV<>CTV Ottawa<>2059
-FILMON EXCLUSIVE<>Guido<>1976
-FILMON EXCLUSIVE<>Chanukkah Live<>2725
-FILMON EXCLUSIVE<>VU Network<>2627
-FILMON EXCLUSIVE<>MHL TV<>1973
-FILMON EXCLUSIVE<>Jennifer Stano<>2044
-FILMON EXCLUSIVE<>BAMMA USA<>2008
-FILMON EXCLUSIVE<>LIVE BOXING<>1864
-FILMON EXCLUSIVE<>Bruce Lee TV<>1855
-FILMON EXCLUSIVE<>FilmOn Reality<>2621
-FILMON EXCLUSIVE<>VENICEBEACHLIVECAM.TV<>2003
-FASHION<>Fashion TV<>21
-FASHION<>H&M Fashion Video<>2119
-FASHION<>GUCCI<>2128
-FASHION<>The Fashion Update<>2134
-FASHION<>Fashion network<>1129
-FASHION<>CHIC.TV Fashion<>1135
-FASHION<>Global Fashion News<>1138
-FASHION<>MODTV FASHION<>1144
-KIDS<>Kartoon Klassics<>793
-KIDS<>FilmOn Kids<>7
-KIDS<>Fun Little Kids<>1861
-KIDS<>Sesame Street Podcast<>1286
-KIDS<>Big Cat Rescue<>1288
-KIDS<>Emba Kids<>719
-KIDS<>Animal Atlas<>799
-KIDS<>Smile of a Child<>401
-MUSIC<>Music Mix USA<>1681
-MUSIC<>Acoustic Long Island VIDEO<>2188
-MUSIC<>The Best of VH1 Podcast (Video)<>2233
-MUSIC<>247Clubber<>950
-MUSIC<>Jazz TeeVee<>1687
-MUSIC<>Dancing Machine TV<>1690
-MUSIC<>Inside Music TV<>1696
-MUSIC<>Mixed Media Network<>2063
-MUSIC<>The Raw Report<>2072
-MUSIC<>4 Music<>95
-MUSIC<>NPR: Tiny Desk Concerts - Video Podcast<>2152
-MUSIC<>WFUV's The Alternate Side In Session<>2170
-MUSIC<>UVTV: Heavy Metal Music Videos, Concert Footage & Interviews<>2179
-MUSIC<>Music - The Interface<>2182
-MUSIC<>Viva<>8
-MUSIC<>The Noise Network<>385
-MUSIC<>FilmOn Jazz and Blues<>530
-MUSIC<>WBEZ's Live Music Thursday<>1367
-MUSIC<>FilmOn Rock TV<>311
-MUSIC<>La sélection de Bande à part, sans chapitres<>1356
-MUSIC<>The Soundtrack Channel<>350
-MUSIC<>JCTV<>400
-MUSIC<>RMC On Air<>1046
-MUSIC<>Classic Arts Showcase<>309
-MUSIC<>Zuus Country<>342
-MUSIC<>Urban Music Network<>347
-MUSIC<>Vintage Music TV<>1042
-MUSIC<>Sound & Vision Radio<>1325
-MUSIC<>NPR: Tiny Desk Concerts Podcast<>1310
-MUSIC<>Irish & Celtic Music Podcast<>1336
-MUSIC<>Above & Beyond: Group Therapy<>1337
-MUSIC<>This Week in Music - Video<>1353
-LATINO TV<>RTVE<>23
-LATINO TV<>CTN International<>1610
-LATINO TV<>Telenovelas TV<>2624
-LATINO TV<>RT Español<>299
-LATINO TV<>RTP international<>303
-LATINO TV<>Hispan TV<>1997
-UK LIVE TV<>BBC One<>14
-UK LIVE TV<>BBC 1 North Ireland<>361
-UK LIVE TV<>BBC Two<>25
-UK LIVE TV<>BBC Parliament<>1666
-UK LIVE TV<>CBEEBIES/BBC Four<>103
-UK LIVE TV<>CBBC/BBC Three<>113
-UK LIVE TV<>Channel 4 <>2
-UK LIVE TV<>Channel 5<>22
-UK LIVE TV<>ITV1 <>11
-UK LIVE TV<>Dave<>370
-UK LIVE TV<>ITV2<>67
-UK LIVE TV<>QUEST<>2707
-UK LIVE TV<>E4<>65
-UK LIVE TV<>Yesterday<>1039
-UK LIVE TV<>CBS Reality+1<>1811
-UK LIVE TV<>CBS Reality<>1808
-UK LIVE TV<>CBS Drama<>1805
-UK LIVE TV<>ITV3<>26
-UK LIVE TV<>ITV4<>101
-UK LIVE TV<>ITV4+1<>1826
-UK LIVE TV<>ITV+1<>1817
-UK LIVE TV<>ITV2+1<>1820
-UK LIVE TV<>ITV3+1<>1823
-UK LIVE TV<>More4<>97
-UK LIVE TV<>Really<>372
-UK LIVE TV<>5USA<>845
-UK LIVE TV<>Pick TV<>371
-GERMAN TV<>ZDFneo<>360
-GERMAN TV<>zdf.kultur<>359
-GERMAN TV<>Sonnenklar TV<>706
-GERMAN TV<>Phoenix<>424
-GERMAN TV<>Tagesschau24<>415
-GERMAN TV<>Eins Festival<>421
-GERMAN TV<>Eins Plus<>418
-GERMAN TV<>QVC Deutschland<>354
-GERMAN TV<>QVC PLUS Deutsch<>355
+LOCAL TV<>FilmOn TV Live<>689<>live54.la3.edge.filmon.com
+LOCAL TV<>Filmon Studio<>1676<>live305.edge.filmon.com
+LOCAL TV<>World<>233<>live223.la3.edge.filmon.com
+LOCAL TV<>WGBH 2.1 Boston<>2575<>204.107.26.245
+LOCAL TV<>WLVI 56.1 Boston<>2572<>204.107.26.245
+LOCAL TV<>WBPX 68.1 Boston<>2569<>204.107.26.245
+LOCAL TV<>TUFF<>216<>live53.la3.edge.filmon.com
+LOCAL TV<>WWOR 9.3 NY<>821<>live223.la3.edge.filmon.com
+LOCAL TV<>WNBC 4.2 NY<>1630<>live65.la3.edge.filmon.com
+LOCAL TV<>WNYW 5 NY<>136<>204.107.26.244
+LOCAL TV<>WCBS 2 NY<>196<>204.107.26.244
+LOCAL TV<>WNBC 4 NY<>154<>204.107.26.244
+LOCAL TV<>WABC 7 NY<>124<>204.107.26.244
+LOCAL TV<>WPIX 11 NY<>209<>live223.la3.edge.filmon.com
+LOCAL TV<>WNET Kids 13.2 NY<>863<>live223.la3.edge.filmon.com
+LOCAL TV<>WNET 13.1 NY<>392<>live223.la3.edge.filmon.com
+LOCAL TV<>KDOC 56.1 Los Angeles<>200<>live223.la3.edge.filmon.com
+UK LIVE TV<>BBC One<>14<>77.67.49.9
+UK LIVE TV<>BBC 1 North Ireland<>361<>live304.edge.filmon.com
+UK LIVE TV<>BBC Two<>25<>77.67.49.9
+UK LIVE TV<>BBC Parliament<>1666<>77.67.49.9
+UK LIVE TV<>CBEEBIES/BBC Four<>103<>77.67.49.9
+UK LIVE TV<>CBBC/BBC Three<>113<>77.67.49.9
+UK LIVE TV<>Channel 4<>2<>live303.edge.filmon.com
+UK LIVE TV<>Channel 5<>22<>live303.edge.filmon.com
+UK LIVE TV<>ITV1 <>11<>live302.edge.filmon.com
+UK LIVE TV<>Dave<>370<>live308.edge.filmon.com
+UK LIVE TV<>ITV2<>67<>live302.edge.filmon.com
+UK LIVE TV<>QUEST<>2707<>live307.edge.filmon.com
+UK LIVE TV<>E4<>65<>live304.edge.filmon.com
+UK LIVE TV<>Yesterday<>1039<>live307.edge.filmon.com
+UK LIVE TV<>CBS Reality+1<>1811<>204.107.27.248
+UK LIVE TV<>CBS Reality<>1808<>204.107.27.248
+UK LIVE TV<>CBS Drama<>1805<>204.107.27.248
+UK LIVE TV<>ITV3<>26<>live302.edge.filmon.com
+UK LIVE TV<>ITV4<>101<>live302.edge.filmon.com
+UK LIVE TV<>ITV4+1<>1826<>204.107.27.248
+UK LIVE TV<>ITV+1<>1817<>204.107.27.248
+UK LIVE TV<>ITV2+1<>1820<>204.107.27.248
+UK LIVE TV<>ITV3+1<>1823<>204.107.27.248
+UK LIVE TV<>More4<>97<>live304.edge.filmon.com
+UK LIVE TV<>Really<>372<>live308.edge.filmon.com
+UK LIVE TV<>5USA<>845<>204.107.27.248
+UK LIVE TV<>Pick TV<>371<>live308.edge.filmon.com
+UK LIVE TV<>Channel 5 + 1<>22<>live303.edge.filmon.com
+

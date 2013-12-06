@@ -109,7 +109,8 @@ def CATEGORIES():
 
 		
 def group_channels(url, title):
-    gt = title
+    url = str(url)
+    gt = str(title)
     name_lst = []
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
@@ -134,10 +135,7 @@ def group_channels(url, title):
             st_grp = list1[0]
             st_name = list1[1]
             st_id = list1[2]
-            try:
-                st_url = list1[3]
-            except:
-                st_url = "blank"
+            st_url = list1[3]
             par = "%s<>%s" % (st_id, st_url)
             thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
             if st_grp == gt and st_name not in name_lst:

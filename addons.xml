@@ -65,7 +65,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
-       version="1.1.2a"
+       version="1.1.2b"
        provider-name="kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

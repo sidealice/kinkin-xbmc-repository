@@ -239,7 +239,7 @@ def search_show(query):
         url = regex_from_to(m, '<a href="', '"')
         thumb = regex_from_to(m, 'src="', '"')
         list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
-        addDir(title, url,2,thumb, '','sh')
+        addDir(title, url,2,thumb, list_data,'sh')
 
 
 def play(name, url, iconimage, showname):

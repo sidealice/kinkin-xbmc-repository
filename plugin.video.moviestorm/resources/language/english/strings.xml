@@ -1,0 +1,9 @@
+<strings>
+	<!-- Settings -->
+    <string id="10002">MovieStorm User Name</string>
+    <string id="10003">MovieStorm Password</string>
+    <string id="10004">MovieStorm Email</string>
+    <string id="10005">Enable Subscriptions</string>
+    <string id="10006">TV Show Directory</string>
+    <string id="10007">Movie Directory</string>
+</strings>

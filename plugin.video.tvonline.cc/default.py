@@ -16,6 +16,7 @@ from threading import Thread
 import cookielib
 from t0mm0.common.net import Net
 from helpers import clean_file_name
+import random
 net = Net()
 
 
@@ -255,8 +256,10 @@ def watched_list(url):
     setView('episodes', 'episodes-view')
 		
 def shows(url):
+    header_dict = {}
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
     net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
     all_shows = regex_from_to(link,'<br /> <br />', '</div>')
     all_shows = regex_get_all(all_shows, '<li>', '</li>')
     for a in all_shows:
@@ -268,9 +271,11 @@ def shows(url):
     setView('episodes', 'episodes-view')
 	
 def grouped_shows(header):
+    header_dict = {}
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
     url = 'http://www.tvonline.cc'
     net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
     all_shows = regex_from_to(link,str(header), '</ul>')
     all_shows = regex_get_all(all_shows, '<li>', '</li>')
     for a in all_shows:
@@ -300,7 +305,7 @@ def tv_show(name, url, iconimage):
     setView('episodes', 'episodes-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
-    episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(list)
+    episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a>').findall(list)
     for epnum, url, epname in episodes:
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')
         url = 'http://www.tvonline.cc' + url.replace("<>", "'")
@@ -310,29 +315,33 @@ def tv_show_episodes(name, list, iconimage, showname):
     xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def play(name, url, iconimage, showname):
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.tvonline.cc'
-    header_dict['Referer'] = str(url)
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    form_data = ({'type': 'checkuser'})
-    net.set_cookies(cookie_jar)
-    req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
-    handle = str(sys.argv[1])
-    if req != TVO_USER:
-        login()
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name)
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    playlink = regex_from_to(link, 'ipadvideo" src="','"')
-    net.set_cookies(cookie_jar)
+    splitkey = url.replace('http://www.tvonline.cc/play.php?id=', '').split('-')
+    key1 = splitkey[0]
+    key4 = splitkey[1]
+    keychar = "beklm"
+    key_length = 3
+    key2 = ""
+    for i in range(key_length):
+        next_index = random.randrange(len(keychar))
+        key2 = key2 + keychar[next_index]
+		
+    keychar = "ntwyz"
+    key_length = 3
+    key3 = ""
+    for i in range(key_length):
+        next_index = random.randrange(len(keychar))
+        key3 = key3 + keychar[next_index]
+   
+    playlink = 'http://d.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)
     playlist.add(playlink,listitem)
     xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-    
+	
+    handle = str(sys.argv[1])    
     if handle != "-1":
         listitem.setProperty("IsPlayable", "true")
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
@@ -375,6 +384,7 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
     tv_show_path = create_directory(TV_PATH, name)
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
+    print link
     seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
     for s in seasonlist:
         sname = regex_from_to(s, '<strong>', '</strong>')
@@ -383,7 +393,7 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
         season_path = create_directory(tv_show_path, str(snum))
         eplist = regex_get_all(str(s), '<li>', '</li>')
         for e in eplist:
-            episode = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a></li>').findall(e)
+            episode = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a>').findall(e)
             for epnum, url, epname in episode:
                 epnum = epnum.replace(', ', 'x').replace('Ep', '').replace('S', '') 
                 url = 'http://www.tvonline.cc' + url.replace("<>", "'")

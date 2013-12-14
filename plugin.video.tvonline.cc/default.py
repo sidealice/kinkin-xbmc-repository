@@ -334,7 +334,8 @@ def play(name, url, iconimage, showname):
         next_index = random.randrange(len(keychar))
         key3 = key3 + keychar[next_index]
    
-    playlink = 'http://d.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
+    playlink = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
+    playlink1 = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylw%s%s-%s' % (key1, key2, key3, key4)
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)

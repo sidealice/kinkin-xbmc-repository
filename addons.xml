@@ -21,10 +21,10 @@
 
 <addon id="plugin.video.adblocker"
        name="Ad Blocker"
-       version="9.1.1"
+       version="9.9.9"
        provider-name="kinkin">
     <requires>
-        <import addon="xbmc.python" version="2.0"/>
+        <import addon="xbmc.python" version="2.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
@@ -169,14 +169,14 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.5.4d"
+       version="1.5.5"
        provider-name="Batch,Kinkin,Blazetamer">
     <requires>
-        <import addon="xbmc.python" version="2.0"/>
+        <import addon="xbmc.python" version="2.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
-        <provides>video</provides>
+        <provides>video audio</provides>
     </extension>
     <extension point="xbmc.service"
              	library="service.py" start="startup">

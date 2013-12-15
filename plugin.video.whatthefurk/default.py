@@ -3506,7 +3506,7 @@ def execute_video(name, url, list_item, strm=False):
         poster_file = os.path.join(poster_path, "%s_poster.jpg" % (imdb_id))
         list_item = xbmcgui.ListItem(clean_file_name(name, use_blanks=False), iconImage=poster_file, thumbnailImage=poster_file)
         
-        #list_item.setThumbnailImage(poster_file)
+        list_item.setThumbnailImage(poster_file)
         if PLAY_MODE == 'stream':
             if mode == "strm file dialog" or strm:
                 set_resolved_url(int(sys.argv[1]), name, url, imdb_id) 

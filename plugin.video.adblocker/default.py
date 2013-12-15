@@ -13,31 +13,13 @@ addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.adblocker', 'fanart.jpg'))
 image = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.adblocker', 'icon.png'))
 audiofile = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.adblocker', 'resources', 'adbusters.mp3'))
-ADS_ADDON = settings.ads_addon()
 GUISETTING = xbmc.translatePath(os.path.join('special://home/userdata', 'guisettings.xml'))
 
 def WHOYOUGONNACALL():
-    addDirFOLDER('Pre-load addons (blocks ad on first-run of addon)','url',2,image)
+    addDir('Pre-load addons (blocks ad on first-run of addon)','url',2,image)
     addDir('Settings','url',1,image)
 	
 def preloadaddons():
-    addons = os.listdir(addon_path)
-    timesetting = str(datetime.datetime.now()).split('.')[0]
-    for a in addons:
-        xml_path = os.path.join(addon_path, a)
-        for xml in glob.glob(os.path.join(xml_path, "addon.xml")):
-            text = open(xml, 'r')
-            r = text.read()
-            text.close()
-            try:
-                id = strip_text(r, 'id="', '"')
-                author = strip_text(r, 'provider-name="', '"')
-                xmlid1 = "%s - %s - ad_time" % (author, id)
-                xmlid2 = "%s - %s - ga_time" % (author, id)
-                ADS_ADDON.setSetting(xmlid1, timesetting)
-                ADS_ADDON.setSetting(xmlid2, timesetting)
-            except:
-                pass
     dialog = xbmcgui.Dialog()
     dialog.ok("Ad Blocker", "", "installed addons pre-loaded")
 	

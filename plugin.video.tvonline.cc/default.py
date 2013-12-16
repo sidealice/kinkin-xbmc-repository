@@ -332,9 +332,9 @@ def play(name, url, iconimage, showname):
     key3 = ""
     for i in range(key_length):
         next_index = random.randrange(len(keychar))
-        key3 = key3 + keychar[next_index]
+        key3 = key3 + keychar[next_index]# friday k saturday w sunday z
    
-    playlink = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylw%s%s-%s' % (key1, key2, key3, key4)
+    playlink = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylz%s%s-%s' % (key1, key2, key3, key4)
     playlink1 = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
@@ -385,7 +385,6 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
     tv_show_path = create_directory(TV_PATH, name)
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    print link
     seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
     for s in seasonlist:
         sname = regex_from_to(s, '<strong>', '</strong>')

@@ -59,6 +59,12 @@ def other_menu():
         return True
     else:
         return False
+		
+def sort_alpha():
+    if ADDON.getSetting('sort_alpha') == 'true':
+        return True
+    else:
+        return False
 	
 def cookie_jar():
     return create_file(FTV_PATH, "cookiejar.lwp")

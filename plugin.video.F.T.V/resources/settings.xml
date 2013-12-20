@@ -12,5 +12,6 @@
         <setting id="my_videos" type="bool" label="10007" default="true" />
         <setting id="my_audio" type="bool" label="10008" default="true" />
         <setting id="other_menu" type="bool" label="10009" default="true" />
+        <setting id="sort_alpha" type="bool" label="10019" default="true" />
 	</category>
 </settings>

@@ -28,12 +28,14 @@ FILMON_PASSWORD = settings.filmon_pass()
 MY_VIDEOS = settings.my_videos()
 MY_AUDIO = settings.my_audio()
 OTHER_MENU = settings.other_menu()
+SORT_ALPHA = settings.sort_alpha()
 DOWNLOAD_PATH = settings.download_path()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'icon.png'))
 channel_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'channel.list'))
+group_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'groups.list'))
 xml_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'FilmOn.xml'))
 base_url = 'http://www.filmon.com/'
 disneyjrurl = 'http://www.disney.co.uk/disney-junior/content/video.jsp?b='
@@ -96,6 +98,8 @@ def CATEGORIES():
     net.set_cookies(cookie_jar)
     url = 'http://www.filmon.com/groups'
     link = net.http_GET(url).content.encode("utf-8").rstrip()
+    if "UK LIVE TV" not in link:
+        addDir("UK LIVE TV",'url',123,'http://static.filmon.com/couch/groups/5/big_logo.png', '','')
     all_groups = regex_get_all(link, '<li class="group-item">', '</li>')
     for groups in all_groups:
         group_id = regex_from_to(groups, 'http://static.filmon.com/couch/groups/','/big_logo.png')
@@ -104,7 +108,7 @@ def CATEGORIES():
         url = base_url + regex_from_to(groups, '<a href="/', '">')
         addDir(title,url,123,thumb, '','')
         setView('episodes', 'episodes-view')
-    if not FILMON_USER in link:
+    if FILMON_USER != "" and not FILMON_USER in link:
         notification('Not logged in at Filmon', 'Check settings', '5000', iconart)
     else:
         notification('Logged in at Filmon', FILMON_USER, '5000', iconart)
@@ -114,19 +118,20 @@ def group_channels(url, title):
     url = str(url)
     gt = str(title)
     name_lst = []
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    if url != 'url':
+        net.set_cookies(cookie_jar)
+        link = net.http_GET(url).content.encode("utf-8").rstrip()
 
-    channels = regex_get_all(link, '<li class="channel', '</li>')
-    for channel in channels:
-        alias = regex_from_to(channel, 'alias="', '" channel_id')
-        channel_id = regex_from_to(channel, 'id="', '" alias')
-        title = regex_from_to(channel, 'channel_title">', '</')
-        name_lst.append(title)
-        description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
-        thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
-        url = base_url + regex_from_to(channel, 'href="/', '" class')
-        addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
+        channels = regex_get_all(link, '<li class="channel', '</li>')
+        for channel in channels:
+            alias = regex_from_to(channel, 'alias="', '" channel_id')
+            channel_id = regex_from_to(channel, 'id="', '" alias')
+            title = regex_from_to(channel, 'channel_title">', '</')
+            name_lst.append(title)
+            description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
+            thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
+            url = base_url + regex_from_to(channel, 'href="/', '" class')
+            addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
     # read from channel list
 
     s = read_from_file(channel_list)
@@ -141,11 +146,13 @@ def group_channels(url, title):
             par = "%s<>%s" % (st_id, st_url)
             thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
             if st_grp == gt and st_name not in name_lst:
-                addDirPlayable(st_name,gt,125,thumb,par,"", "", "grp")
+                addDirPlayable(st_name,gt,125,thumb,par,"", "", "")
 
     if gt == 'UK LIVE TV':
         addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
     setView('episodes', 'episodes-view')
+    if SORT_ALPHA:    
+        xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def favourites():
     url = base_url + 'my/favorites'
@@ -418,7 +425,25 @@ def non_geo():
         else:
             STurl = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
 
-        addDirPlayable(title,str(STurl),111,thumb,str(ch_id),"", title, "ng")
+        addDirPlayable(title,str(STurl),111,thumb,str(ch_id),link, title, "ng")
+		
+def add_ng(title,ch_id,link):
+    grp_texts = []
+    dialog = xbmcgui.Dialog()
+    s = read_from_file(group_list)
+    grp_list = s.split('\n')
+    for grp in grp_list:
+        grp_texts.append(grp)
+		
+    menu_id = dialog.select('Select Group', grp_texts)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    else:	
+        grpname = grp_texts[menu_id]
+        list_data = "%s<>%s<>%s<>%s" % (grpname, title, ch_id, link)
+        add_to_list(list_data, channel_list)
+        notification(title + ' added to:', grpname, '5000', iconart)
 
 def play_ng(name,url,iconimage):
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
@@ -736,6 +761,31 @@ def read_from_file(path, silent=False):
             print("Could not read from " + path)
         return None
 
+def find_list(query, search_file):
+    try:
+        content = read_from_file(search_file) 
+        lines = content.split('\n')
+        index = lines.index(query)
+        return index
+    except:
+        return -1
+		
+def add_to_list(list, file):
+    if find_list(list, file) >= 0:
+        return
+
+    if os.path.isfile(file):
+        content = read_from_file(file)
+    else:
+        content = ""
+
+    lines = content.split('\n')
+    s = '%s\n' % list
+    for line in lines:
+        if len(line) > 0:
+            s = s + line + '\n'
+    write_to_file(file, s)
+
 def wait_dl_only(time_to_wait, title):
     print 'Waiting ' + str(time_to_wait) + ' secs'    
 
@@ -813,7 +863,7 @@ def addDir(name,url,mode,iconimage,ch_fanart,description):
         liz.setProperty('fanart_image', fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
-		
+	
 def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, function):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&start="+str(start)+"&ch_fanart="+str(ch_fanart)
         ok=True
@@ -821,11 +871,13 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
-        if function != 'od' and function != 'gb'and function != 'djr':
+        if function != 'od' and function != 'gb'and function != 'djr' and function != 'ng'  and function != '':
             contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],ch_fanart, start,iconimage)))
             contextMenuItems.append(("Toggle My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,ch_fanart,iconimage)))
         if function == 'djr':
             contextMenuItems.append(("Play All Videos",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=303&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),iconimage)))
+        if function == 'ng':
+            contextMenuItems.append(("Add Channel to Group",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=112&iconimage=%s)'%(sys.argv[0],urllib.quote(start), str(ch_fanart),str(description))))
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
@@ -897,6 +949,9 @@ elif mode==125:
 		
 elif mode == 111:
         play_ng(name,url,iconimage)
+		
+elif mode == 112:
+        add_ng(name, url, iconimage)
 		
 elif mode==126:
         login()

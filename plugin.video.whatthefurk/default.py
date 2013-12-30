@@ -1197,10 +1197,6 @@ def setup():
         if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.XMLbackup'):
             if dialog.yesno("What the Furk", "XML Backup addon found", "", 'Do you want to restore all settings?', "No Thanks", "Restore Settings"):
                 xbmc.executebuiltin('RunPlugin(plugin://plugin.video.XMLbackup/?mode=2&url="url")')
-            else:
-                setup_FURK()
-        else:
-            setup_FURK()
 			
 def setup_FURK():
     dialog = xbmcgui.Dialog()
@@ -1241,6 +1237,7 @@ def main_menu():
     items.append(create_directory_tuple('Account Info', 'account info'))
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('Help', 'help menu'))
+    items.append(create_directory_tuple('Set-Up Wizard', 'setup wizard'))
     return items
 
 def imdb_similar_menu(name, data, imdb_id):
@@ -2406,8 +2403,8 @@ def movie_dialog(data, imdb_id, strm=False):################### SEARCH MOVIE ARC
     files = []
         
     dialog = xbmcgui.Dialog()
-    quality_list = ["Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    quality_list_return = ["","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list = ["Any", "3D", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+    quality_list_return = ["", "3D","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     
     if QUALITYSTYLE == "preferred":
         operator="%7C"
@@ -2470,7 +2467,10 @@ def movie_dialog(data, imdb_id, strm=False):################### SEARCH MOVIE ARC
             is_ready = f.is_ready
             info_hash = f.info_hash
             size = f.size
-            bitrate = float(size)/duration*8/1024/1024
+            try:
+                bitrate = float(size)/duration*8/1024/1024
+            except:
+                bitrate = 2
             if bitrate < float(DOWNLOAD_SPEED):
                 bitrate = "[COLOR lime][%.1fMbps][/COLOR]" % (bitrate)
             else:
@@ -2658,8 +2658,9 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### E
                 type = format
             else:
                 wtf_mode = "execute video"
+                imdb = imdb_id
                 imdb_id="%s$%s$%s" % (type, MBs, imdb_id)
-            file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb_id)
+            file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb)
             items.append(file_list_tuple)
             if content=="video" and SKIP_BROWSE and mode != "browse context menu":
                 count+=1
@@ -2831,6 +2832,8 @@ def strm_episode_dialog(data, imdb_id, strm=False):##################### SEARCH 
 				
         menu_texts.append("...Search 1Channel")
         menu_texts.append("...Search Icefilms")
+        menu_texts.append("...Search MovieStorm")
+        menu_texts.append("...Search TVonline")
         menu_texts.append("...Search latest torrents")
 
         menu_id = dialog.select('Select Archive', menu_texts)
@@ -2842,17 +2845,27 @@ def strm_episode_dialog(data, imdb_id, strm=False):##################### SEARCH 
             easyname=customstring
             tv_show_name=customstring
             iname=customstring
-        if(menu_id == len(menu_texts)-3):
+        if(menu_id == len(menu_texts)-5):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
             else:
                 dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
-        elif(menu_id == len(menu_texts)-2):
+        elif(menu_id == len(menu_texts)-4):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
                 iurl='http%3a%2f%2fwww.icefilms.info%2f'
                 xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
             else:
                 dialog.ok("Addon not installed", "", "Install the Icefilms addon to use this function")
+        elif(menu_id == len(menu_texts)-3):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=7&url=%s&name=%s)' %('plugin://plugin.video.moviestorm/',"url", tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the MovieStorm addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tvonline.cc'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=17&url=%s&name=%s)' %('plugin://plugin.video.tvonline.cc/',"url", tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the TVonline addon to use this function")
         elif(menu_id == len(menu_texts)-1):
             download_kat(tv_show_name, season_episode)
         else:
@@ -2896,8 +2909,8 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
             time.sleep(F_DELAY)
 					
         dialog = xbmcgui.Dialog()
-        quality_list = ["Custom Search", "Any","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-        quality_list_return = ["Custom","","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+        quality_list = ["Custom Search", "Any", "3D", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
+        quality_list_return = ["Custom","", "3D", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
 	
         if not login_at_furk():
             return []
@@ -2977,6 +2990,7 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
 				
         menu_texts.append("...Search 1Channel")
         menu_texts.append("...Search Icefilms")
+        menu_texts.append("...Search MovieStorm")
         menu_texts.append("...Search latest torrents")
 
         menu_id = dialog.select('Select Archive', menu_texts)
@@ -2986,17 +3000,23 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
         if customstring!="abcdef":
             name=customstring
             name2=customstring
-        if(menu_id == len(menu_texts)-3):
+        if(menu_id == len(menu_texts)-4):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
             else:
                 dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
-        elif(menu_id == len(menu_texts)-2):
+        elif(menu_id == len(menu_texts)-3):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
                 url='http%3a%2f%2fwww.icefilms.info%2f'
                 xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',url,urllib.quote_plus(name2),"0")))
             else:
                 dialog.ok("Addon not installed", "", "Install the IceFilms addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
+                url='http%3a%2f%2fwww.icefilms.info%2f'
+                xbmc.executebuiltin(('Container.Update(%s?mode=7&url=%s&name=%s)' %('plugin://plugin.video.moviestorm/',"url",name2)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the MovieStorm addon to use this function")
         elif(menu_id == len(menu_texts)-1):
             download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(" TV Movie","").replace(":"," ")), "dummy")
         else:
@@ -4524,6 +4544,12 @@ def create_movie_list_item(name, imdb_id, rating, votes):
         iurl='http%3a%2f%2fwww.icefilms.info%2f'
         name2 = name[:len(data)-7].replace("The ","")
         contextMenuItems.append(('@Search Movie Icefilms', 'Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(name2),"0")))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
+        name2 = name[:len(data)-7].replace("The ","")        
+        contextMenuItems.append(('@Search MovieStorm', 'XBMC.Container.Update(%s?mode=7&name=%s&url=%s)' %('plugin://plugin.video.moviestorm/',urllib.quote(name2), "url")))
+    #if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.yifymovies.hd'):
+        #name2 = name[:len(data)-7].replace("The ","")        
+        #contextMenuItems.append(('@Search Yify Movies HD', 'XBMC.Container.Update(%s?action=movies_search&query=%s)' %('plugin://plugin.video.yifymovies.hd/',urllib.quote(name2))))
 
     if exist_in_dir(clean_file_name(name), MOVIES_PATH, isMovie=True):
         remove_url = '%s?name=%s&data=%s&imdb_id=%s&mode=remove movie strm' % (sys.argv[0], urllib.quote(name), urllib.quote(name), imdb_id)
@@ -4716,6 +4742,12 @@ def create_episode_list_item(name, data, imdb_id, poster, title, year, overview,
         iurl='http%3a%2f%2fwww.icefilms.info%2f'
         iname = "%s %sx%.2d" % (tv_show_name,season_number,episode_number)
         contextMenuItems.append(('@Search Episode Icefilms', 'Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
+        tv_show_name = data_split[0].replace(" Mini-Series","")       
+        contextMenuItems.append(('@Search MovieStorm', 'XBMC.Container.Update(%s?mode=7&name=%s&url=%s)' %('plugin://plugin.video.moviestorm/',tv_show_name, "url")))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tvonline.cc'):
+        tv_show_name = data_split[0].replace(" Mini-Series","")       
+        contextMenuItems.append(('@Search TVonline', 'XBMC.Container.Update(%s?mode=17&name=%s&url=%s)' %('plugin://plugin.video.tvonline.cc/',tv_show_name, "url")))
 
     name_kat = tv_show_name.replace("The ","")
     data_kat = season_episode
@@ -5425,6 +5457,9 @@ elif mode == "enable pc setting":
 	
 elif mode == 'test download':
     test_dl_speed()
+	
+elif mode == "setup wizard":
+    setup_FURK()
 		
 
 	

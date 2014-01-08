@@ -128,7 +128,10 @@ def group_channels(url, title):
             channel_id = regex_from_to(channel, 'id="', '" alias')
             title = regex_from_to(channel, 'channel_title">', '</')
             name_lst.append(title)
-            description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
+            try:
+                description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
+            except:
+                description = ""
             thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
             url = base_url + regex_from_to(channel, 'href="/', '" class')
             addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")

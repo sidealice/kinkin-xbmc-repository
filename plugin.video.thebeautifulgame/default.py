@@ -16,15 +16,17 @@ from threading import Thread
 import cookielib
 from helpers import clean_file_name
 import plugintools
+from t0mm0.common.net import Net
 
 
 ADDON = settings.addon()
 FAV = settings.favourites_file()
+cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.thebeautifulgame', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.thebeautifulgame', 'icon.png'))
 base_url = 'http://eurorivals.net'
-
+net = Net()
 
 def open_url(url):
     trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
@@ -977,7 +979,17 @@ elif mode == 12:
 elif mode == 13:
         remove_from_favourites(name, url, list, FAV, "Removed from Favourites")
 		
-
+elif mode == 14:
+        create_tv_show_strm_files(name, url, list, "true")
+		
+elif mode == 15:
+        remove_tv_show_strm_files(name, url, list, TV_PATH)
+		
+elif mode == 16:
+        subscriptions()
+		
+elif mode == 17:
+        get_subscriptions()
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

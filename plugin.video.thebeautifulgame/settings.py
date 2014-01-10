@@ -11,6 +11,8 @@ def addon():
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")
 		
+def cookie_jar():
+    return create_file(DATA_PATH, "cookiejar.lwp")
 	
 def create_directory(dir_path, dir_name=None):
     if dir_name:

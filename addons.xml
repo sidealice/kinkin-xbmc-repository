@@ -125,6 +125,26 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 </addon>
 
+<addon id="plugin.video.thebeautifulgame"
+       name="The Beautiful Game"
+       version="0.7.0"
+       provider-name="kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="plugin.video.youtube"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Football news, highlights, tables and more!</summary>
+        <description>Football news, highlights, tables and more!</description>
+    </extension>
+
+</addon>
+
 <addon id="plugin.video.tvonline.cc"
        name="TVonline"
        version="2.1.7c"

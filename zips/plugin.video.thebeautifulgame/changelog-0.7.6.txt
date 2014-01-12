@@ -1,5 +1,6 @@
 0.7.6
 updated icon & fanart by tb4ll
 
+
 0.7.5
 Initial Release

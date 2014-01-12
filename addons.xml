@@ -127,8 +127,8 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.thebeautifulgame"
        name="The Beautiful Game"
-       version="0.7.5"
-       provider-name="kinkin">
+       version="0.7.6"
+       provider-name="kinkin, art by tb4ll">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
         <import addon="plugin.video.youtube"/>
@@ -190,7 +190,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.5.6"
+       version="1.5.7"
        provider-name="Batch,Kinkin,Blazetamer">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

@@ -2987,7 +2987,8 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
                 menu_data.append(f.url_dl)
                 menu_linkid.append(f.id)
                 menu_url_pls.append(f.url_pls)
-				
+
+        menu_texts.append("...Search yify Movies HD")				
         menu_texts.append("...Search 1Channel")
         menu_texts.append("...Search Icefilms")
         menu_texts.append("...Search MovieStorm")
@@ -3000,7 +3001,13 @@ def strm_movie_dialog(name, imdb_id, strm=False):##################### SEARCH MO
         if customstring!="abcdef":
             name=customstring
             name2=customstring
-        if(menu_id == len(menu_texts)-4):
+        if(menu_id == len(menu_texts)-5):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.yifymovies.hd'):
+                name2 = name[:len(data)-7].replace("The ","")        
+                xbmc.executebuiltin(('XBMC.Container.Update(%s?action=movies_search&query=%s)' %('plugin://plugin.video.yifymovies.hd/',urllib.quote_plus(name2))))
+            else:
+                dialog.ok("Addon not installed", "", "Install the yify Movies HD addon to use this function")
+        elif(menu_id == len(menu_texts)-4):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
             else:
@@ -4537,6 +4544,9 @@ def create_movie_list_item(name, imdb_id, rating, votes):
     trailer_url = '%s?name=%s&data=%s&imdb_id=%s&mode=view trailer' % (sys.argv[0], urllib.quote(name_trailer), urllib.quote(data_trailer), urllib.quote(name))
     contextMenuItems.append(('View trailer', 'XBMC.RunPlugin(%s)' % trailer_url))
     contextMenuItems.append(('IMDB users also like...', "XBMC.Container.Update(%s?mode=similartitles menu&name=%s&data=%s&imdb_id=%s)" % (sys.argv[0], urllib.quote(name), "MOV", imdb_id ) ) )
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.yifymovies.hd'):
+        name2 = name[:len(data)-7].replace("The ","")        
+        contextMenuItems.append(('@Search Yify Movies HD', 'XBMC.Container.Update(%s?action=movies_search&query=%s)' %('plugin://plugin.video.yifymovies.hd/',urllib.quote_plus(name2))))
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
         name2 = name[:len(data)-7].replace("The ","")        
         contextMenuItems.append(('@Search Movie 1Channel', 'XBMC.Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
@@ -4547,10 +4557,6 @@ def create_movie_list_item(name, imdb_id, rating, votes):
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
         name2 = name[:len(data)-7].replace("The ","")        
         contextMenuItems.append(('@Search MovieStorm', 'XBMC.Container.Update(%s?mode=7&name=%s&url=%s)' %('plugin://plugin.video.moviestorm/',urllib.quote(name2), "url")))
-    #if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.yifymovies.hd'):
-        #name2 = name[:len(data)-7].replace("The ","")        
-        #contextMenuItems.append(('@Search Yify Movies HD', 'XBMC.Container.Update(%s?action=movies_search&query=%s)' %('plugin://plugin.video.yifymovies.hd/',urllib.quote(name2))))
-
     if exist_in_dir(clean_file_name(name), MOVIES_PATH, isMovie=True):
         remove_url = '%s?name=%s&data=%s&imdb_id=%s&mode=remove movie strm' % (sys.argv[0], urllib.quote(name), urllib.quote(name), imdb_id)
         contextMenuItems.append(('Remove from XBMC library', 'XBMC.RunPlugin(%s)' % remove_url))

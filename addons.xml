@@ -104,7 +104,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.moviestorm"
        name="MovieStorm"
-       version="1.0.1"
+       version="1.0.2"
        provider-name="kinkin, art by umOuch">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

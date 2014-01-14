@@ -179,12 +179,13 @@ def links(name,url,iconimage):
 			
 def tv_show_episodes(name, list, iconimage, showname,epurl):
     seasonnum = name.replace('Season ', '')
-    all_episodes = re.compile('<div class="number left">(.+?)</div><div class="name left"> (.+?)</div><div class="edate left">(.+?)</div> <div class="link left"><a class="watch_all" href="(.+?)">Watch NOW').findall(list)
+    episodes = regex_from_to(list, 'SHOW EPISODES</a', '<div class="advert')
+    all_episodes = re.compile('<div class="number left">(.+?)</div><div class="name left"> (.+?)</div><div class="edate left">(.+?)</div> <div class="link left"><a class="watch_all" href="(.+?)">Watch NOW').findall(episodes)
     for epnum, epname, epdate, url in all_episodes:
         snum = regex_from_to(url, 'season=', '&episode')
         epnum = epnum.replace('Episode ', '')
         url = epurl.replace('hhhh', 'http') + url.replace("<>", "?").replace("$", "#").replace("aNd", "&").replace('hhhh', 'http').replace('href="', '')
-        name = "%sx%s - %s - %s" % (snum, epnum, clean_file_name(epname), epdate)
+        name = "%sx%s - %s" % (snum, epnum, clean_file_name(epname))
         if snum == seasonnum:
             addDirPlayable(name,url,3,iconimage, showname)
     setView('episodes', 'episodes-view')
@@ -331,7 +332,8 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
     tv_show_path = create_directory(TV_PATH, name)
     link = open_url(url).strip().replace('\n', '').replace('\t', '').replace('?', '<>').replace('#', '$')
     if 'SHOW EPISODES' in link:
-        all_episodes = re.compile('<div class="number left">(.+?)</div><div class="name left"> (.+?)</div><div class="edate left">(.+?)</div> <div class="link left"><a class="watch_all" href="(.+?)">Watch NOW').findall(link)
+        episodes = regex_from_to(link, 'SHOW EPISODES</a', '<div class="advert')
+        all_episodes = re.compile('<div class="number left">(.+?)</div><div class="name left"> (.+?)</div><div class="edate left">(.+?)</div> <div class="link left"><a class="watch_all" href="(.+?)">Watch NOW').findall(episodes)
         if iconimage == 'missing':
             iconimage = regex_from_to(link, '<div class="cover"><a href="', '"')
         else:
@@ -346,7 +348,7 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
                 snum = regex_from_to(url, 'season=', '&episode')
                 epnum = epnum.replace('Episode ', '')
                 url = epurl.replace('hhhh', 'http') + url.replace("<>", "?").replace("$", "#").replace("aNd", "&").replace('href="', '')
-                display = "%sx%s - %s - %s" % (snum, epnum, clean_file_name(epname), epdate)
+                display = "%sx%s - %s" % (snum, epnum, clean_file_name(epname))
                 if snum == seasonnum:
                    create_strm_file(display, url, "3", season_path, iconimage.replace('hhhh', 'http:'), name)
         if ntf == "true" and ENABLE_SUBS:
@@ -677,6 +679,9 @@ elif mode==5:
 		
 elif mode==6:
         search()
+		
+elif mode == 7:
+        search_show(name)
 		
 elif mode == 11:
         add_favourite(name, url, list, FAV, "Added to Favourites")

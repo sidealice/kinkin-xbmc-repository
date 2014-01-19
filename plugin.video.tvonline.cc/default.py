@@ -17,6 +17,8 @@ import cookielib
 from t0mm0.common.net import Net
 from helpers import clean_file_name
 import random
+from metahandler import metahandlers
+metainfo = metahandlers.MetaData()
 net = Net()
 
 
@@ -25,6 +27,7 @@ TVO_USER = settings.tvo_user()
 TVO_PASSWORD = settings.tvo_pass()
 TVO_EMAIL = settings.tvo_email()
 ENABLE_SUBS = settings.enable_subscriptions()
+ENABLE_META = settings.enable_meta()
 TV_PATH = settings.tv_directory()
 FAV = settings.favourites_file()
 SUB = settings.subscription_file()
@@ -209,7 +212,20 @@ def favourites():
                 title = title.replace('->-', ' & ')
                 url = list1[1]
                 thumb = list1[2]
-                addDir(title, url,3,thumb, list,'sh')
+                if ENABLE_META:
+                    infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+                    if infoLabels['title']=='':
+                        name=title
+                    else:
+                        name=infoLabels['title']
+                    if infoLabels['cover_url']=='':
+                        iconimage=thumb
+                    else:
+                        iconimage=infoLabels['cover_url']
+                else:
+                    infoLabels =None
+                    iconimage=thumb
+                addDir(title, url,3,thumb, list,'sh',infoLabels=infoLabels)
 				
 def subscriptions():
     if os.path.isfile(SUB):
@@ -222,7 +238,20 @@ def subscriptions():
                 title = title.replace('->-', ' & ')
                 url = list1[1]
                 thumb = list1[2]
-                addDir(title, url,3,thumb, list,'sh')
+                if ENABLE_META:
+                    infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+                    if infoLabels['title']=='':
+                        name=title
+                    else:
+                        name=infoLabels['title']
+                    if infoLabels['cover_url']=='':
+                        iconimage=thumb
+                    else:
+                        iconimage=infoLabels['cover_url']
+                else:
+                    infoLabels =None
+                    iconimage=thumb
+                addDir(title, url,3,thumb, list,'sh',infoLabels=infoLabels)
 			
 def search_show(query):
     url = 'http://www.tvonline.cc/searchlist.php'
@@ -234,8 +263,21 @@ def search_show(query):
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         thumb = regex_from_to(a, '<img src="', '" ')
+        if ENABLE_META:
+            infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+            if infoLabels['title']=='':
+                name=title
+            else:
+                name=infoLabels['title']
+            if infoLabels['cover_url']=='':
+                iconimage=thumb
+            else:
+                iconimage=infoLabels['cover_url']
+        else:
+            infoLabels =None
+            iconimage=thumb
         list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
-        addDir(title, url,3,thumb, list_data,'sh')
+        addDir(title, url,3,iconimage, list_data,'sh',infoLabels=infoLabels)
 		
 def watched_list(url):
     net.set_cookies(cookie_jar)
@@ -266,8 +308,21 @@ def shows(url):
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         thumb = regex_from_to(a, '<img src="', '" ')
-        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
-        addDir(str(title), str(url),3,thumb, list_data,'sh')
+        if ENABLE_META:
+            infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+            if infoLabels['title']=='':
+                name=title
+            else:
+                name=infoLabels['title']
+            if infoLabels['cover_url']=='':
+                iconimage=thumb
+            else:
+                iconimage=infoLabels['cover_url']
+        else:
+            infoLabels =None
+            iconimage=thumb
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, iconimage)
+        addDir(str(title), str(url),3,iconimage, list_data,'sh',infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
 	
 def grouped_shows(header):
@@ -288,8 +343,21 @@ def grouped_shows(header):
                 thumb = "http://pic.newtvshows.org/" + title.replace(' ', '.') + ".jpg"
         else:
             thumb = regex_from_to(a, '<img src="', '" ')
-        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
-        addDir(title, url,3,thumb, list_data,'sh')
+        if ENABLE_META:
+            infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+            if infoLabels['title']=='':
+                name=title
+            else:
+                name=infoLabels['title']
+            if infoLabels['cover_url']=='':
+                iconimage=thumb
+            else:
+                iconimage=infoLabels['cover_url']
+        else:
+            infoLabels =None
+            iconimage=thumb
+        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, iconimage)
+        addDir(title, url,3,iconimage, list_data,'sh',infoLabels=infoLabels)
         
     setView('episodes', 'episodes-view')
 		
@@ -300,19 +368,58 @@ def tv_show(name, url, iconimage):
     seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
     for s in seasonlist:
         sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
+        if sname.startswith('Season 0'):
+            sn = sname.replace('Season 0', '')
+        else:
+            sn = sname.replace('Season ', '')
         eplist = regex_get_all(str(s), '<li>', '</li>')
-        addDir(sname, 'url',4,str(iconimage), eplist,name)
+        if ENABLE_META:
+            infoLabels=get_meta(name,'tvshow',year=None,season=sn,episode=None)
+            if infoLabels['title']=='':
+                name=name
+            else:
+                name=infoLabels['title']
+            if infoLabels['cover_url']=='':
+                iconimage=iconimage
+            else:
+                iconimage=infoLabels['cover_url']
+        else:
+            infoLabels =None
+            iconimage=iconimage
+        addDir(sname, 'url',4,iconimage, eplist,name,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
     episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a>').findall(list)
     for epnum, url, epname in episodes:
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')
+        se = epnum.split('-')
+        sn = se[0].replace('S','')
+        if se[1].startswith('E0'):
+            en = se[1].replace('E0', '')
+        else:
+            en = se[1].replace('E', '')
         url = 'http://www.tvonline.cc' + url.replace("<>", "'")
         name = "%s - %s" % (epnum, clean_file_name(epname))
-        addDirPlayable(name,url,5,iconimage, showname)
+        if ENABLE_META:
+            infoLabels=get_meta(showname,'episode',year=None,season=sn,episode=en)
+            if infoLabels['title']=='':
+                name = name
+            else:
+                name = "%s. %s" % (en, infoLabels['title'])
+            if infoLabels['cover_url']=='':
+                iconimage=iconimage
+            else:
+                iconimage=infoLabels['cover_url']
+        else:
+            infoLabels =None
+            iconimage=iconimage
+        addDirPlayable(name,url,5,iconimage, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
-    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+    if ENABLE_META:
+        xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_EPISODE)
+    else:
+        xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def play(name, url, iconimage, showname):
     dp = xbmcgui.DialogProgress()
@@ -616,6 +723,16 @@ def wait_dl_only(time_to_wait, title):
         print 'Done waiting'
         return True
 		
+def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episode_title=None):
+    if 'tvshow' in types:
+        meta = metainfo.get_meta('tvshow',name,'','','')
+    if 'episode' in types:
+        meta = metainfo.get_episode_meta(name, '', season, episode)
+    infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered']}
+        
+    return infoLabels 
+	
+		
 def notification(title, message, ms, nart):
     xbmc.executebuiltin("XBMC.notification(" + title + "," + message + "," + ms + "," + nart + ")")
 	
@@ -643,7 +760,7 @@ def get_params():
         return param
 
 
-def addDir(name,url,mode,iconimage,list,description):
+def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         suffix = ""
         suffix2 = ""
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&description="+str(description)
@@ -665,19 +782,25 @@ def addDir(name,url,mode,iconimage,list,description):
                 suffix2 = ' [COLOR cyan][s][/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=15&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
         liz=xbmcgui.ListItem(name + suffix + suffix2, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
-        liz.setProperty('fanart_image', fanart)
+        liz.setInfo( type="Video", infoLabels=infoLabels)
+        try:
+            liz.setProperty( "fanart_image", infoLabels['fanart'] )
+        except:
+            liz.setProperty('fanart_image', fanart )
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
-def addDirPlayable(name,url,mode,iconimage,showname):
+def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
         ok=True
         contextMenuItems = []
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": name } )
-        liz.setProperty('fanart_image', fanart)
+        liz.setInfo( type="Video", infoLabels=infoLabels)
+        try:
+            liz.setProperty( "fanart_image", infoLabels['fanart'] )
+        except:
+            liz.setProperty('fanart_image', fanart )
         contextMenuItems.append(("[COLOR red]Report an error[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&showname=%s)'%(sys.argv[0],name, url, showname)))
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
@@ -748,6 +871,9 @@ elif mode==6:
 		
 elif mode==7:
         grouped_shows(url)
+		
+elif mode == 17:
+        search_show(name)
 		
 elif mode == 8:
         a_to_z(url)

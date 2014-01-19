@@ -64,11 +64,17 @@ def highlights_country(url):
         addDir(t, url,1,iconimage, '','')
 
 def highlights_list(url):
+    hidescores = False
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Hide Results?", '', 'Do you want hide the scores?'):
+       hidescores = True
     link= open_url(url).rstrip()
     list = regex_from_to(link, '<table cellpadding=0 cellspacing=3 width=4', '</table>')
     all_hl = regex_get_all(list, '<tr valign=', '</tr>')
     for hl in all_hl:
         title = regex_from_to(hl, "><b>", '</b> <span').replace('<b>', '').replace('</b>', '')
+        if hidescores:
+            title = title.replace('0', '?').replace('1', '?').replace('2', '?').replace('3', '?').replace('4', '?').replace('5', '?').replace('6', '?').replace('7', '?').replace('8', '?').replace('9', '?')
         country = regex_from_to(hl, 'alt="', '"')
         matchdate = regex_from_to(hl, '11px;">', '</td>')
         url = base_url + regex_from_to(hl, "<a href='", "' class")
@@ -217,6 +223,10 @@ def club_menu(name, url, list):
         addDir(t,url,22,iconimage,squadurl,"clubs")
 	
 def club_results(name, url, iconimage):
+    hidescores = False
+    dialog = xbmcgui.Dialog()
+    if dialog.yesno("Hide Results?", '', 'Do you want hide the scores?'):
+       hidescores = True
     try:
         splitname = name.split(']')
         teamname = splitname[5].replace('[/COLOR','')
@@ -231,6 +241,8 @@ def club_results(name, url, iconimage):
         else:
             mdetail = re.compile('<div class="scrow(.+?)"><div class="sc(.+?)"></div><div class="sccompsm"><a href="(.+?)">(.+?)</a></div><div class="schomeco">(.+?)</div><div class="scpen blank"></div><div class="scscoreco (.+?)" onClick="lightbox(.+?)" >(.+?)</div><div class="scpen blank"></div><div class="scawayco">(.+?)</div><div class="scvideo"><a href="(.+?)">(.+?)</a>').findall(m)
         for day,datestr,lgeurl,lgename,home,dum2,dum1,score,away,url,hltag in mdetail:
+            if hidescores:
+                score = score.replace('0', '?').replace('1', '?').replace('2', '?').replace('3', '?').replace('4', '?').replace('5', '?').replace('6', '?').replace('7', '?').replace('8', '?').replace('9', '?')
             datestr = datestr.replace('time', '')
             url = base_url + url
             text = "%s - [COLOR cyan]%s [COLOR lime]%s[/COLOR] %s[/COLOR] - [COLOR gold]%s[/COLOR]" % (datestr, home, score, away, hltag)
@@ -239,6 +251,8 @@ def club_results(name, url, iconimage):
     for m in match:
         mdetail = re.compile('title="(.+?)">(.+?)</div><div class="sccompsm"><a href="(.+?)">(.+?)</a></div><div class="schomeco">(.+?)</div><div class="scpen blank"></div><div class="(.+?)" onClick="lightbox(.+?)" >(.+?)</div><div class="scpen blank"></div><div class="scawayco">(.+?)</div><div class="scnovideo (.+?)">(.+?);</div>').findall(m)
         for day,datestr,lgeurl,lgename,home,dum1,dum2,score,away,url,hltag in mdetail:
+            if hidescores:
+                score = score.replace('0', '?').replace('1', '?').replace('2', '?').replace('3', '?').replace('4', '?').replace('5', '?').replace('6', '?').replace('7', '?').replace('8', '?').replace('9', '?')
             url = base_url + url
             text = "%s - [COLOR cyan]%s %s %s[/COLOR]" % (datestr, home, score, away)
             addDir(text,url,999,iconimage,text,"")

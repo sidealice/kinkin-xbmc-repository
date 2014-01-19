@@ -22,6 +22,12 @@ def enable_subscriptions():
         return True
     else:
         return False
+		
+def enable_meta():
+    if ADDON.getSetting('enable_meta') == "true":
+        return True
+    else:
+        return False
 	
 def tv_directory():
     return ADDON.getSetting('tv_directory')

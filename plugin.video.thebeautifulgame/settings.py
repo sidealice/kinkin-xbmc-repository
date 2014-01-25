@@ -14,6 +14,12 @@ def favourites_file():
 def cookie_jar():
     return create_file(DATA_PATH, "cookiejar.lwp")
 	
+def force_sd():
+    if ADDON.getSetting('force_sd') == "true":
+        return True
+    else:
+        return False
+	
 def create_directory(dir_path, dir_name=None):
     if dir_name:
         dir_path = os.path.join(dir_path, dir_name)

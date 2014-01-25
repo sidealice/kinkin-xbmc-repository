@@ -1,8 +1,4 @@
 <strings>
 	<!-- Settings -->
-    <string id="10002">TVonline User Name</string>
-    <string id="10003">TVonline Password</string>
-    <string id="10004">TVonline Email</string>
-    <string id="10005">Enable Subscriptions</string>
-    <string id="10006">TV Show Directory</string>
+    <string id="10002">Prefer SD Feeds</string>
 </strings>

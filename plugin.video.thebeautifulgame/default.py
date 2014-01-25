@@ -21,6 +21,7 @@ from t0mm0.common.net import Net
 
 ADDON = settings.addon()
 FAV = settings.favourites_file()
+FORCE_SD = settings.force_sd()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.thebeautifulgame', 'art', 'fanart.jpg'))
@@ -98,7 +99,8 @@ def ninety_minutes_menu():
     addDir("90 Minutes - All Teams", 'http://livefootballvideo.com/teams',90,iconart, '','')
 
 def ninety_minutes_submenu(name, url):
-    link = open_url(url)
+    link = open_url(url).replace('\n','')
+    print link
     if name == "90 Minutes - Top Competitions":#url, title
         data = regex_from_to(link, '>Competitions<', 'title="All')
         match = re.compile('<a href="(.+?)">(.+?)</a>').findall(data)
@@ -107,35 +109,44 @@ def ninety_minutes_submenu(name, url):
             iconimage = 'http://livefootballvideo.com/images/leagues/big/x%s.png.pagespeed.ic.45fxD8-tJP.png' % urlname
             addDir(title,url,92,iconimage,"","")
     else:
-        match = re.compile('<li><img src="(.+?)"/> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
-        for iconimage,url,d1,title in match:
+        #match = re.compile('<li><img src="(.+?)"/> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
+        match = re.compile('<li><img style="display:none;visibility:hidden;" data-cfsrc="(.+?)"/><noscript><img src="(.+?)"/></noscript> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
+        for d2,iconimage,url,d1,title in match:
             iconimage = iconimage.replace('small', 'big')
             url = 'http://livefootballvideo.com' + url
             addDir(title,url,92,iconimage,"","")		
 
 def ninety_minutes_teams(name,url,iconimage):
-    link = open_url(url)
-    match = re.compile('<li><img src="(.+?)"/> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
-    for iconimage,url,d1,title in match:
+    link = open_url(url).replace('\n','')
+    #match = re.compile('<li><img src="(.+?)"/> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
+    match = re.compile('<li><img style="display:none;visibility:hidden;" data-cfsrc="(.+?)"/><noscript><img src="(.+?)"/></noscript> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
+    for d2,iconimage,url,d1,title in match:
         urlname = url.replace('/teams/', '')
         iconimage = 'http://livefootballvideo.com/images/teams/big/x%s.png.pagespeed.ic.45fxD8-tJP.png' % urlname
         url = 'http://livefootballvideo.com' + url
         addDir(title,url,92,iconimage,"","clubs")
 	
 def ninety_minutes_latest(name,url,iconimage):
-    link = open_url(url)
-    match = re.compile('rel="bookmark" title="(.+?)"><img src="(.+?)" alt="(.+?)"/></a></div><div class="postcontent"><h2><a href="(.+?)" title="(.+?)">(.+?)</a></h2><p class="postmetadata longdate" rel="(.+?)">(.+?)</p></div></li>').findall(link)
-    for title,iconimage,t2,url,t3,t4,datestamp,datestr in match:
+    link = open_url(url).replace('\n','')
+    all_match = regex_get_all(link, 'rel="bookmark', '</p></div></li>')
+    for m in all_match:
+        title = regex_from_to(m, 'title="', '"')
+        datestr = regex_from_to(m, 'longdate" rel="', '</p>')
+        datestr = datestr[12:]
+        url = regex_from_to(m, '<a href="', '"')
+        iconimage = regex_from_to(m, '<img src="', '"')
         title = "%s - %s" % (datestr,title)
         addDir(title,url,91,iconimage,"","clubs")
-    if "class='nextpostslink" in link:
-        all_pages = regex_from_to(link, "<span class='pages", "class='nextpostslink")
-        pages = re.compile("<a href='(.+?)' class='page larger'>(.+?)</a>").findall(all_pages)
+    if 'class="nextpostslink' in link:
+        all_pages = regex_from_to(link, "<span class='pages", 'class="nextpostslink')
+        pages = re.compile('href="(.+?)">(.+?)</a>').findall(all_pages)
         for url, pg in pages:
-            addDir('[COLOR cyan]' + '>> Page ' + pg + '[/COLOR]',url,92,"","","")
+            if not 'laquo' in pg:
+                addDir('[COLOR cyan]' + '>> Page ' + pg + '[/COLOR]',url,92,"","","")
 		
 def ninety_minutes_source(name,url,iconimage):
-    link = open_url(url).replace("'", '"')
+    link = open_url(url).replace("'", '"').replace('\n','')
+    print link
     match = re.compile('<h3 class="heading-more open"><span>(.+?)</span></h3>(.+?)</p></div></div>').findall(link)
 
     for title, urls in match:
@@ -389,16 +400,28 @@ def resolve_url(url):
         net.set_cookies(cookie_jar)
         link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
         net.save_cookies(cookie_jar)
-        if 'url720":"' in link:
-            vidlinks = re.compile('url720":"(.+?)"').findall(link)
-        elif 'url480":"' in link:
-            vidlinks = re.compile('url480":"(.+?)"').findall(link)
-        elif 'url360":"' in link:
-            vidlinks = re.compile('url360":"(.+?)"').findall(link)
+        if FORCE_SD:
+            if 'url480":"' in link:
+                vidlinks = re.compile('url480":"(.+?)"').findall(link)
+            elif 'url360":"' in link:
+                vidlinks = re.compile('url360":"(.+?)"').findall(link)
+            elif 'url240":"' in link:
+                vidlinks = re.compile('url240":"(.+?)"').findall(link)
+            else:
+                vidlinks = re.compile('url720":"(.+?)"').findall(link)
+            for playlink in vidlinks:
+                playlink = playlink.replace('\/', '/')
         else:
-            vidlinks = re.compile('url240":"(.+?)"').findall(link)
-        for playlink in vidlinks:
-            playlink = playlink.replace('\/', '/')
+            if 'url720":"' in link:
+                vidlinks = re.compile('url720":"(.+?)"').findall(link)
+            elif 'url480":"' in link:
+                vidlinks = re.compile('url480":"(.+?)"').findall(link)
+            elif 'url360":"' in link:
+                vidlinks = re.compile('url360":"(.+?)"').findall(link)
+            else:
+                vidlinks = re.compile('url240":"(.+?)"').findall(link)
+            for playlink in vidlinks:
+                playlink = playlink.replace('\/', '/')
 			
     #VIDEA.HU
     if 'videa.hu' in url:#http://videa.hu/player?v=a6eZxnrQf9JoHi9o
@@ -827,12 +850,9 @@ def addDir(name,url,mode,iconimage,list,description):
 def addDirPlayable(name,url,mode,iconimage,showname):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
         ok=True
-        contextMenuItems = []
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)
-        contextMenuItems.append(("[COLOR red]Report an error[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&showname=%s)'%(sys.argv[0],name, url, showname)))
-        liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         #xbmc.executebuiltin("Container.SetViewMode(51)")
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok

@@ -364,7 +364,7 @@ def grouped_shows(header):
 def tv_show(name, url, iconimage):
     episodes = []
     net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    link = net.http_GET(url).content.encode("utf-8").rstrip().replace('&', 'and')
     seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
     for s in seasonlist:
         sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
@@ -395,18 +395,23 @@ def tv_show_episodes(name, list, iconimage, showname):
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')
         se = epnum.split('-')
         sn = se[0].replace('S','')
+        if len(sn) == 1:
+            snum = "%s%s" % ('S0', sn)
+        else:
+            snum = "%s%s" % ('S', sn)
+        seasonepi = "%s%s" % (snum, se[1])
         if se[1].startswith('E0'):
             en = se[1].replace('E0', '')
         else:
             en = se[1].replace('E', '')
         url = 'http://www.tvonline.cc' + url.replace("<>", "'")
-        name = "%s - %s" % (epnum, clean_file_name(epname))
+        name = "%s - %s" % (seasonepi, clean_file_name(epname))
         if ENABLE_META:
             infoLabels=get_meta(showname,'episode',year=None,season=sn,episode=en)
             if infoLabels['title']=='':
                 name = name
             else:
-                name = "%s. %s" % (en, infoLabels['title'])
+                name = "%s %s" % (seasonepi, infoLabels['title'])
             if infoLabels['cover_url']=='':
                 iconimage=iconimage
             else:
@@ -767,7 +772,7 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         ok=True
         contextMenuItems = []
         if name == "My Subscriptions":
-            contextMenuItems.append(("[COLOR cyan]Refresh Subscriptions[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=17&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
+            contextMenuItems.append(("[COLOR cyan]Refresh Subscriptions[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=18&list=%s)'%(sys.argv[0], name, url, str(list).replace('http:','hhhh'))))
         if description == "sh":
             if find_list(list, FAV) < 0:
                 suffix = ""
@@ -902,7 +907,7 @@ elif mode == 15:
 elif mode == 16:
         subscriptions()
 		
-elif mode == 17:
+elif mode == 18:
         get_subscriptions()
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

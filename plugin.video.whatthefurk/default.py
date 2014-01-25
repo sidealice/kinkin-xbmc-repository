@@ -643,7 +643,7 @@ def get_subscriptions():
                     create_tv_show_strm_files(tv_show_name, tv_show_imdb, tv_show_mode, TV_SHOWS_PATH)
                 else:
                     mode = data[1]
-                    items = get_menu_items(name, mode, "", "")
+                    items = get_menu_items(name, mode, "1", "")
                     
                     for (url, li, isFolder) in items:
                         paramstring = url.replace(sys.argv[0], '')
@@ -652,7 +652,10 @@ def get_subscriptions():
                         movie_data = urllib.unquote_plus(params["name"])
                         movie_imdb = urllib.unquote_plus(params["imdb_id"])
                         movie_mode = "strm movie dialog"
-                        create_strm_file(movie_name, movie_data, movie_imdb, movie_mode, MOVIES_PATH)
+                        print movie_name
+                        if 'Next Page' not in movie_name:
+                            create_strm_file(movie_name, movie_data, movie_imdb, movie_mode, MOVIES_PATH)
+        time.sleep(2)
         xbmc.executebuiltin('UpdateLibrary(video)')
                     
     except:
@@ -1944,7 +1947,7 @@ def subscription_menu():
         if item_data.startswith('tt'):
             items.append(create_tv_show_tuple(item_name, item_data,'',''))
         else:
-            items.append(create_movie_directory_tuple(item_name, item_data, ''))
+            items.append(create_movie_directory_tuple(item_name, item_data, '1'))
 
     return items
 
@@ -2834,6 +2837,7 @@ def strm_episode_dialog(data, imdb_id, strm=False):##################### SEARCH 
         menu_texts.append("...Search Icefilms")
         menu_texts.append("...Search MovieStorm")
         menu_texts.append("...Search TVonline")
+        menu_texts.append("...Search TV4ME")
         menu_texts.append("...Search latest torrents")
 
         menu_id = dialog.select('Select Archive', menu_texts)
@@ -2845,27 +2849,32 @@ def strm_episode_dialog(data, imdb_id, strm=False):##################### SEARCH 
             easyname=customstring
             tv_show_name=customstring
             iname=customstring
-        if(menu_id == len(menu_texts)-5):
+        if(menu_id == len(menu_texts)-6):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
             else:
                 dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
-        elif(menu_id == len(menu_texts)-4):
+        elif(menu_id == len(menu_texts)-5):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
                 iurl='http%3a%2f%2fwww.icefilms.info%2f'
                 xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
             else:
                 dialog.ok("Addon not installed", "", "Install the Icefilms addon to use this function")
-        elif(menu_id == len(menu_texts)-3):
+        elif(menu_id == len(menu_texts)-4):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7&url=%s&name=%s)' %('plugin://plugin.video.moviestorm/',"url", tv_show_name)))
             else:
                 dialog.ok("Addon not installed", "", "Install the MovieStorm addon to use this function")
-        elif(menu_id == len(menu_texts)-2):
+        elif(menu_id == len(menu_texts)-3):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tvonline.cc'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=17&url=%s&name=%s)' %('plugin://plugin.video.tvonline.cc/',"url", tv_show_name)))
             else:
                 dialog.ok("Addon not installed", "", "Install the TVonline addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tv4me'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=18&url=%s&name=%s)' %('plugin://plugin.video.tv4me/',"url", tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the TV4ME addon to use this function")
         elif(menu_id == len(menu_texts)-1):
             download_kat(tv_show_name, season_episode)
         else:
@@ -4754,6 +4763,9 @@ def create_episode_list_item(name, data, imdb_id, poster, title, year, overview,
     if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tvonline.cc'):
         tv_show_name = data_split[0].replace(" Mini-Series","")       
         contextMenuItems.append(('@Search TVonline', 'XBMC.Container.Update(%s?mode=17&name=%s&url=%s)' %('plugin://plugin.video.tvonline.cc/',tv_show_name, "url")))
+    if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tv4me'):
+        tv_show_name = data_split[0].replace(" Mini-Series","")       
+        contextMenuItems.append(('@Search TV4ME', 'XBMC.Container.Update(%s?mode=18&name=%s&url=%s)' %('plugin://plugin.video.tv4me/',tv_show_name, "url")))
 
     name_kat = tv_show_name.replace("The ","")
     data_kat = season_episode

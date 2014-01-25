@@ -266,7 +266,7 @@ def tv_show_episodes(name, list, iconimage, showname):
             if infoLabels['title']=='':
                 name = name
             else:
-                name = "%s. %s" % (en, infoLabels['title'])
+                name = "%s%s %s" % (snum, epnum, infoLabels['title'])
             if infoLabels['cover_url']=='':
                 iconimage=thumb
             else:
@@ -804,6 +804,9 @@ elif mode == 16:
 		
 elif mode == 17:
         get_subscriptions()
+		
+elif mode == 18:
+        search_show(name)
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

@@ -3151,8 +3151,10 @@ def one_click_movie(name, imdb_id, strm=False):
                 count=count+1
 
     if (count == len(files) and len(files)>0) or len(files)==0:
+        menu_texts.append("...Search yify Movies HD")				
         menu_texts.append("...Search 1Channel")
         menu_texts.append("...Search Icefilms")
+        menu_texts.append("...Search MovieStorm")
         menu_texts.append("...Search latest torrents")
 
         menu_id = dialog.select('No file found....try another addon?', menu_texts)
@@ -3162,17 +3164,29 @@ def one_click_movie(name, imdb_id, strm=False):
         if customstring!="abcdef":
             name=customstring
             name2=customstring
-        if(menu_id == len(menu_texts)-3):
+        if(menu_id == len(menu_texts)-5):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.yifymovies.hd'):
+                name2 = name[:len(data)-7].replace("The ","")        
+                xbmc.executebuiltin(('XBMC.Container.Update(%s?action=movies_search&query=%s)' %('plugin://plugin.video.yifymovies.hd/',urllib.quote_plus(name2))))
+            else:
+                dialog.ok("Addon not installed", "", "Install the yify Movies HD addon to use this function")
+        elif(menu_id == len(menu_texts)-4):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=&query=%s)' %('plugin://plugin.video.1channel/',name2)))
             else:
                 dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
-        elif(menu_id == len(menu_texts)-2):
+        elif(menu_id == len(menu_texts)-3):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
                 url='http%3a%2f%2fwww.icefilms.info%2f'
                 xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',url,urllib.quote_plus(name2),"0")))
             else:
                 dialog.ok("Addon not installed", "", "Install the IceFilms addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
+                url='http%3a%2f%2fwww.icefilms.info%2f'
+                xbmc.executebuiltin(('Container.Update(%s?mode=7&url=%s&name=%s)' %('plugin://plugin.video.moviestorm/',"url",name2)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the MovieStorm addon to use this function")
         elif(menu_id == len(menu_texts)-1):
             download_kat(str(data.replace("-"," ").replace(" Documentary","").replace(" TV Movie","").replace(":"," ")), "dummy")
     else:
@@ -3276,6 +3290,9 @@ def one_click_episode(data, imdb_id, strm=False):
     if (count == len(files) and len(files)>0) or len(files)==0:
         menu_texts.append("...Search 1Channel")
         menu_texts.append("...Search Icefilms")
+        menu_texts.append("...Search MovieStorm")
+        menu_texts.append("...Search TVonline")
+        menu_texts.append("...Search TV4ME")
         menu_texts.append("...Search latest torrents")
 
         menu_id = dialog.select('No file found....try another addon?', menu_texts)
@@ -3287,17 +3304,32 @@ def one_click_episode(data, imdb_id, strm=False):
             easyname=customstring
             tv_show_name=customstring
             iname=customstring
-        if(menu_id == len(menu_texts)-3):
+        if(menu_id == len(menu_texts)-6):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.1channel'):
                 xbmc.executebuiltin(('Container.Update(%s?mode=7000&section=tv&query=%s)' %('plugin://plugin.video.1channel/',tv_show_name)))
             else:
                 dialog.ok("Addon not installed", "", "Install the 1Channel addon to use this function")
-        elif(menu_id == len(menu_texts)-2):
+        elif(menu_id == len(menu_texts)-5):
             if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.icefilms'):
                 iurl='http%3a%2f%2fwww.icefilms.info%2f'
                 xbmc.executebuiltin(('Container.Update(%s?mode=555&url=%s&search=%s&nextPage=%s)' %('plugin://plugin.video.icefilms/',iurl,urllib.quote(iname),"0")))
             else:
                 dialog.ok("Addon not installed", "", "Install the Icefilms addon to use this function")
+        elif(menu_id == len(menu_texts)-4):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.moviestorm'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=7&url=%s&name=%s)' %('plugin://plugin.video.moviestorm/',"url", tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the MovieStorm addon to use this function")
+        elif(menu_id == len(menu_texts)-3):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tvonline.cc'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=17&url=%s&name=%s)' %('plugin://plugin.video.tvonline.cc/',"url", tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the TVonline addon to use this function")
+        elif(menu_id == len(menu_texts)-2):
+            if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.tv4me'):
+                xbmc.executebuiltin(('Container.Update(%s?mode=18&url=%s&name=%s)' %('plugin://plugin.video.tv4me/',"url", tv_show_name)))
+            else:
+                dialog.ok("Addon not installed", "", "Install the TV4ME addon to use this function")
         elif(menu_id == len(menu_texts)-1):
             download_kat(tv_show_name, season_episode)
     else:

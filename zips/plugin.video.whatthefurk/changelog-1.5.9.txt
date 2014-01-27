@@ -25,7 +25,7 @@ Added bitrate to results
 New art by Blazetamer!
 Fixed watchlist, now shows full list
 Fixed TMDB api, movie meta now works
-Fixed error with preferred setting when playing from library
+Fixed error with preferred option when playing through library
 
 1.5.3
 Added new movie menu...."Movies by MPAA Rating"

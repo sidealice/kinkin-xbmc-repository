@@ -306,7 +306,7 @@ def shows(url):
     all_shows = regex_get_all(all_shows, '<li>', '</li>')
     for a in all_shows:
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
-        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
+        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','').replace('and','&')
         thumb = regex_from_to(a, '<img src="', '" ')
         if ENABLE_META:
             infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
@@ -334,7 +334,7 @@ def grouped_shows(header):
     all_shows = regex_from_to(link,str(header), '</ul>')
     all_shows = regex_get_all(all_shows, '<li>', '</li>')
     for a in all_shows:
-        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
+        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title').replace('and','&')
         title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
         if header == "Hit TV Shows":
             try:
@@ -357,7 +357,7 @@ def grouped_shows(header):
             infoLabels =None
             iconimage=thumb
         list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, iconimage)
-        addDir(title, url,3,iconimage, list_data,'sh',infoLabels=infoLabels)
+        addDir(str(title), url,3,iconimage, list_data,'sh',infoLabels=infoLabels)
         
     setView('episodes', 'episodes-view')
 		
@@ -386,10 +386,12 @@ def tv_show(name, url, iconimage):
         else:
             infoLabels =None
             iconimage=iconimage
-        addDir(sname, 'url',4,iconimage, eplist,name,infoLabels=infoLabels)
+        showname = name.replace('&','and')
+        addDir(sname, 'url',4,iconimage, eplist,str(showname),infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
+    showname = showname.replace('and','&')
     episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a>').findall(list)
     for epnum, url, epname in episodes:
         epnum = epnum.replace(', ', '-').replace('Ep', 'E')

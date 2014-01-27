@@ -261,7 +261,7 @@ def search_show(query):
     all_shows = regex_get_all(all_shows, '<li>', '</li>')
     for a in all_shows:
         url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
-        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
+        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','').replace('and','&')
         thumb = regex_from_to(a, '<img src="', '" ')
         if ENABLE_META:
             infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
@@ -364,7 +364,7 @@ def grouped_shows(header):
 def tv_show(name, url, iconimage):
     episodes = []
     net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip().replace('&', 'and')
+    link = net.http_GET(url).content.rstrip().replace('&', 'and').encode("utf-8", 'ignore')
     seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
     for s in seasonlist:
         sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
@@ -421,7 +421,7 @@ def tv_show_episodes(name, list, iconimage, showname):
         else:
             infoLabels =None
             iconimage=iconimage
-        addDirPlayable(name,url,5,iconimage, showname,infoLabels=infoLabels)
+        addDirPlayable(name.replace(u'\u2019',"'"),url,5,iconimage, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
     if ENABLE_META:
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_EPISODE)

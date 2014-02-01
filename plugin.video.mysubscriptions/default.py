@@ -6,7 +6,7 @@ from datetime import date
 from meta import TheTVDBInfo
 USERDATA = xbmc.translatePath(os.path.join('special://home/userdata', 'addon_data'))
 check_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
-dummy_file = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'dummyclip.mp4')
+dummy_file = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'clip.mp4')
 fanart = ''
 ADDON = settings.addon()
 SUB_FILE = settings.subscription_file()
@@ -122,7 +122,7 @@ def stream_episode(name, data):
                 subshowpath = os.listdir(show_path)
                 for s in subshowpath:
                     season_path = os.path.join(show_path, s)
-                    if s == showname:
+                    if s.lower() == showname.lower():
                         season_path = os.path.join(show_path, s)
                         seasonpath = os.listdir(season_path)
                         for se in seasonpath:

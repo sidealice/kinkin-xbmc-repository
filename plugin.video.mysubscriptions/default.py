@@ -6,7 +6,7 @@ from datetime import date
 from meta import TheTVDBInfo
 USERDATA = xbmc.translatePath(os.path.join('special://home/userdata', 'addon_data'))
 check_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
-dummy_file = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'clip.mp4')
+dummy_file = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'dummyclip.mp4')
 fanart = ''
 ADDON = settings.addon()
 SUB_FILE = settings.subscription_file()

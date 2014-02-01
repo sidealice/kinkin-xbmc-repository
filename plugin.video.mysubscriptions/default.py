@@ -32,7 +32,11 @@ def find_shows(name,url):
                 subshowpath = os.listdir(show_path)
                 for s in subshowpath:
                     season_path = os.path.join(show_path, s)
-                    text = s
+                    text = s.rstrip()
+                    if text.find('_') >-1:
+                        text = text[:text.find('_')].rstrip()
+                    if text.find('(') >-1:
+                        text = text[:text.find('(')].rstrip()
                     add_to_list(text, SUB_FILE)
     subscription_imdb()
     get_subscriptions()
@@ -122,7 +126,7 @@ def stream_episode(name, data):
                 subshowpath = os.listdir(show_path)
                 for s in subshowpath:
                     season_path = os.path.join(show_path, s)
-                    if s.lower() == showname.lower():
+                    if showname.lower() in s.lower():
                         season_path = os.path.join(show_path, s)
                         seasonpath = os.listdir(season_path)
                         for se in seasonpath:
@@ -131,7 +135,8 @@ def stream_episode(name, data):
                                 episode_path = os.path.join(season_path, se)
                                 all_episodes = os.listdir(episode_path)
                                 for episode in all_episodes:
-                                    epnum1 = episode.replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '')
+                                    epnum1 = episode.replace(s, '').replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '').replace('_', '').lstrip()
+                                    print addons, epnum1
                                     if ' ' in epnum1:
                                         epnum1 = epnum1.split(' ')[0]
                                     if 'E' in epnum1:

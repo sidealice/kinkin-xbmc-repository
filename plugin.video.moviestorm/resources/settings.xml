@@ -5,7 +5,7 @@
         <setting id="ms_email" type="text" label="10004" default=""/>
         <setting id="enable_subscriptions" type="bool" label="10005" default="false" />
         <setting id="tv_directory" type="folder" label="10006" default="set"/>
-        <setting id="movie_directory" type="folder" label="10007" default="set"/>
+        <setting id="movie_directory" type="folder" label="10007" default="special://userdata/addon_data/plugin.video.moviestorm/tvshows"/>
         <setting id="service_time" type="text" label="Service Time" default="2000-01-01 00:00:00" visible="false"/>
 
 	</category>

@@ -1,0 +1,45 @@
+[COLOR cyan][B]What does this addon do?[/B][/COLOR]
+My Subscriptions allows you subscribe to TV Shows in multiple addons. When playing an
+episode from the library you then get the choice of addon to play from.
+All addons that have subscription functionality are supported as long as you set them up
+as described in step one/two below.
+
+
+INSTRUCTIONS
+STEP ONE
+Make sure each addons TV Directory is set to its userdata folder and contains "show" in 
+the folder name. Most addons create a folder for you automatically.
+i.e. GOtv creates the folder .../userdata/addon_data/plugin.video.GOtv/TVShows
+
+Directory search is NOT CASE SENSITIVE, so you can call it "Show", ShOw", "shOW". It just has
+to contain that word.
+
+STEP TWO
+Delete existing TV Series directories from your current XBMC library source.
+Go to Videos/Files and use the context menu to remove your TV Series source
+
+STEP THREE
+My Subscriptions will create this directory: 
+.../userdata/addon_data/plugin.video.mysubscriptions/TV_SUBSCRIPTIONS
+
+You can change this in settings, but you need to set content (TV Shows) on whatever folder you choose.
+
+[COLOR cyan][B]How it works[/B][/COLOR]
+Subscribe to your favourite series in whatever addons you prefer.
+The addons will still run their own subscription service, but they will update directories
+that aren't linked to your XBMC Library.
+
+[B]My Subscriptions[/B] will run it's own subscription service.
+This service will scan your userdata/TV Show folder for show names, create new strm files
+and update your library
+
+When playing an episode from the library the addon will scan other addons' TV Show directories
+for the same series/episode stream. 
+If only one addon strm is found the episode will autoplay.
+If more than one addon has the episode you will be able to choose which addon to play
+
+Note that it might take a second more to start playing your selected stream.
+
+
+[COLOR gold]This addons is beta. Post any issues at www.xbmchub.com/forums/kinkins-repo/[/COLOR]
+

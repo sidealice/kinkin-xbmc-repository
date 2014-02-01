@@ -1,0 +1,8 @@
+<settings>
+	<category label="Settings">
+        <setting id="tv_directory" type="folder" label="10001" default="special://userdata/addon_data/plugin.video.mysubscriptions/TV_SUBSCRIPTIONS"/>
+        <setting id="subscription_update" type="bool" label="10002" default="true"/>
+        <setting id="subscription_timer" type="enum" values="2h|5h|10h|15h|24h" label="10003" default="2"/>
+        <setting id="service_time" type="text" label="Service Time" default="2000-01-01 00:00:00" visible="false"/>
+	</category>
+</settings>

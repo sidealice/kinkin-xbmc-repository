@@ -30,7 +30,10 @@ def enable_meta():
         return False
 	
 def tv_directory():
-    return ADDON.getSetting('tv_directory')
+    if ADDON.getSetting('tv_directory').startswith('special'):
+        return create_directory(DATA_PATH, "tvshows")
+    else:
+        return ADDON.getSetting('tv_directory')
 	
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")
@@ -60,4 +63,5 @@ def create_file(dir_path, file_name=None):
     return file_path
 	
 create_directory(DATA_PATH, "")
+
 		

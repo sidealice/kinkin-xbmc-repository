@@ -26,7 +26,10 @@ def enable_subscriptions():
         return False
 	
 def tv_directory():
-    return ADDON.getSetting('tv_directory')
+    if ADDON.getSetting('tv_directory').startswith('special'):
+        return create_directory(DATA_PATH, "tvshows")
+    else:
+        return ADDON.getSetting('tv_directory')
 	
 def movie_directory():
     return ADDON.getSetting('movie_directory')
@@ -61,4 +64,5 @@ def create_file(dir_path, file_name=None):
     return file_path
 	
 create_directory(DATA_PATH, "")
+
 		

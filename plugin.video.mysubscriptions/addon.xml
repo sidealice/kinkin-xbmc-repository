@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.moviestorm"
-       name="MovieStorm"
-       version="1.0.3"
-       provider-name="kinkin, art by umOuch">
+<addon id="plugin.video.mysubscriptions"
+       name="My Subscriptions"
+       version="0.5.0"
+       provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.t0mm0.common" version="1.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
@@ -16,8 +15,9 @@
 	</extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary>Stream movies and TV shows from moviestorm.eu</summary>
-        <description>Stream movies and TV shows from moviestorm.eu</description>
+        <summary>One subscription, multiple addons!</summary>
+        <description>Subscribe to TV Shows from any addon and let My Subscriptions update your library. Playing an episode from the
+		library then give you a choice of addons</description>
     </extension>
 	
 </addon>

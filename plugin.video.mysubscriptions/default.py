@@ -9,6 +9,7 @@ check_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 dummy_file = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'dummyclip.mp4')
 fanart = ''
 ADDON = settings.addon()
+yrlist = os.path.join(ADDON.getAddonInfo('path'),'resources', 'messages', 'years.list')
 SUB_FILE = settings.subscription_file()
 SUB_IMDB_FILE = settings.subs_imdb_file()
 TV_SHOWS_PATH = settings.tv_directory()
@@ -23,21 +24,26 @@ def open_settings():
 
 def find_shows(name,url):
     plugins = os.listdir(USERDATA)
+    y = read_from_file(yrlist)
+    yr_list = y.split('\n')
+    
     for addons in plugins:
         addon_path = os.path.join(USERDATA, addons)
-        subdirpath = os.listdir(addon_path)
-        for s in subdirpath:
-            if 'show' in s.lower():
-                show_path = os.path.join(addon_path, s)
-                subshowpath = os.listdir(show_path)
-                for s in subshowpath:
-                    season_path = os.path.join(show_path, s)
-                    text = s.rstrip()
-                    if text.find('_') >-1:
-                        text = text[:text.find('_')].rstrip()
-                    if text.find('(') >-1:
-                        text = text[:text.find('(')].rstrip()
-                    add_to_list(text, SUB_FILE)
+        if 'plugin.video.' in addon_path:
+            subdirpath = os.listdir(addon_path)
+            for s in subdirpath:
+                if 'show' in s.lower():
+                    show_path = os.path.join(addon_path, s)
+                    subshowpath = os.listdir(show_path)
+                    for s in subshowpath:
+                        season_path = os.path.join(show_path, s)
+                        text = s.replace('_',' ').rstrip()
+                        for yr in yr_list:
+                            if yr in text:
+                                text = text.replace(yr,'').rstrip()
+                        if text.find('(') >-1:
+                            text = text[:text.find('(')].rstrip()
+                        add_to_list(text, SUB_FILE)
     subscription_imdb()
     get_subscriptions()
     time.sleep(1)
@@ -53,7 +59,8 @@ def subscription_imdb():
                 try:
                     imdb_id = get_imdb(show)
                     text = "%s<>%s" % (show, imdb_id)
-                    add_to_list(text, SUB_IMDB_FILE)
+                    if imdb_id != 'notfound':
+                        add_to_list(text, SUB_IMDB_FILE)
                 except:
                     pass
 
@@ -77,8 +84,11 @@ def get_imdb(show):
     params["count"] = "1"
     params["title_type"] = "tv_series,mini_series,tv_special"
     url = "%s%s" % ("http://m.imdb.com/search/title?", urllib.urlencode(params))
-    imdb_id = search_imdb(url)
-    return imdb_id
+    try:
+        imdb_id = search_imdb(url)
+        return imdb_id
+    except:
+        return 'notfound'
 
 def search_imdb(url):
     body = open_url(url)
@@ -118,43 +128,41 @@ def stream_episode(name, data):
     showepisode = splitdata[3]
     plugins = os.listdir(USERDATA)
     for addons in plugins:
-        addon_path = os.path.join(USERDATA, addons)
-        subdirpath = os.listdir(addon_path)
-        for s in subdirpath:
-            if 'show' in s.lower():
-                show_path = os.path.join(addon_path, s)
-                subshowpath = os.listdir(show_path)
-                for s in subshowpath:
-                    season_path = os.path.join(show_path, s)
-                    if showname.lower() in s.lower():
+        if 'plugin.video.' in addons:
+            addon_path = os.path.join(USERDATA, addons)
+            subdirpath = os.listdir(addon_path)
+            for s in subdirpath:
+                if 'show' in s.lower():
+                    show_path = os.path.join(addon_path, s)
+                    subshowpath = os.listdir(show_path)
+                    for s in subshowpath:
                         season_path = os.path.join(show_path, s)
-                        seasonpath = os.listdir(season_path)
-                        for se in seasonpath:
-                            snum = se.replace('Season ', '').replace('season ', '').replace('season 0', '').replace('Season 0', '').replace('S', '').replace('S0', '')
-                            if snum == showseason:
-                                episode_path = os.path.join(season_path, se)
-                                all_episodes = os.listdir(episode_path)
-                                for episode in all_episodes:
-                                    epnum1 = episode.replace(s, '').replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '').replace('_', '').lstrip()
-                                    print addons, epnum1
-                                    if ' ' in epnum1:
-                                        epnum1 = epnum1.split(' ')[0]
-                                    if 'E' in epnum1:
-                                        epnum1 = epnum1.split('E')[1]
-                                    if 'x' in epnum1:
-                                        epnum1 = epnum1.split('x')[1]
-                                    if epnum1.startswith('0'):
-                                        epnum1 = epnum1.replace('0', '')
-                                    if epnum1 == showepisode:
-                                        ep_path = os.path.join(episode_path, episode)
-                                        addon_name = addons.replace('plugin.video.', '').upper()
-                                        s = read_from_file(ep_path)
-                                        ep_list = s.split('\n')
-                                        for ep_url in ep_list:
-                                            if ep_url != '':
-                                                menu_texts.append(addon_name)
-                                                menu_data.append(ep_url)
-                                                menu_path.append(ep_path)
+                        if showname.lower() in s.replace('_', ' ').replace('&', ' ').lower():
+                            season_path = os.path.join(show_path, s)
+                            seasonpath = os.listdir(season_path)
+                            for se in seasonpath:
+                                snum = se.replace('Season ', '').replace('season ', '').replace('season 0', '').replace('Season 0', '').replace('S', '').replace('S0', '')
+                                if snum == showseason:
+                                    episode_path = os.path.join(season_path, se)
+                                    all_episodes = os.listdir(episode_path)
+                                    for episode in all_episodes:
+                                        episode1 = episode.replace('_', ' ').rstrip()
+                                        epnum1 = episode1.replace(s, '').replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '').replace('_', '').lstrip()
+                                        print addons, epnum1
+                                        if ' ' in epnum1:
+                                            epnum1 = epnum1.split(' ')[0]
+                                        if 'E' in epnum1:
+                                            epnum1 = epnum1.split('E')[1]
+                                        if 'x' in epnum1:
+                                            epnum1 = epnum1.split('x')[1]
+                                        if epnum1.startswith('0'):
+                                            epnum1 = epnum1.replace('0', '')
+                                        if epnum1 == showepisode:
+                                            ep_path = os.path.join(episode_path, episode)
+                                            print ep_path
+                                            addon_name = addons.replace('plugin.video.', '').upper()
+                                            menu_texts.append(addon_name)
+                                            menu_path.append(ep_path)
 												
     if len(menu_texts) == 1:
          menu_id = 0	

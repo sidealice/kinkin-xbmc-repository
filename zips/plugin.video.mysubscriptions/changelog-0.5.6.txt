@@ -4,11 +4,15 @@ More fixes to show/episode name for different addons
 0.5.5
 Tweaked showname matching
 
+
 0.5.4
 Fix playback error
 
 0.5.3
 Fix to show name search
+
+0.5.1
+Testing dummy mp4 file
 
 0.5.0
 Initial beta release

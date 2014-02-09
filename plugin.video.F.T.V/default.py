@@ -28,6 +28,7 @@ FILMON_PASSWORD = settings.filmon_pass()
 MY_VIDEOS = settings.my_videos()
 MY_AUDIO = settings.my_audio()
 OTHER_MENU = settings.other_menu()
+HIDDEN_FILE = settings.hidden_file()
 SORT_ALPHA = settings.sort_alpha()
 DOWNLOAD_PATH = settings.download_path()
 cookie_jar = settings.cookie_jar()
@@ -85,6 +86,7 @@ def keep_alive():
     tloop.start()
 	
 def CATEGORIES():
+    hidden_links = read_from_file(HIDDEN_FILE)
     login()
     if MY_VIDEOS:
         addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
@@ -99,15 +101,17 @@ def CATEGORIES():
     url = 'http://www.filmon.com/groups'
     link = net.http_GET(url).content.encode("utf-8").rstrip()
     if "UK LIVE TV" not in link:
-        addDir("UK LIVE TV",'url',123,'http://static.filmon.com/couch/groups/5/big_logo.png', '','')
+        if not "UK LIVE TV" in hidden_links:
+            addDir("UK LIVE TV",'url',123,'http://static.filmon.com/couch/groups/5/big_logo.png', '','')
     all_groups = regex_get_all(link, '<li class="group-item">', '</li>')
     for groups in all_groups:
         group_id = regex_from_to(groups, 'http://static.filmon.com/couch/groups/','/big_logo.png')
         title = regex_from_to(groups, 'title="', '"')
         thumb = 'http://static.filmon.com/couch/groups/%s/big_logo.png'	% group_id
         url = base_url + regex_from_to(groups, '<a href="/', '">')
-        addDir(title,url,123,thumb, '','')
-        setView('episodes', 'episodes-view')
+        if not title in hidden_links:
+            addDir(title,url,123,thumb, '','')
+    setView('episodes', 'episodes-view')
     if FILMON_USER != "" and not FILMON_USER in link:
         notification('Not logged in at Filmon', 'Check settings', '5000', iconart)
     else:
@@ -774,6 +778,7 @@ def find_list(query, search_file):
         return -1
 		
 def add_to_list(list, file):
+    print list
     if find_list(list, file) >= 0:
         return
 
@@ -861,8 +866,10 @@ def addDir(name,url,mode,iconimage,ch_fanart,description):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
         ok=True
         contextMenuItems = []
+        contextMenuItems.append(('Hide Channel Group', 'XBMC.RunPlugin(%s?mode=10&url=%s)'% (sys.argv[0],str(name))))
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
+        liz.addContextMenuItems(contextMenuItems, False)
         liz.setProperty('fanart_image', fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
@@ -942,6 +949,10 @@ elif mode==15:
 		
 elif mode==2:
         other()
+		
+elif mode == 10:
+        print "MODE " + url
+        add_to_list(url, HIDDEN_FILE)
 		
 elif mode==123:
         group_channels(url, name)

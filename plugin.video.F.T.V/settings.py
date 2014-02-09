@@ -19,6 +19,9 @@ def filmon_account():
         return True
     else:
         return False
+		
+def hidden_file():
+    return create_file(DATA_PATH, "hidden_links.list")
 	
 def filmon_user():
     return ADDON.getSetting('filmon_user') 

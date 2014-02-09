@@ -2,7 +2,7 @@
 <addons>
 <addon id="plugin.audio.mp3streams"
        name="MP3 Streams"
-       version="0.8.2"
+       version="0.8.3"
        provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

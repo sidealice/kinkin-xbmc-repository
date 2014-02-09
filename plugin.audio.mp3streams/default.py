@@ -5,6 +5,7 @@ from t0mm0.common.net import Net
 from threading import Thread
 cookie_jar = settings.cookie_jar()
 net = Net()
+import requests
 ADDON = settings.addon()
 ARTIST_ART = settings.artist_icons()
 FAV_ARTIST = settings.favourites_file_artist()
@@ -26,8 +27,9 @@ def open_url(url):
     return link
 	
 def GET_url(url):
-    header_dict = {}
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+    header_dict = {}#audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5
+    header_dict['Accept'] = 'audio/webm,audio/ogg,udio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'
+    header_dict['User-Agent'] = '	AppleWebKit/<WebKit Rev>'
     header_dict['Host'] = 'musicmp3.ru'
     header_dict['Referer'] = 'http://musicmp3.ru/'
     header_dict['Connection'] = 'keep-alive'

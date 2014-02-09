@@ -48,37 +48,37 @@ def get_cookie():
 
 	
 def CATEGORIES():
-    addDir('Artists','http://musicmp3.ru/artists.html',21,iconart,'')
-    addDir('Top Albums','http://musicmp3.ru/genres.html',12,iconart,'')
-    addDir('New Albums','http://musicmp3.ru/new_albums.html',12,iconart,'')
-    addDir('Billboard Charts','url',101,iconart,'')
-    addDir('Search Artists','url',24,iconart,'')
-    addDir('Search Albums','url',24,iconart,'')
-    addDir('Search Songs','url',24,iconart,'')
-    addDir('Favourite Artists','url',63,iconart,'')
-    addDir('Favourite Albums','url',66,iconart,'')
-    addDir('Favourite Songs','url',69,iconart,'')
-    addDirAudio('Instant Mix (Shuffle and play your favourite songs)','url',99,iconart,'','','')
-    addDirAudio('Clear Playlist','url',100,iconart,'','','')
+    addDir('Artists','http://musicmp3.ru/artists.html',21,'','')
+    addDir('Top Albums','http://musicmp3.ru/genres.html',12,'','')
+    addDir('New Albums','http://musicmp3.ru/new_albums.html',12,'','')
+    addDir('Billboard Charts','url',101,'','')
+    addDir('Search Artists','url',24,'','')
+    addDir('Search Albums','url',24,'','')
+    addDir('Search Songs','url',24,'','')
+    addDir('Favourite Artists','url',63,'','')
+    addDir('Favourite Albums','url',66,'','')
+    addDir('Favourite Songs','url',69,'','')
+    addDirAudio('Instant Mix (Shuffle and play your favourite songs)','url',99,'','','','')
+    addDirAudio('Clear Playlist','url',100,'','','','')
 	
 def charts():
-    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,iconart,'')
-    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,iconart,'')
-    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,iconart,'')
-    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,iconart,'')
-    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,iconart,'')
-    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,iconart,'')
-    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,iconart,'')
-    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,iconart,'')
-    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,iconart,'')
-    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,iconart,'')
-    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,iconart,'')
-    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,iconart,'')
-    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,iconart,'')
-    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,iconart,'')
-    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,iconart,'')
-    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,iconart,'')
-    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,iconart,'')
+    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,'','')
+    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,'','')
+    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,'','')
+    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,'','')
+    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,'','')
+    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,'','')
+    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,'','')
+    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,'','')
+    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,'','')
+    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,'','')
+    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,'','')
+    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,'','')
+    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,'','')
+    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,'','')
+    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,'','')
+    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,'','')
+    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,'','')
 	
 def chart_lists(name, url):
     req = urllib2.Request(url)
@@ -339,7 +339,7 @@ def play_album(name, url, iconimage,clear,mix):
             except:
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
-           xbmc.Player(xbmc.PLAYER_CORE_MPLAYER).play(pl)
+           xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)
 			
 			
 def play_song(url,name,songname,artist,album,iconimage,clear):
@@ -361,7 +361,7 @@ def play_song(url,name,songname,artist,album,iconimage,clear):
         except:
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
-        xbmc.Player(xbmc.PLAYER_CORE_MPLAYER).play(pl)	
+        xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)	
 
 def get_artist_icon(name,url):
     data_path = os.path.join(ARTIST_ART, name + '.jpg')
@@ -645,7 +645,7 @@ def addDir(name,url,mode,iconimage,type):
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=65)'%(sys.argv[0], name, str(list))))
-        liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+        liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)
@@ -666,7 +666,7 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album):
         else:
             suffix = ' [COLOR lime]+[/COLOR]'
             contextMenuItems.append(("[COLOR orange]Remove from Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=68)'%(sys.argv[0], name, str(list))))
-        liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+        liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)

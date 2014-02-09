@@ -282,7 +282,6 @@ def find_url(id):
 			
 
 def play_album(name, url, iconimage,clear,mix):
-    handle = str(sys.argv[1])
     browse=False
     playlist=[]
     dialog = xbmcgui.Dialog()
@@ -296,11 +295,10 @@ def play_album(name, url, iconimage,clear,mix):
             trn = track.replace('track','')
             url = find_url(trn) + id
             title = "%s. %s" % (track.replace('track',''), songname.replace('&amp;', '&'))
-            text = "%s - %s - %s" % (artist,songname,album)
             addDirAudio(title,url,10,iconimage,songname,artist,album)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
-            liz.setInfo('Video', infoLabels={'Title':text, 'duration':dur })
-            #liz.setProperty('mimetype', 'audio/mpeg')
+            liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
+            liz.setProperty('mimetype', 'audio/mpeg')
             liz.setProperty("IsPlayable","true")
             liz.setThumbnailImage(iconimage)
             liz.setProperty('fanart_image', fanart)
@@ -318,11 +316,10 @@ def play_album(name, url, iconimage,clear,mix):
             trn = track.replace('track','')
             url = find_url(trn) + id
             title = "%s. %s" % (track.replace('track',''), songname.replace('&amp;', '&'))
-            text = "%s - %s - %s" % (artist,songname,album)
             addDirAudio(title,url,10,iconimage,songname,artist,album)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
-            liz.setInfo('Video', infoLabels={'Title':text, 'duration':dur })
-            #liz.setProperty('mimetype', 'audio/mpeg')
+            liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
+            liz.setProperty('mimetype', 'audio/mpeg')
             liz.setProperty("IsPlayable","true")
             liz.setThumbnailImage(iconimage)
             liz.setProperty('fanart_image', fanart)
@@ -341,19 +338,18 @@ def play_album(name, url, iconimage,clear,mix):
             except:
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
-            xbmc.Player().play(pl)	
+           xbmc.Player().play(pl)
 			
 			
 def play_song(url,name,songname,artist,album,iconimage,clear):
-    handle = str(sys.argv[1])
     dialog = xbmcgui.Dialog()
     show_name=name
     playlist=[]
     pl = get_XBMCPlaylist(clear)
     url1=str(url)
     liz=xbmcgui.ListItem(show_name, iconImage=iconimage, thumbnailImage=iconimage)
-    #liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album})
-    #liz.setProperty('mimetype', 'audio/mpeg')
+    liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album})
+    liz.setProperty('mimetype', 'audio/mpeg')
     liz.setThumbnailImage(iconimage)
     liz.setProperty('fanart_image', fanart)
     playlist.append((url1, liz))
@@ -364,11 +360,7 @@ def play_song(url,name,songname,artist,album,iconimage,clear):
         except:
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
-        if handle != "-1":
-            liz.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, liz)
-        else:
-            xbmc.Player().play(pl)	
+        xbmc.Player().play(pl)	
 
 def get_artist_icon(name,url):
     data_path = os.path.join(ARTIST_ART, name + '.jpg')
@@ -675,7 +667,7 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album):
             contextMenuItems.append(("[COLOR orange]Remove from Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=68)'%(sys.argv[0], name, str(list))))
         liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
-        liz.setInfo( type="Video", infoLabels={ "Title": name } )
+        liz.setInfo( type="Audio", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz)
         return ok

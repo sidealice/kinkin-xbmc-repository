@@ -337,7 +337,7 @@ def play_album(name, url, iconimage,clear,mix):
             except:
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
-            xbmc.Player().play(pl)
+           xbmc.Player(xbmc.PLAYER_CORE_MPLAYER).play(pl)
 			
 			
 def play_song(url,name,songname,artist,album,iconimage,clear):
@@ -359,7 +359,7 @@ def play_song(url,name,songname,artist,album,iconimage,clear):
         except:
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
-        xbmc.Player().play(pl)	
+        xbmc.Player(xbmc.PLAYER_CORE_MPLAYER).play(pl)	
 
 def get_artist_icon(name,url):
     data_path = os.path.join(ARTIST_ART, name + '.jpg')

@@ -12,7 +12,7 @@ FAV_ALBUM = settings.favourites_file_album()
 FAV_SONG = settings.favourites_file_songs()
 PLAYLIST_FILE = settings.playlist_file()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'fanart.jpg'))
-urllist = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'resources', 'language', 'mp3url.list'))
+urllist = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'lists', 'mp3url.list'))
 audio_fanart = ""
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'icon.png'))
 

@@ -293,7 +293,7 @@ def play_album(name, url, iconimage,clear,mix):
         match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
             trn = track.replace('track','')
-            url = find_url(trn) + id
+            url = find_url(trn).strip() + id
             title = "%s. %s" % (track.replace('track',''), songname.replace('&amp;', '&'))
             addDirAudio(title,url,10,iconimage,songname,artist,album)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
@@ -314,7 +314,7 @@ def play_album(name, url, iconimage,clear,mix):
         nItem=len(match)
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
             trn = track.replace('track','')
-            url = find_url(trn) + id
+            url = find_url(trn).strip() + id
             title = "%s. %s" % (track.replace('track',''), songname.replace('&amp;', '&'))
             addDirAudio(title,url,10,iconimage,songname,artist,album)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)

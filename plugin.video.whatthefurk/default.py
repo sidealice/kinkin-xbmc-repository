@@ -2647,7 +2647,7 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### E
         size = "[%.2fGB]" % size
         content = regex_from_to(str(all_td), "u'ct': u'", "/")
         text = "[%s] %s %s %s" %(format, size, name, bitrate)
-        
+      
 	
         if mode == "t music files menu":
             wtf_mode = "execute video"
@@ -2661,9 +2661,9 @@ def t_file_dialog_movie(xbmcname, id, imdb_id, strm=False):################### E
                 type = format
             else:
                 wtf_mode = "execute video"
-                imdb = imdb_id
+                #imdb = imdb_id
                 imdb_id="%s$%s$%s" % (type, MBs, imdb_id)
-            file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb)
+            file_list_tuple = create_file_list_tuple(xbmcname, text, name, wtf_mode, url, size, poster, type, imdb_id)
             items.append(file_list_tuple)
             if content=="video" and SKIP_BROWSE and mode != "browse context menu":
                 count+=1
@@ -3556,7 +3556,10 @@ def parental_control(imdb_id):
 def execute_video(name, url, list_item, strm=False):
     now = time.strftime("%H")
     dialog = xbmcgui.Dialog()
-    imdb_id=list_item
+    if list_item.find('$')>0:
+        imdb_id = list_item.split('$')[2]
+    else:
+        imdb_id=list_item
     if PC_ENABLE:
         mpaa = parental_control(imdb_id)
     else:
@@ -4250,6 +4253,8 @@ def myfiles_audio(unlinked):
             except:
                 pass
     return items;
+	
+
 	
 def addLink(name,url,iconimage,albumname):
     contextMenuItems = []

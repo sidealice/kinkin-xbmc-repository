@@ -180,12 +180,12 @@ def links(name,url,iconimage):
 def tv_show_episodes(name, list, iconimage, showname,epurl):
     seasonnum = name.replace('Season ', '')
     episodes = regex_from_to(list, 'SHOW EPISODES</a', '<div class="advert')
-    all_episodes = re.compile('<div class="number left">(.+?)</div><div class="name left"> (.+?)</div><div class="edate left">(.+?)</div> <div class="link left"><a class="watch_all" href="(.+?)">Watch NOW').findall(episodes)
-    for epnum, epname, epdate, url in all_episodes:
+    all_episodes = re.compile('<div class="number left"><a style="(.+?)" href="(.+?)">(.+?)</a></div><div class="name left"> <a href="(.+?)">(.+?)</a></div><div class="edate left">(.+?)</div>').findall(episodes)
+    for d1,url,epnum,url2,epname,epdate in all_episodes:
         snum = regex_from_to(url, 'season=', '&episode')
         epnum = epnum.replace('Episode ', '')
         url = epurl.replace('hhhh', 'http') + url.replace("<>", "?").replace("$", "#").replace("aNd", "&").replace('hhhh', 'http').replace('href="', '')
-        name = "%sx%s - %s" % (snum, epnum, clean_file_name(epname))
+        name = "%sx%s - %s - %s" % (snum, epnum, clean_file_name(epname),epdate)
         if snum == seasonnum:
             addDirPlayable(name,url,3,iconimage, showname)
     setView('episodes', 'episodes-view')

@@ -12,6 +12,9 @@ FAV_ALBUM = settings.favourites_file_album()
 FAV_SONG = settings.favourites_file_songs()
 PLAYLIST_FILE = settings.playlist_file()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'fanart.jpg'))
+art = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/'
+artgenre = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/genre/'
+artbillboard = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/billboard/'
 urllist = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'lists', 'mp3url.list'))
 audio_fanart = ""
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'icon.png'))
@@ -47,39 +50,40 @@ def get_cookie():
 
 	
 def CATEGORIES():
-    addDir('Artists','http://musicmp3.ru/artists.html',21,'','')
-    addDir('Top Albums','http://musicmp3.ru/genres.html',12,'','')
-    addDir('New Albums','http://musicmp3.ru/new_albums.html',12,'','')
-    addDir('Billboard Charts','url',101,'','')
-    addDir('Search Artists','url',24,'','')
-    addDir('Search Albums','url',24,'','')
-    addDir('Search Songs','url',24,'','')
-    addDir('Favourite Artists','url',63,'','')
-    addDir('Favourite Albums','url',66,'','')
-    addDir('Favourite Songs','url',69,'','')
-    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,'','','','')
-    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,'','','','')
-    addDirAudio('Clear Playlist','url',100,'','','','')
+    addDir('Artists','http://musicmp3.ru/artists.html',21,art + 'artists.jpg','')
+    addDir('Top Albums','http://musicmp3.ru/genres.html',12,art + 'topalbums.jpg','')
+    addDir('New Albums','http://musicmp3.ru/new_albums.html',12,art + 'newalbums.jpg','')
+    addDir('Billboard Charts','url',101,art + 'billboardcharts.jpg','')
+    addDir('Search Artists','url',24,art + 'searchartists.jpg','')
+    addDir('Search Albums','url',24,art + 'searchalbums.jpg','')
+    addDir('Search Songs','url',24,art + 'searchsongs.jpg','')
+    addDir('Favourite Artists','url',63,art + 'favouriteartists.jpg','')
+    addDir('Favourite Albums','url',66,art + 'favouritealbums.jpg','')
+    addDir('Favourite Songs','url',69,art + 'favouritesongs.jpg','')
+    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritealbums.jpg','','','')
+    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritesongs.jpg','','','')
+    addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','')
+
 	
 def charts():
-    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,'','')
-    addDir('UK Single Chart - Top 100','http://www.officialcharts.com/singles-chart/',102,'','')
-    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,'','')
-    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,'','')
-    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,'','')
-    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,'','')
-    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,'','')
-    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,'','')
-    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,'','')
-    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,'','')
-    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,'','')
-    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,'','')
-    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,'','')
-    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,'','')
-    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,'','')
-    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,'','')
-    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,'','')
-    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,'','')
+    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,artbillboard +'ukalbumchart.jpg','')
+    addDir('UK Single Chart - Top 100','http://www.officialcharts.com/singles-chart/',102,artbillboard +'uksinglecharttop100.jpg','')
+    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,artbillboard +'billboard200.jpg','')
+    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,artbillboard +'hot100singles.jpg','')
+    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,artbillboard +'countryalbums.jpg','')
+    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,artbillboard +'heatseekeralbums.jpg','')
+    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,artbillboard +'independentalbums.jpg','')
+    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,artbillboard +'cataloguealbums.jpg','')
+    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,artbillboard +'folkalbums.jpg','')
+    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,artbillboard +'bluesalbums.jpg','')
+    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,artbillboard +'tastemakeralbums.jpg','')
+    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,artbillboard +'rockalbums.jpg','')
+    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,artbillboard +'alternativealbums.jpg','')
+    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,artbillboard +'hardrockalbums.jpg','')
+    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,artbillboard +'digitalalbums.jpg','')
+    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,artbillboard +'randbalbums.jpg','')
+    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,artbillboard +'toprandbandhiphop.jpg','')
+    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,artbillboard +'danceandelectronic.jpg','')
 	
 def chart_lists(name, url):
     req = urllib2.Request(url)
@@ -108,11 +112,12 @@ def chart_lists(name, url):
 	
 def artists(url):
     link = GET_url(url)
-    addDir('All Artists','http://musicmp3.ru/main_artists.html?type=artist&page=1',31,iconart,'')
+    addDir('All Artists','http://musicmp3.ru/main_artists.html?type=artist&page=1',31,art + 'allartists.jpg','')
     sub_dir = re.compile('<li class="menu_sub__item"><a class="menu_sub__link" href="(.+?)">(.+?)</a></li>').findall(link)
     for url1, title in sub_dir:
         iconimage = 'http://musicmp3.ru/i' + url1.replace('.html', '.jpg').replace('artists', 'genres').replace('tracks', 'track')
-        addDir(title.replace('&amp;', '&'),'http://musicmp3.ru' + url1,41,iconimage,'')
+        if title != 'Other':
+            addDir(title.replace('&amp;', '&'),'http://musicmp3.ru' + url1,41,artgenre + title.replace(' ','').replace('&amp;','_').lower() + '.jpg','')
 	
 def all_artists(name, url):
     link = GET_url(url)
@@ -132,24 +137,23 @@ def all_artists(name, url):
     setView('movies', 'default')
     
 		
-def sub_dir(name, url):
+def sub_dir(name, url,icon):
     link = GET_url(url)
-    addDir('All ' + name + ' Artists',url + '?page=1',31,'http://www.pearljamlive.com/images/pic_home.jpg','')
+    addDir('Top ' + name + ' Artists',url + '?page=1',31,artgenre + name.replace(' ','').replace('&amp;','_').lower() +'/' + 'top' + name.replace(' ','').replace('&amp;','_').lower() + '.jpg','')
     sub_dir = re.compile('<li class="menu_sub__item"><a class="menu_sub__link" href="(.+?)">(.+?)</a></li>').findall(link)
     for url, title in sub_dir:
-        iconimage = 'http://musicmp3.ru/i' + url.replace('.html', '.jpg').replace('artists', 'genres').replace('tracks', 'track')
-        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',31,iconimage,'')
+        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',31,artgenre + name.replace(' ','').replace('&amp;','_').lower() +'/' + title.replace(' ','').replace('&amp;','_').lower() + '.jpg','')
 		
 def genres(name,url):
     link = GET_url(url)
     if name == 'Top Albums':
-        addDir('Top Albums','http://musicmp3.ru/main_albums.html?gnr_id=&sort=top&type=album&page=1',15,'http://www.pearljamlive.com/images/pic_home.jpg','')
+        addDir('Top Albums','http://musicmp3.ru/main_albums.html?gnr_id=&sort=top&type=album&page=1',15,art +'alltopalbums.jpg','')
     else:
-        addDir('New Albums',url + '?page=1',15,'http://www.pearljamlive.com/images/pic_home.jpg','')
+        addDir('New Albums',url + '?page=1',15,art + 'allnewalbums.jpg','')
     sub_dir = re.compile('<li class="menu_sub__item"><a class="menu_sub__link" href="(.+?)">(.+?)</a></li>').findall(link)
     for url1, title in sub_dir:
         iconimage = 'http://musicmp3.ru/i' + url1.replace('.html', '.jpg').replace('tracks', 'track')
-        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url1,14,iconimage,'')
+        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url1,14,artgenre + title.replace(' ','').replace('&amp;','_').lower() + '.jpg','')
 		
 def all_genres(name, url):
     nxtpgnum = int(url.replace('http://musicmp3.ru/main_albums.html?gnr_id=2&sort=top&type=album&page=', '')) + 1
@@ -161,21 +165,19 @@ def all_genres(name, url):
     addDir('>> Next page',nxtpgurl,13,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'next.png')))
     
 		
-def genre_sub_dir(name, url):#gnr_id=491&amp;sort
+def genre_sub_dir(name, url,icon):
     link = GET_url(url)
-    addDir('Top ' + name + ' Albums',url + '?page=1',15,'http://www.pearljamlive.com/images/pic_home.jpg','')
+    addDir('Top ' + name + ' Albums',url + '?page=1',15,artgenre + name.replace('and','&').replace(' ','').replace('&amp;','_').lower() +'/' + 'top' + name.replace('and','_').replace(' ','').replace('&amp;','_').lower() + '.jpg','')
     sub_dir = re.compile('<li class="menu_sub__item"><a class="menu_sub__link" href="(.+?)">(.+?)</a></li>').findall(link)
     for url, title in sub_dir:
-        iconimage = 'http://musicmp3.ru/i' + url.replace('.html', '.jpg').replace('tracks', 'track')
-        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',15,iconimage,'')
+        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',15,artgenre + name.replace('and','&').replace(' ','').replace('&amp;','_').lower() +'/' + title.replace(' ','').replace('&amp;','_').lower() + '.jpg','')
 		
-def genre_sub_dir2(name, url):#gnr_id=491&amp;sort
+def genre_sub_dir2(name, url,icon):
     link = GET_url(url)
-    addDir('Top ' + name + ' Albums',url,15,'http://www.pearljamlive.com/images/pic_home.jpg','')
+    addDir('Top ' + name + ' Albums',url,15,os.path.join(genre,  'alltopalbums.jpg'),'')
     sub_dir = re.compile('<li class="menu_sub__item"><a class="menu_sub__link" href="(.+?)">(.+?)</a></li>').findall(link)
     for url, title in sub_dir:
-        iconimage = 'http://musicmp3.ru/i' + url.replace('.html', '.jpg').replace('tracks', 'track')
-        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',15,iconimage,'')
+        addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',15,icon,'')
 		
 def search(name, url):
     keyboard = xbmc.Keyboard('', name, False)
@@ -794,7 +796,7 @@ elif mode == 31:
     all_artists(name, url)
 	
 elif mode == 41:
-    sub_dir(name, url)
+    sub_dir(name, url,iconimage)
 	
 elif mode == 22:
     albums(name,url)
@@ -806,10 +808,10 @@ elif mode == 13:
     all_genres(name, url)
 	
 elif mode == 14:
-    genre_sub_dir(name, url)
+    genre_sub_dir(name, url,iconimage)
 
 elif mode == 16:
-    genre_sub_dir2(name, url)
+    genre_sub_dir2(name, url,iconimage)
 	
 elif mode == 15:
     album_list(name, url)

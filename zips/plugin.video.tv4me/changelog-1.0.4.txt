@@ -4,6 +4,7 @@ Fixed missing episodes for some shows
 1.0.3
 Added default tv show directory
 
+
 1.0.2
 Fixed episode names to allow subtitle download
 

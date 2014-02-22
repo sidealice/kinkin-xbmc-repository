@@ -221,6 +221,10 @@ def grouped_shows(url):
 
 def tv_show(name, url, iconimage):
     episodes = []
+    if 'tvseries.net' in url:
+        site = "ZZnetYY"
+    else:
+        site = "ZZmeYY"
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
@@ -245,14 +249,17 @@ def tv_show(name, url, iconimage):
         else:
             infoLabels =None
             iconimage=iconart
-        addDir(sname, 'url',4,iconimage, eplist,name,infoLabels=infoLabels)
+        addDir(sname, 'url',4,iconimage, eplist,site + name,infoLabels=infoLabels)
     setView('episodes', 'seasons-view')
 		
 def tv_show_episodes(name, list, iconimage, showname):
     list = str(list)
-    episodes = re.compile('<a title="(.+?)" href="(.+?)"> <div class="(.+?)data-original="(.+?)"(.+?)nseasnumep"> (.+?) <br />(.+?) </div> </div> </a>').findall(list)
-    for epname, url, a, thumb, b, snum, epnum in episodes:
-        url = 'http://www.watch-tvseries.net' + url
+    site = regex_from_to(showname,'ZZ', 'YY')
+    splitshnm = showname.split('YY')
+    showname = splitshnm[1]
+    episodes = re.compile('<a title="(.+?)" href="(.+?)"> <div class="(.+?)data-original="(.+?)"(.+?)nseasnumep"> (.+?) <br(.+?)>(.+?) </div> </div> </a>').findall(list)
+    for epname, url, a, thumb, b, snum, c, epnum in episodes:
+        url = 'http://www.watch-tvseries.' + site + url
         epnum = epnum.replace('episode ', 'E')
         snum = snum.replace('season ', 'S')
         sn = snum.replace('S0','')
@@ -274,17 +281,20 @@ def tv_show_episodes(name, list, iconimage, showname):
         else:
             infoLabels =None
             iconimage=iconart
+        print url
         addDirPlayable(name,url,5,iconimage, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
 		
 def play(name, url, iconimage, showname):
     hosturl = url
+    site = regex_from_to(hosturl,'www.watch-tvseries.', '/series')
+    host = 'www.watch-tvseries.' + site
     vidlinks = "found"
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name)
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    header_dict['Host'] = 'www.watch-tvseries.net'
+    header_dict['Host'] = host
     header_dict['Connection'] = 'keep-alive'
     header_dict['Cache-Control'] = 'max-age=0'
     header_dict['Referer'] = hosturl
@@ -299,9 +309,13 @@ def play(name, url, iconimage, showname):
         except:
             key1 = "notavailable"
 	
-    key = re.compile('"http://www.watch-tvseries.net/"(.+?)"(.+?)"').findall(link)
+    if site == 'net':
+        key = re.compile('"http://www.watch-tvseries.net/"(.+?)"(.+?)"').findall(link)
+    else:
+        key = re.compile('"http://www.watch-tvseries.me/"(.+?)"(.+?)"').findall(link)
     for a, url in key:
-        url1 = 'http://www.watch-tvseries.net/play/plvids' + url
+        url1 = 'http://www.watch-tvseries.%s/play/plvids%s' % (site, url)
+        print url1
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Host'] = 'vk.com'
@@ -361,7 +375,7 @@ def play(name, url, iconimage, showname):
             linkurl = 'http://www.nowvideo.sx/api/player.api.php?cid=1&cid3=undefined&key=%s&user=undefined&file=%s&numOfErrors=0&pass=undefined&cid2=undefined' % (key, file)
             link = open_url(linkurl)
             playlink = regex_from_to(link, 'url=', '&title')
-		
+	
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)

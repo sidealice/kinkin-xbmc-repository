@@ -1,8 +1,11 @@
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
 import cookielib
 import settings, time
+import requests
 from t0mm0.common.net import Net
 from threading import Thread
+from mutagen.easyid3 import EasyID3
+from mutagen.mp3 import MP3
 cookie_jar = settings.cookie_jar()
 net = Net()
 ADDON = settings.addon()
@@ -11,6 +14,8 @@ FAV_ARTIST = settings.favourites_file_artist()
 FAV_ALBUM = settings.favourites_file_album()
 FAV_SONG = settings.favourites_file_songs()
 PLAYLIST_FILE = settings.playlist_file()
+MUSIC_DIR = settings.music_dir()
+DOWNLOAD_LIST = settings.download_list()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'fanart.jpg'))
 art = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/'
 artgenre = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/genre/'
@@ -60,9 +65,10 @@ def CATEGORIES():
     addDir('Favourite Artists','url',63,art + 'favouriteartists.jpg','')
     addDir('Favourite Albums','url',66,art + 'favouritealbums.jpg','')
     addDir('Favourite Songs','url',69,art + 'favouritesongs.jpg','')
-    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritealbums.jpg','','','')
-    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritesongs.jpg','','','')
-    addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','')
+    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritealbums.jpg','','','','')
+    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritesongs.jpg','','','','')
+    addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','','')
+    addDirAudio('Add ID3 Tags','url',300,art + 'clearplaylist.jpg','','','','')
 
 	
 def charts():
@@ -223,7 +229,7 @@ def search_songs(query):
         iconimage = ""
         url = 'http://listen.musicmp3.ru/2f99f4bf4ce7b171/' + id
         title = "%s - %s - %s" % (artist.replace('&amp;','and'), song.replace('&amp;','&'), album.replace('&amp;','&'))
-        addDirAudio(title,url,10,iconimage,song,artist,album)
+        addDirAudio(title,url,10,iconimage,song,artist,album,'')
         liz=xbmcgui.ListItem(song, iconImage=iconimage, thumbnailImage=iconimage)
         liz.setInfo('music', {'Title':song, 'Artist':artist, 'Album':album})
         liz.setProperty('mimetype', 'audio/mpeg')
@@ -302,7 +308,7 @@ def play_album(name, url, iconimage,clear,mix):
             trn = track.replace('track','')
             url = find_url(trn).strip() + id
             title = "%s. %s" % (track.replace('track',''), songname)
-            addDirAudio(title,url,10,iconimage,songname,artist,album)
+            addDirAudio(title,url,10,iconimage,songname,artist,album,dur)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
             liz.setProperty('mimetype', 'audio/mpeg')
@@ -325,9 +331,13 @@ def play_album(name, url, iconimage,clear,mix):
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
             trn = track.replace('track','')
-            url = find_url(trn).strip() + id
             title = "%s. %s" % (track.replace('track',''), songname)
-            addDirAudio(title,url,10,iconimage,songname,artist,album)
+            stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
+            if os.path.exists(stored_path):
+                url = stored_path
+            else:
+                url = find_url(trn).strip() + id
+            addDirAudio(title,url,10,iconimage,songname,artist,album,dur)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
             liz.setProperty('mimetype', 'audio/mpeg')
@@ -353,14 +363,18 @@ def play_album(name, url, iconimage,clear,mix):
            xbmc.Player().play(pl)
 			
 			
-def play_song(url,name,songname,artist,album,iconimage,clear):
+def play_song(url,name,songname,artist,album,iconimage,dur,clear):
+    stored_path = os.path.join(MUSIC_DIR,  artist, album, name + '.mp3')
     dialog = xbmcgui.Dialog()
     show_name=name
     playlist=[]
     pl = get_XBMCPlaylist(clear)
-    url1=str(url)
+    if os.path.exists(stored_path):
+        url1 = stored_path
+    else:
+        url1=str(url)
     liz=xbmcgui.ListItem(show_name, iconImage=iconimage, thumbnailImage=iconimage)
-    liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album})
+    liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
     liz.setProperty('mimetype', 'audio/mpeg')
     liz.setThumbnailImage(iconimage)
     liz.setProperty('fanart_image', fanart)
@@ -372,7 +386,97 @@ def play_song(url,name,songname,artist,album,iconimage,clear):
         except:
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
-        xbmc.Player().play(pl)	
+        xbmc.Player().play(pl)
+		
+def download_song(url,name,songname,artist,album,iconimage):
+    track = songname[:songname.find('.')]
+    artist_path = create_directory(MUSIC_DIR, artist)
+    album_path = create_directory(artist_path, album)
+    list_data = "%s<>%s<>%s<>%s<>%s%s" % (album_path,artist,album,track,songname,'.mp3')	
+    local_filename = album_path + '/' + songname + '.mp3'
+    headers = {'Host': 'listen.musicmp3.ru','Range': 'bytes=0-','User-Agent': 'AppleWebKit/<WebKit Rev>', 'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'}
+    r = requests.get(url, headers=headers, stream=True)
+    with open(local_filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024): 
+            if chunk:
+                f.write(chunk)
+                f.flush()
+    add_to_list(list_data, DOWNLOAD_LIST, False)
+	
+def download_album(url,name,iconimage):
+    dialog = xbmcgui.Dialog()
+    check_downloads = os.path.join(MUSIC_DIR,  'downloading.txt')
+    if os.path.exists(check_downloads):
+        dialog.ok("Album download in progress", 'Please wait for the current download to finish')
+        return
+    playlist=[]
+    link = GET_url(url)
+    notification(name, 'Download started', '3000', iconimage)
+    match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
+    nSong = len(match)
+    for track,id,songurl,meta, d1,album,artist,songname,dur in match:
+        songname = songname.replace('&amp;', 'and')
+        artist = artist.replace('&amp;', 'and')
+        album = album.replace('&amp;', 'and')
+        trn = track.replace('track','')
+        url = find_url(trn).strip() + id
+        playlist.append(songname)
+        title = "%s. %s" % (track.replace('track',''), songname)
+        artist_path = create_directory(MUSIC_DIR, artist)
+        album_path = create_directory(artist_path, album)
+        list_data = "%s<>%s<>%s<>%s<>%s%s" % (album_path,artist,album,trn,title,'.mp3')
+        download_lock = create_file(MUSIC_DIR, "downloading.txt")
+        local_filename = album_path + '/' + title + '.mp3'
+        headers = {'Host': 'listen.musicmp3.ru','Range': 'bytes=0-','User-Agent': 'AppleWebKit/<WebKit Rev>', 'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'}
+        r = requests.get(url, headers=headers, stream=True)
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024): 
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+        text = "%s of %s tracks downloaded" % (trn, nSong)
+        notification(artist + ' ' + album, text, '3000', iconimage)
+        add_to_list(list_data, DOWNLOAD_LIST, False)
+    notification(artist + ' ' + album, 'Album download finished', '3000', iconimage)
+    if os.path.exists(download_lock):
+        os.remove(download_lock)
+		
+def clear_lock():
+    download_lock = os.path.join(MUSIC_DIR,  'downloading.txt')
+    if os.path.exists(download_lock):
+        os.remove(download_lock)
+		
+def id3_tags():
+    id3Thread = Getid3Thread()
+    id3Thread.start()
+	
+class Getid3Thread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+	
+    def run(self):
+        if os.path.isfile(DOWNLOAD_LIST):
+            s = read_from_file(DOWNLOAD_LIST)
+            search_list = s.split('\n')
+            for list in search_list:
+                if list != '':
+                    splitlist = list.split('<>')
+                    filename = os.path.join(splitlist[0], splitlist[4])
+                    artist = splitlist[1]
+                    album = splitlist[2]
+                    track = splitlist[3]
+                    trackname = splitlist[4]
+                    tracktitle = trackname[trackname.find('. ')+2:]
+                    if os.path.exists(filename):
+                        audio = MP3(filename, ID3=EasyID3)
+                        audio["title"] = tracktitle
+                        audio["artist"] = artist
+                        audio["album"] = album
+                        audio["tracknumber"] = track
+                        audio.save()
+                        remove_from_list(list, DOWNLOAD_LIST)
+        notification('Music Library', 'ID3 tags updated', '3000', iconart)
+        xbmc.executebuiltin('UpdateLibrary(music)')
 
 def get_artist_icon(name,url):
     data_path = os.path.join(ARTIST_ART, name + '.jpg')
@@ -489,14 +593,14 @@ def favourite_songs():
                 url = list1[3]
                 iconimage = list1[4]
                 text = "%s - %s - %s" % (title, artist, album)
-                addDirAudio(text.upper(),url,10,iconimage,title,artist,album)
+                addDirAudio(text.upper(),url,10,iconimage,title,artist,album,'')
 
 def add_favourite(name, url, dir, text):
     splitdata = url.split('<>')
     if 'artist' in dir:
         artist = splitdata[0]
         url1 = splitdata[1]
-        add_to_list(url, dir)
+        add_to_list(url, dir, True)
         notification(name.upper(), "[COLOR lime]" + text + "[/COLOR]", '5000','')
         link = GET_url(url1)
         try:
@@ -508,7 +612,7 @@ def add_favourite(name, url, dir, text):
         artist = splitdata[0]
         url1 = splitdata[1]
         thumb = splitdata[2]
-        add_to_list(url, dir)
+        add_to_list(url, dir, True)
         notification(name.upper(), "[COLOR lime]" + text + "[/COLOR]", '5000', thumb)
 		
 def add_favourite_song(name, url, dir, text):
@@ -518,7 +622,7 @@ def add_favourite_song(name, url, dir, text):
     songname = splitdata[2]
     url1 = splitdata[3]
     iconimage = splitdata[4]
-    add_to_list(url, dir)
+    add_to_list(url, dir, False)
     notification(songname.upper(), "[COLOR lime]" + text + "[/COLOR]", '5000',iconimage)
 	
 def remove_from_favourites(name, url, dir, text):
@@ -538,7 +642,7 @@ def find_list(query, search_file):
     except:
         return -1
 		
-def add_to_list(list, file):
+def add_to_list(list, file, refresh):
     if find_list(list, file) >= 0:
         return
 
@@ -553,7 +657,7 @@ def add_to_list(list, file):
         if len(line) > 0:
             s = s + line + '\n'
     write_to_file(file, s)
-    if not 'song' in file:
+    if refresh == True:
         xbmc.executebuiltin("Container.Refresh")
     
 def remove_from_list(list, file):
@@ -687,6 +791,8 @@ def addDir(name,url,mode,iconimage,type):
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Favourite Artists[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=62)'%(sys.argv[0], name, str(list))))
         if type == "albums":
+            download_album = '%s?name=%s&url=%s&iconimage=%s&mode=202' % (sys.argv[0], urllib.quote(name), url, iconimage)  
+            contextMenuItems.append(('[COLOR cyan]Download Album[/COLOR]', 'XBMC.RunPlugin(%s)' % download_album))
             queue_music = '%s?name=%s&url=%s&iconimage=%s&mode=6' % (sys.argv[0], urllib.quote(name), url, iconimage)  
             contextMenuItems.append(('[COLOR cyan]Queue Album[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_music))
             if find_list(list.lower(), FAV_ALBUM) < 0:
@@ -702,12 +808,16 @@ def addDir(name,url,mode,iconimage,type):
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
-def addDirAudio(name,url,mode,iconimage,songname,artist,album):
+def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur):
         suffix = ""
         list = "%s<>%s<>%s<>%s<>%s" % (str(artist),str(album),str(songname).lower(),url,str(iconimage))
         contextMenuItems = []
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&songname="+urllib.quote_plus(songname)+"&artist="+urllib.quote_plus(artist)+"&album="+urllib.quote_plus(album)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&songname="+urllib.quote_plus(songname)+"&artist="+urllib.quote_plus(artist)+"&album="+urllib.quote_plus(album)+"&dur="+str(dur)
         ok=True
+        if name == "Add ID3 Tags":
+            contextMenuItems.append(("Clear Download Lock",'XBMC.RunPlugin(%s?name=%s&mode=333)'%(sys.argv[0], name)))
+        download_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=201' % (sys.argv[0], songname, url, iconimage,name,artist,album)  
+        contextMenuItems.append(('[COLOR cyan]Download Song[/COLOR]', 'XBMC.RunPlugin(%s)' % download_song))
         queue_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=11' % (sys.argv[0], urllib.quote(songname), url, iconimage,songname,artist,album)  
         contextMenuItems.append(('[COLOR cyan]Queue Song[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_song))
         if find_list(list.lower(), FAV_SONG) < 0:
@@ -761,6 +871,10 @@ try:
         list=str(params["list"])
 except:
         pass
+try:
+        dur=str(params["dur"])
+except:
+        pass
 
 
 if mode==None or url==None or len(url)<1:
@@ -784,10 +898,10 @@ elif mode ==8:
     ADDON.openSettings()
 	
 elif mode == 10:
-    play_song(url,name,songname,artist,album,iconimage,True)
+    play_song(url,name,songname,artist,album,iconimage,dur,True)
 	
 elif mode == 11:
-    play_song(url,name,songname,artist,album,iconimage,False)
+    play_song(url,name,songname,artist,album,iconimage,dur,False)
 	
 elif mode == 21:
     artists(url)
@@ -866,6 +980,18 @@ elif mode == 101:
 	
 elif mode == 102:
     chart_lists(name, url)
+	
+elif mode == 201:
+    download_song(url,name,songname,artist,album,iconimage)
+	
+elif mode == 202:
+    download_album(url,name,iconimage)
+
+elif mode == 300:
+    id3_tags()
+	
+elif mode == 333:
+    clear_lock()
 		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

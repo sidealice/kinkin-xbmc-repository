@@ -19,11 +19,26 @@ def favourites_file_artist():
 def favourites_file_album():
     return create_file(DATA_PATH, "favourites_album.list")
 	
+def download_list():
+    return create_file(DATA_PATH, "downloads.list")
+	
 def favourites_file_songs():
     return create_file(DATA_PATH, "favourites_songs.list")
 	
 def playlist_file():
     return create_file(DATA_PATH, "playlist_file.list")
+	
+def custom_directory():
+    if ADDON.getSetting('custom_directory') == "true":
+        return True
+    else:
+        return False
+		
+def music_dir():
+    if ADDON.getSetting('music_dir')=="set":
+        return create_directory(DATA_PATH, "music")
+    else:
+        return ADDON.getSetting('music_dir')
 	
 def create_directory(dir_path, dir_name=None):
     if dir_name:

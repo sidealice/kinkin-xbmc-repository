@@ -65,8 +65,8 @@ def CATEGORIES():
     addDir('Favourite Artists','url',63,art + 'favouriteartists.jpg','')
     addDir('Favourite Albums','url',66,art + 'favouritealbums.jpg','')
     addDir('Favourite Songs','url',69,art + 'favouritesongs.jpg','')
-    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritealbums.jpg','','','','','')
-    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritesongs.jpg','','','','','')
+    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritesongs.jpg','','','','','')
+    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritealbums.jpg','','','','','')
     addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','','','')
     addDirAudio('Add ID3 Tags','url',300,iconart,'','','','','')
 

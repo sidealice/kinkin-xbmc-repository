@@ -171,8 +171,8 @@ def links(name,url,iconimage):
             season = regex_from_to(s, '688px;">', '<a data-season').rstrip()
             addDir(season, str(link),4,iconimage, name,epurl)
     else:
-        match = re.compile('<tr><td class="source_td">(.+?)</td><td class="quality_td">(.+?)</td><td class="age_td">(.+?)</td><td class="link_td"><a target="_blank" href="(.+?)">WATCH').findall(link)
-        for source, quality, age, url in match:
+        match = re.compile('data-id="(.+?)" data-host="iShared.eu" class="ReportLink" >report this link</a></td><td class="quality_td">(.+?)</td><td class="age_td">(.+?)</td><td class="link_td">   <a target="_blank" href="(.+?)">WATCH').findall(link)
+        for id,quality,age,url in match:
             text = "%s [COLOR gold][%s][/COLOR] (uploaded %s ago)" % (name, quality, age)
             url = url
             addDirPlayable(text,url,3,iconimage,name)

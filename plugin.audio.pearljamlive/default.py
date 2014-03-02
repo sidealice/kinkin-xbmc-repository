@@ -8,7 +8,7 @@ pjbootleg_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin
 audio_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart1.jpg'))
 
 def CATEGORIES():
-        addDir('Pearl Jam Live',pearljam_url,1,'http://www.pearljamlive.com/images/pic_home.jpg')
+        addDir('Pearl Jam Live',pearljam_url,1,'http://www.pearljamlive.com/images/polaroid_home.jpg')
         addDir( 'Pearl Jam Bootlegs','url',4,pjbootleg_logo)
 
 #########################  PEARL JAM	#################################################	
@@ -18,12 +18,11 @@ def LISTEN_YEAR(url):
         response = urllib2.urlopen(req)
         link=response.read()
         response.close()
-        match=re.compile('href="loading(.+?)" title="(.+?)"').findall(link)
-        for url,name in match:
-            year=name.replace(' Pearl Jam Bootlegs', '')
-            thumb = pearljam_url + 'images/pic_' + str(year) + '.jpg'
-            if name.endswith("Bootlegs"):
-                addDir(name,pearljam_url+'interior'+url,2,thumb)
+        match=re.compile('<a href="(.+?)" target="content">(.+?)</a>').findall(link)
+        for url,year in match:
+            thumb = 'http://www.pearljamlive.com/images/polaroid_%s.jpg' % year# pearljam_url + 'images/pic_' + str(year) + '.jpg'
+            if len(year)==4:
+                addDir(year + ' Bootlegs',pearljam_url+url,2,thumb)
 				
 def CONCERT_LIST(url):
         req = urllib2.Request(url)
@@ -31,21 +30,18 @@ def CONCERT_LIST(url):
         response = urllib2.urlopen(req)
         link=re.sub('\s+',' ',response.read())
         response.close()
-        match=re.compile('<td width="100">(.+?)</td> <td width="350">(.+?)</td>').findall(link)
-        year=re.compile('src="images/pic_(.+?).jpg"').findall(link)
-        year=str(year).replace("['","").replace("']","")
-        dp = xbmcgui.DialogProgress()
-        dp.create("Pearl Jam Live",'Fetching concerts')
-        dp.update(0)
-        nItem=len(match)
-        for url,name in match:
-            url1 = pearljam_url + 'playlists/' + year + url.replace('January ', '01').replace('January ', '01').replace('February ', '02').replace('March ', '03').replace('April ', '04').replace('May ', '05').replace('June ', '06').replace('July ', '07').replace('August ', '08').replace('September ', '09').replace('October ', '10').replace('November ', '11').replace('December ', '12') + '.xml'
-            thumb = pearljam_url + 'images/pic_' + str(year) + '.jpg'
-            progress = len(url1) / float(nItem) * 100               
-            dp.update(int(progress), 'Grabbing shows',str(year))
-            if dp.iscanceled():
-                return
-            addDir(url + ' - ' + name,url1,3,thumb)
+        thumb = pearljam_url + regex_from_to(link, '<img border="0" src="', '"')
+        all_shows = regex_from_to(link,'<table border="0" cellpadding="5" cellspacing="0"', '</table>')
+        all_td = regex_get_all(all_shows, '<tr>', '</tr>')
+        for a in all_td:
+            td = regex_get_all(a, '<td', '</td>')
+            showdate = regex_from_to(td[0], '">', '<')
+            title = regex_from_to(td[1], '>', '<')
+            urldata = regex_from_to(td[3], 'data-item="', '"')
+            url1 = pearljam_url + 'playlists/' + urldata + '.xml'
+            print url1
+            name = "%s - %s" % (showdate,title)
+            addDir(name,url1,3,thumb)
 
 def AUDIOLINKS(url,name,clear):
         iconimage=""
@@ -246,7 +242,22 @@ def PJB_SINGLELINKS(url,name,clear):
             except:
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
-            xbmc.Player().play(pl)				
+            xbmc.Player().play(pl)	
+
+def regex_from_to(text, from_string, to_string, excluding=True):
+    if excluding:
+        r = re.search("(?i)" + from_string + "([\S\s]+?)" + to_string, text).group(1)
+    else:
+        r = re.search("(?i)(" + from_string + "[\S\s]+?" + to_string + ")", text).group(1)
+    return r
+
+def regex_get_all(text, start_with, end_with):
+    r = re.findall("(?i)(" + start_with + "[\S\s]+?" + end_with + ")", text)
+    return r
+
+def strip_text(r, f, t, excluding=True):
+    r = re.search("(?i)" + f + "([\S\s]+?)" + t, r).group(1)
+    return r			
 
 ############################################################################################
 def get_params():

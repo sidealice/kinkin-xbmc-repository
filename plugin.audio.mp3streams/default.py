@@ -65,10 +65,10 @@ def CATEGORIES():
     addDir('Favourite Artists','url',63,art + 'favouriteartists.jpg','')
     addDir('Favourite Albums','url',66,art + 'favouritealbums.jpg','')
     addDir('Favourite Songs','url',69,art + 'favouritesongs.jpg','')
-    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritealbums.jpg','','','','')
-    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritesongs.jpg','','','','')
-    addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','','')
-    addDirAudio('Add ID3 Tags','url',300,art + 'clearplaylist.jpg','','','','')
+    addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritealbums.jpg','','','','','')
+    addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritesongs.jpg','','','','','')
+    addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','','','')
+    addDirAudio('Add ID3 Tags','url',300,iconart,'','','','','')
 
 	
 def charts():
@@ -139,7 +139,7 @@ def all_artists(name, url):
     pgnum = int(url[pgnumf:]) + 1
     nxtpgurl = url[:pgnumf]
     nxtpgurl = "%s%s" % (nxtpgurl, pgnum)
-    addDir('>> Next page',nxtpgurl,31,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'next.png')),'')
+    addDir('>> Next page',nxtpgurl,31,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'nextpage.jpg')),'')
     setView('movies', 'default')
     
 		
@@ -168,7 +168,7 @@ def all_genres(name, url):
     all_genres = re.compile('<li class="small_list__item"><a class="small_list__link" href="(.+?)">(.+?)</a></li>').findall(link)
     for url1, title in all_genres:
         addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url1,22,'http://www.pearljamlive.com/images/pic_home.jpg','')
-    addDir('>> Next page',nxtpgurl,13,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'next.png')))
+    addDir('>> Next page',nxtpgurl,13,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'nextpage.jpg')))
     
 		
 def genre_sub_dir(name, url,icon):
@@ -229,7 +229,7 @@ def search_songs(query):
         iconimage = ""
         url = 'http://listen.musicmp3.ru/2f99f4bf4ce7b171/' + id
         title = "%s - %s - %s" % (artist.replace('&amp;','and'), song.replace('&amp;','&'), album.replace('&amp;','&'))
-        addDirAudio(title,url,10,iconimage,song,artist,album,'')
+        addDirAudio(title,url,10,iconimage,song,artist,album,'','')
         liz=xbmcgui.ListItem(song, iconImage=iconimage, thumbnailImage=iconimage)
         liz.setInfo('music', {'Title':song, 'Artist':artist, 'Album':album})
         liz.setProperty('mimetype', 'audio/mpeg')
@@ -254,7 +254,7 @@ def album_list(name, url):
     pgnum = int(url[pgnumf:]) + 1
     nxtpgurl = url[:pgnumf]
     nxtpgurl = "%s%s" % (nxtpgurl, pgnum)
-    addDir('>> Next page',nxtpgurl,15,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'next.png')),'')
+    addDir('>> Next page',nxtpgurl,15,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'nextpage.jpg')),'')
     setView('movies', 'album')
 
     
@@ -308,7 +308,7 @@ def play_album(name, url, iconimage,clear,mix):
             trn = track.replace('track','')
             url = find_url(trn).strip() + id
             title = "%s. %s" % (track.replace('track',''), songname)
-            addDirAudio(title,url,10,iconimage,songname,artist,album,dur)
+            addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
             liz.setProperty('mimetype', 'audio/mpeg')
@@ -337,7 +337,7 @@ def play_album(name, url, iconimage,clear,mix):
                 url = stored_path
             else:
                 url = find_url(trn).strip() + id
-            addDirAudio(title,url,10,iconimage,songname,artist,album,dur)
+            addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
             liz.setProperty('mimetype', 'audio/mpeg')
@@ -485,6 +485,28 @@ def get_artist_icon(name,url):
         dlThread.start()
 		
 def instant_mix():
+    menu_texts = []
+    menu_texts.append("All Songs")
+    dialog = xbmcgui.Dialog()
+    if os.path.isfile(FAV_SONG):
+        s = read_from_file(FAV_SONG)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                try:
+                    plname = list1[5]
+                    if not plname in menu_texts:
+                        menu_texts.append(plname)
+                except:
+                    if not "Ungrouped" in menu_texts:
+                        menu_texts.append("Ungrouped")
+    menu_id = dialog.select('Select Group', menu_texts)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    groupname = menu_texts[menu_id]
+	
     playlist = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
     playlist.clear()
     if os.path.isfile(FAV_SONG):
@@ -498,18 +520,46 @@ def instant_mix():
                 songname = splitdata[2]
                 url1 = splitdata[3]
                 iconimage = splitdata[4]
-                play_song(url1,songname.upper(),songname.upper(),artist.upper(),album.upper(),iconimage,False)
+                try:
+                    plname = splitdata[5]
+                except:
+                    plname = "Ungrouped"
+                if (plname == groupname) or groupname == "All Songs":                
+                    play_song(url1,songname.upper(),songname.upper(),artist.upper(),album.upper(),iconimage, '',False)
     playlist.shuffle()
 	
 def instant_mix_album():
-    shuffleThread = ShuffleAlbumThread()
+    menu_texts = []
+    menu_texts.append("All Albums")
+    dialog = xbmcgui.Dialog()
+    if os.path.isfile(FAV_ALBUM):
+        s = read_from_file(FAV_ALBUM)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                try:
+                    plname = list1[3]
+                    if not plname in menu_texts:
+                        menu_texts.append(plname)
+                except:
+                    if not "Ungrouped" in menu_texts:
+                        menu_texts.append("Ungrouped")
+    menu_id = dialog.select('Select Group', menu_texts)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    groupname = menu_texts[menu_id]
+    shuffleThread = ShuffleAlbumThread(groupname)
     shuffleThread.start()
 
 class ShuffleAlbumThread(Thread):
-    def __init__(self):
+    def __init__(self,groupname):
+        self.groupname=groupname
         Thread.__init__(self)
 
     def run(self):
+        groupname=self.groupname        
         playlist = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
         playlist.clear()
         if os.path.isfile(FAV_ALBUM):
@@ -521,24 +571,15 @@ class ShuffleAlbumThread(Thread):
                     title = list1[0]
                     url = list1[1]
                     thumb = list1[2]
-                    play_album(title, url, thumb,False,'mix')
+                    try:
+                        plname = list1[3]
+                    except:
+                        plname = "Ungrouped"
+                    if (plname == groupname) or groupname == "All Albums": 
+                        play_album(title, url, thumb,False,'mix')
+                        playlist.shuffle()
                     time.sleep(15)
-                    playlist.shuffle()
-		
-def instant_mix():
-    playlist = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
-    playlist.clear()
-    if os.path.isfile(FAV_ALBUM):
-        s = read_from_file(FAV_ALBUM)
-        search_list = s.split('\n')
-        for list in search_list:
-            if list != '':
-                list1 = list.split('<>')
-                title = list1[0]
-                url = list1[1]
-                thumb = list1[2]
-                play_album(title, url, thumb,False,'mix')
-    playlist.shuffle()
+
 	
 class DownloadIconThread(Thread):
     def __init__(self, name, url, data_path):
@@ -569,6 +610,27 @@ def favourite_artists():
         
 				
 def favourite_albums():
+    menu_texts = []
+    menu_texts.append("All Albums")
+    dialog = xbmcgui.Dialog()
+    if os.path.isfile(FAV_ALBUM):
+        s = read_from_file(FAV_ALBUM)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                try:
+                    plname = list1[3]
+                    if not plname in menu_texts:
+                        menu_texts.append(plname)
+                except:
+                    if not "Ungrouped" in menu_texts:
+                        menu_texts.append("Ungrouped")
+    menu_id = dialog.select('Select Group', menu_texts)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    groupname = menu_texts[menu_id]
     if os.path.isfile(FAV_ALBUM):
         s = read_from_file(FAV_ALBUM)
         search_list = s.split('\n')
@@ -578,9 +640,36 @@ def favourite_albums():
                 title = list1[0]
                 url = list1[1]
                 thumb = list1[2]
-                addDir(title.replace('&amp;', '&').upper(),url,5,thumb,'albums')
+                try:
+                    plname = list1[3]
+                except:
+                    plname = "Ungrouped"
+                if (plname == groupname) or groupname == "All Albums":
+                    addDir(title.replace('&amp;', '&').upper(),url,5,thumb,plname + 'qqalbums')
 				
 def favourite_songs():
+    menu_texts = []
+    menu_texts.append("All Songs")
+    dialog = xbmcgui.Dialog()
+    if os.path.isfile(FAV_SONG):
+        s = read_from_file(FAV_SONG)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                try:
+                    plname = list1[5]
+                    if not plname in menu_texts:
+                        menu_texts.append(plname)
+                except:
+                    if not "Ungrouped" in menu_texts:
+                        menu_texts.append("Ungrouped")
+    menu_id = dialog.select('Select Group', menu_texts)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    groupname = menu_texts[menu_id]
+	
     if os.path.isfile(FAV_SONG):
         s = read_from_file(FAV_SONG)
         search_list = s.split('\n')
@@ -592,8 +681,13 @@ def favourite_songs():
                 title = list1[2]
                 url = list1[3]
                 iconimage = list1[4]
+                try:
+                    plname = list1[5]
+                except:
+                    plname = "Ungrouped"
                 text = "%s - %s - %s" % (title, artist, album)
-                addDirAudio(text.upper(),url,10,iconimage,title,artist,album,'')
+                if (plname == groupname) or groupname == "All Songs":
+                    addDirAudio(text.upper(),url,10,iconimage,title,artist,album,'qq' + plname,'favsong')
 
 def add_favourite(name, url, dir, text):
     splitdata = url.split('<>')
@@ -609,19 +703,80 @@ def add_favourite(name, url, dir, text):
         except:
             pass
     else:
+        menu_texts = []
+        menu_texts.append("Add New Group")
+        dialog = xbmcgui.Dialog()
+        if os.path.isfile(dir):
+            s = read_from_file(dir)
+            search_list = s.split('\n')
+            for list in search_list:
+                if list != '':
+                    list1 = list.split('<>')
+                    try:
+                        plname = list1[3]
+                        if not plname in menu_texts:
+                            menu_texts.append(plname)
+                    except:
+                        pass
+        menu_id = dialog.select('Select Group', menu_texts)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        if (menu_id == 0):
+            keyboard = xbmc.Keyboard('', 'Create New Group', False)
+            keyboard.doModal()
+            if keyboard.isConfirmed():
+                query = keyboard.getText()
+                if len(query) > 0:
+                    plname = query
+        else:
+            plname = menu_texts[menu_id]
         artist = splitdata[0]
         url1 = splitdata[1]
         thumb = splitdata[2]
-        add_to_list(url, dir, True)
+        url = "%s<>%s" % (url, plname)
+        if 'artist' in dir:
+            add_to_list(url, dir, True)
+        else:
+            add_to_list(url, dir, False)
         notification(name.upper(), "[COLOR lime]" + text + "[/COLOR]", '5000', thumb)
 		
 def add_favourite_song(name, url, dir, text):
+    menu_texts = []
+    menu_texts.append("Add New Group")
+    dialog = xbmcgui.Dialog()
+    if os.path.isfile(FAV_SONG):
+        s = read_from_file(FAV_SONG)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                try:
+                    plname = list1[5]
+                    if not plname in menu_texts:
+                        menu_texts.append(plname)
+                except:
+                    pass
+    menu_id = dialog.select('Select Group', menu_texts)
+    if(menu_id < 0):
+        return (None, None)
+        dialog.close()
+    if (menu_id == 0):
+        keyboard = xbmc.Keyboard('', 'Create New Group', False)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            query = keyboard.getText()
+            if len(query) > 0:
+                plname = query
+    else:
+        plname = menu_texts[menu_id]
     splitdata = url.split('<>')
     artist = splitdata[0]
     album = splitdata[1]
     songname = splitdata[2]
     url1 = splitdata[3]
     iconimage = splitdata[4]
+    url = "%s<>%s" % (url, plname)
     add_to_list(url, dir, False)
     notification(songname.upper(), "[COLOR lime]" + text + "[/COLOR]", '5000',iconimage)
 	
@@ -661,6 +816,7 @@ def add_to_list(list, file, refresh):
         xbmc.executebuiltin("Container.Refresh")
     
 def remove_from_list(list, file):
+    list = list.replace('<>Ungrouped', '').replace('All Songs', '')
     index = find_list(list, file)
     if index >= 0:
         content = read_from_file(file)
@@ -671,7 +827,8 @@ def remove_from_list(list, file):
             if len(line) > 0:
                 s = s + line + '\n'
         write_to_file(file, s)
-        xbmc.executebuiltin("Container.Refresh")
+        if not 'song' in file and not 'album' in file:
+            xbmc.executebuiltin("Container.Refresh")
 		
 def write_to_file(path, content, append=False, silent=False):
     try:
@@ -775,11 +932,18 @@ def addLink(name,url,iconimage):
 
 
 def addDir(name,url,mode,iconimage,type):
+        type1=type
+        type = type.replace('qq','')
         suffix = ""
         if type == "artists":
             list = "%s<>%s" % (str(name).lower(),url)
         else:
-            list = "%s<>%s<>%s" % (str(name).lower(),url,str(iconimage))
+            if 'qq' in type1:
+                spltype1 = type1.split('qq')
+                list = "%s<>%s<>%s<>%s" % (str(name).lower(),url,str(iconimage),spltype1[0])
+            else:
+                list = "%s<>%s<>%s" % (str(name).lower(),url,str(iconimage))
+        list = list.replace(',', '')
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)
         ok=True
         contextMenuItems = []
@@ -790,17 +954,17 @@ def addDir(name,url,mode,iconimage,type):
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Favourite Artists[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=62)'%(sys.argv[0], name, str(list))))
-        if type == "albums":
+        if 'album' in type:
             download_album = '%s?name=%s&url=%s&iconimage=%s&mode=202' % (sys.argv[0], urllib.quote(name), url, iconimage)  
             contextMenuItems.append(('[COLOR cyan]Download Album[/COLOR]', 'XBMC.RunPlugin(%s)' % download_album))
             queue_music = '%s?name=%s&url=%s&iconimage=%s&mode=6' % (sys.argv[0], urllib.quote(name), url, iconimage)  
             contextMenuItems.append(('[COLOR cyan]Queue Album[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_music))
-            if find_list(list.lower(), FAV_ALBUM) < 0:
+            if not 'qq' in type1:
                 suffix = ""
-                contextMenuItems.append(("[COLOR lime]Add to Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=64)'%(sys.argv[0], name, str(list))))
+                contextMenuItems.append(("[COLOR lime]Add to Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=64)'%(sys.argv[0], name.replace(',', ''), str(list))))
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
-                contextMenuItems.append(("[COLOR orange]Remove from Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=65)'%(sys.argv[0], name, str(list))))
+                contextMenuItems.append(("[COLOR orange]Remove from Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=65)'%(sys.argv[0], name.replace(',', ''), str(list))))
         liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
@@ -808,9 +972,13 @@ def addDir(name,url,mode,iconimage,type):
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
-def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur):
+def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur,type):
         suffix = ""
-        list = "%s<>%s<>%s<>%s<>%s" % (str(artist),str(album),str(songname).lower(),url,str(iconimage))
+        if 'qq' in dur:
+            list = "%s<>%s<>%s<>%s<>%s<>%s" % (str(artist),str(album),str(songname).lower(),url,str(iconimage),str(dur).replace('qq',''))
+        else:
+            list = "%s<>%s<>%s<>%s<>%s" % (str(artist),str(album),str(songname).lower(),url,str(iconimage))
+        list = list.replace(',', '')
         contextMenuItems = []
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&songname="+urllib.quote_plus(songname)+"&artist="+urllib.quote_plus(artist)+"&album="+urllib.quote_plus(album)+"&dur="+str(dur)
         ok=True
@@ -820,12 +988,12 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur):
         contextMenuItems.append(('[COLOR cyan]Download Song[/COLOR]', 'XBMC.RunPlugin(%s)' % download_song))
         queue_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=11' % (sys.argv[0], urllib.quote(songname), url, iconimage,songname,artist,album)  
         contextMenuItems.append(('[COLOR cyan]Queue Song[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_song))
-        if find_list(list.lower(), FAV_SONG) < 0:
+        if type != 'favsong':
             suffix = ""
-            contextMenuItems.append(("[COLOR lime]Add to Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=67)'%(sys.argv[0], name, str(list))))
+            contextMenuItems.append(("[COLOR lime]Add to Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=67)'%(sys.argv[0], name.replace(',', ''), str(list))))
         else:
             suffix = ' [COLOR lime]+[/COLOR]'
-            contextMenuItems.append(("[COLOR orange]Remove from Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=68)'%(sys.argv[0], name, str(list))))
+            contextMenuItems.append(("[COLOR orange]Remove from Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=68)'%(sys.argv[0], name.replace(',', ''), str(list))))
         liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )

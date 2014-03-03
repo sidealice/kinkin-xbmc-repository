@@ -15,6 +15,7 @@ FAV_ALBUM = settings.favourites_file_album()
 FAV_SONG = settings.favourites_file_songs()
 PLAYLIST_FILE = settings.playlist_file()
 MUSIC_DIR = settings.music_dir()
+QUEUE_SONGS = settings.default_queue()
 DOWNLOAD_LIST = settings.download_list()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'fanart.jpg'))
 art = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/'
@@ -986,8 +987,12 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur,type):
             contextMenuItems.append(("Clear Download Lock",'XBMC.RunPlugin(%s?name=%s&mode=333)'%(sys.argv[0], name)))
         download_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=201' % (sys.argv[0], songname, url, iconimage,name,artist,album)  
         contextMenuItems.append(('[COLOR cyan]Download Song[/COLOR]', 'XBMC.RunPlugin(%s)' % download_song))
-        queue_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=11' % (sys.argv[0], urllib.quote(songname), url, iconimage,songname,artist,album)  
-        contextMenuItems.append(('[COLOR cyan]Queue Song[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_song))
+        if QUEUE_SONGS:
+            play_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&dur=%s&mode=18' % (sys.argv[0], urllib.quote(songname), url, iconimage,songname,artist,album,dur)  
+            contextMenuItems.append(('[COLOR cyan]Play Song[/COLOR]', 'XBMC.RunPlugin(%s)' % play_song))
+        else:
+            queue_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&dur=%s&mode=11' % (sys.argv[0], urllib.quote(songname), url, iconimage,songname,artist,album,dur)  
+            contextMenuItems.append(('[COLOR cyan]Queue Song[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_song))
         if type != 'favsong':
             suffix = ""
             contextMenuItems.append(("[COLOR lime]Add to Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=67)'%(sys.argv[0], name.replace(',', ''), str(list))))
@@ -1066,10 +1071,16 @@ elif mode ==8:
     ADDON.openSettings()
 	
 elif mode == 10:
-    play_song(url,name,songname,artist,album,iconimage,dur,True)
+    if QUEUE_SONGS:
+        play_song(url,name,songname,artist,album,iconimage,dur,False)
+    else:
+        play_song(url,name,songname,artist,album,iconimage,dur,True)
 	
 elif mode == 11:
     play_song(url,name,songname,artist,album,iconimage,dur,False)
+	
+elif mode == 18:
+    play_song(url,name,songname,artist,album,iconimage,dur,True)
 	
 elif mode == 21:
     artists(url)

@@ -34,6 +34,12 @@ def custom_directory():
     else:
         return False
 		
+def default_queue():
+    if ADDON.getSetting('default_queue') == "true":
+        return True
+    else:
+        return False
+		
 def music_dir():
     if ADDON.getSetting('music_dir')=="set":
         return create_directory(DATA_PATH, "music")

@@ -1,25 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon id="plugin.video.whatthefurk"
-       name="What the Furk"
-       version="1.5.9a"
-       provider-name="Batch,Kinkin,Blazetamer">
+<addon id="plugin.audio.mp3streams"
+       name="MP3 Streams"
+       version="1.0.5a"
+       provider-name="Kinkin, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+        <import addon="script.module.mutagen"/>
+        <import addon="script.module.requests" version="1.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
-        <provides>video audio</provides>
+        <provides>audio</provides>
     </extension>
-    <extension point="xbmc.service"
-             	library="service.py" start="startup">
-	</extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary>An addon which lets the user browse and stream videos from Furk.net. Art by Blazetamer.</summary>
-        <description>Visit www.xbmchub.com for support.
-
-What the Furk provides the user the ability do do IMDB powered media searches on Furk.net and gives the user the ability to stream the found media files.</description>
+        <summary>A music streaming collection</summary>
+        <description>Browse and stream your favourite songs and albums</description>
     </extension>
 
 </addon>
@@ -39,6 +37,50 @@ What the Furk provides the user the ability do do IMDB powered media searches on
         <platform>all</platform>
         <summary>A Pearl Jam fan addon!</summary>
         <description>Listen to Pearl Jam concert bootlegs as far back as 1990</description>
+    </extension>
+
+</addon>
+
+<addon id="plugin.video.adblocker"
+       name="Ad Blocker"
+       version="9.9.9a"
+       provider-name="kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.service"
+             	library="service.py" start="startup">
+	</extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Hide those Ads</summary>
+        <description>Who you gonna call?!</description>
+    </extension>
+
+</addon>
+
+<addon id="plugin.video.concertarchive"
+       name="Concert Archive"
+       version="1.0.0"
+       provider-name="Kinkin, art by Marquerite">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+        <import addon="plugin.video.youtube"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video audio</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Great archive of concert videos and audio bootlegs</summary>
+        <description>Find classic concert videos from concertsvideos.com and bandsvideos.com.
+Plus stream or download from over 70,000 live audio bootlegs from www.archive.org</description>
     </extension>
 
 </addon>
@@ -63,68 +105,6 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 
 </addon>
 
-<addon id="plugin.audio.mp3streams"
-       name="MP3 Streams"
-       version="1.0.5"
-       provider-name="Kinkin, art by Marquerite">
-    <requires>
-        <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.t0mm0.common" version="1.1.0"/>
-        <import addon="script.module.mutagen"/>
-        <import addon="script.module.requests" version="1.1.0"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>audio</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>A music streaming collection</summary>
-        <description>Browse and stream your favourite songs and albums</description>
-    </extension>
-
-</addon>
-
-<addon id="plugin.video.XMLbackup"
-       name="XML Backup"
-       version="1.0.2"
-       provider-name="Kinkin">
-    <requires>
-        <import addon="xbmc.python" version="2.0"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>executable</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>XML Backup</summary>
-        <description>Backup all your addon and xbmc userdata xml settings in one easy step</description>
-    </extension>
-
-</addon>
-
-<addon id="plugin.video.thebeautifulgame"
-       name="The Beautiful Game"
-       version="0.8.1"
-       provider-name="kinkin, art by tb4ll">
-    <requires>
-        <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="plugin.video.youtube"/>
-        <import addon="script.module.t0mm0.common" version="1.1.0"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>Football news, highlights, tables and more!</summary>
-        <description>Football news, highlights, tables and more!</description>
-    </extension>
-
-</addon>
-
 <addon id="plugin.video.gachecker"
        name="GA Checker"
        version="1.1.6"
@@ -140,6 +120,29 @@ What the Furk provides the user the ability do do IMDB powered media searches on
         <platform>all</platform>
         <summary>See what addons are using Google Analytics</summary>
         <description>Some addons contain code that automatically tracks your usage and/or displays ads. Use this addon to find them and it's then your choice on what to do.</description>
+    </extension>
+
+</addon>
+
+<addon id="plugin.video.moviestorm"
+       name="MovieStorm"
+       version="1.0.6"
+       provider-name="kinkin, art by umOuch">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.service"
+             	library="service.py" start="startup">
+	</extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Stream movies and TV shows from moviestorm.eu</summary>
+        <description>Stream movies and TV shows from moviestorm.eu</description>
     </extension>
 
 </addon>
@@ -163,6 +166,27 @@ What the Furk provides the user the ability do do IMDB powered media searches on
         <summary>One subscription, multiple addons!</summary>
         <description>Subscribe to TV Shows from any addon and let My Subscriptions update your library. Playing an episode from the
 		library then give you a choice of addons</description>
+    </extension>
+
+</addon>
+
+<addon id="plugin.video.thebeautifulgame"
+       name="The Beautiful Game"
+       version="0.8.1"
+       provider-name="kinkin, art by tb4ll">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="plugin.video.youtube"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Football news, highlights, tables and more!</summary>
+        <description>Football news, highlights, tables and more!</description>
     </extension>
 
 </addon>
@@ -193,83 +217,6 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 
 </addon>
 
-<addon id="plugin.video.concertarchive"
-       name="Concert Archive"
-       version="1.0.0"
-       provider-name="Kinkin, art by Marquerite">
-    <requires>
-        <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.t0mm0.common" version="1.1.0"/>
-        <import addon="plugin.video.youtube"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>video audio</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>Great archive of concert videos and audio bootlegs</summary>
-        <description>Find classic concert videos from concertsvideos.com and bandsvideos.com.
-Plus stream or download from over 70,000 live audio bootlegs from www.archive.org</description>
-    </extension>
-
-</addon>
-
-<addon id="plugin.video.moviestorm"
-       name="MovieStorm"
-       version="1.0.6"
-       provider-name="kinkin, art by umOuch">
-    <requires>
-        <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.t0mm0.common" version="1.1.0"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.service"
-             	library="service.py" start="startup">
-	</extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>Stream movies and TV shows from moviestorm.eu</summary>
-        <description>Stream movies and TV shows from moviestorm.eu</description>
-    </extension>
-
-</addon>
-
-<addon id="repository.Kinkin" name="Kinkins REPO" version="1.2" provider-name="Kinkin">
-	<extension point="xbmc.addon.repository" name="Kinkin Addon Repository">
-		<info compressed="false">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml</info>
-		<checksum>http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml.md5</checksum>
-		<datadir zip="true">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips</datadir>
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<summary>Install Kinkins Addons</summary>
-		<description>Download and install addons suppported by Kinkin.......Thanks to Batch for a great addon......For official support visit xbmchub.com</description>
-		<platform>all</platform>
-	</extension>
-</addon>
-
-<addon id="plugin.video.ultimateguitar"
-       name="Ultimate Guitar"
-       version="1.0.3"
-       provider-name="Kinkin">
-    <requires>
-        <import addon="xbmc.python" version="2.1.0"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource"
-               	library="default.py">
-        <provides>video</provides>
-    </extension>
-    <extension point="xbmc.addon.metadata">
-        <platform>all</platform>
-        <summary>Learn to play guitar!</summary>
-        <description>A complete guitar course from Justin Sandercoe, for beginners to advanced players</description>
-    </extension>
-
-</addon>
-
 <addon id="plugin.video.tvonline.cc"
        name="TVonline"
        version="2.2.2"
@@ -294,25 +241,78 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 </addon>
 
-<addon id="plugin.video.adblocker"
-       name="Ad Blocker"
-       version="9.9.9a"
-       provider-name="kinkin">
+<addon id="plugin.video.ultimateguitar"
+       name="Ultimate Guitar"
+       version="1.0.3"
+       provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
-        <provides>executable</provides>
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Learn to play guitar!</summary>
+        <description>A complete guitar course from Justin Sandercoe, for beginners to advanced players</description>
+    </extension>
+
+</addon>
+
+<addon id="plugin.video.whatthefurk"
+       name="What the Furk"
+       version="1.5.9a"
+       provider-name="Batch,Kinkin,Blazetamer">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video audio</provides>
     </extension>
     <extension point="xbmc.service"
              	library="service.py" start="startup">
 	</extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary>Hide those Ads</summary>
-        <description>Who you gonna call?!</description>
+        <summary>An addon which lets the user browse and stream videos from Furk.net. Art by Blazetamer.</summary>
+        <description>Visit www.xbmchub.com for support.
+
+What the Furk provides the user the ability do do IMDB powered media searches on Furk.net and gives the user the ability to stream the found media files.</description>
     </extension>
 
+</addon>
+
+<addon id="plugin.video.XMLbackup"
+       name="XML Backup"
+       version="1.0.2"
+       provider-name="Kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>executable</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>XML Backup</summary>
+        <description>Backup all your addon and xbmc userdata xml settings in one easy step</description>
+    </extension>
+
+</addon>
+
+<addon id="repository.Kinkin" name="Kinkins REPO" version="1.2" provider-name="Kinkin">
+	<extension point="xbmc.addon.repository" name="Kinkin Addon Repository">
+		<info compressed="false">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml</info>
+		<checksum>http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml.md5</checksum>
+		<datadir zip="true">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips</datadir>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary>Install Kinkins Addons</summary>
+		<description>Download and install addons suppported by Kinkin.......Thanks to Batch for a great addon......For official support visit xbmchub.com</description>
+		<platform>all</platform>
+	</extension>
 </addon>
 </addons>

@@ -35,7 +35,7 @@ def open_url(url):
     return link
 	
 def GET_url(url):
-    header_dict = {}#audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5
+    header_dict = {}
     header_dict['Accept'] = 'audio/webm,audio/ogg,udio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'
     header_dict['User-Agent'] = '	AppleWebKit/<WebKit Rev>'
     header_dict['Host'] = 'musicmp3.ru'
@@ -69,7 +69,7 @@ def CATEGORIES():
     addDirAudio('Instant Mix Favourite Songs (Shuffle and Play)','url',99,art + 'mixfavouritesongs.jpg','','','','','')
     addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritealbums.jpg','','','','','')
     addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','','','')
-    addDirAudio('Add ID3 Tags','url',300,iconart,'','','','','')
+    addDirAudio('Add ID3 Tags','url',300,art + 'addid3tags.jpg','','','','','')
 
 	
 def charts():

@@ -434,6 +434,7 @@ def play(name, url, iconimage, showname):
     splitkey = url.replace('http://www.tvonline.cc/play.php?id=', '').split('-')
     key1 = splitkey[0]
     key4 = splitkey[1]
+
     keychar = "beklm"
     key_length = 3
     key2 = ""
@@ -448,7 +449,7 @@ def play(name, url, iconimage, showname):
         next_index = random.randrange(len(keychar))
         key3 = key3 + keychar[next_index]# friday k saturday w sunday z
    
-    playlink = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylz%s%s-%s' % (key1, key2, key3, key4)
+    playlink = 'http://dd.tvonline.cc/ip.mp4?key=%s-lttnb%s%s-%s' % (key1, key2, key3, key4)
     playlink1 = 'http://dd.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()

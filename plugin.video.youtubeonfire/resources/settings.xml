@@ -1,0 +1,12 @@
+<settings>
+	<category label="Movies">
+        <setting id="default_sort" type="enum" values="Featured|Newly Added|Newly Released|Top Rated" label="10002" default="0" />
+        <setting id="default_language" type="enum" values="English|Korean|Chinese|Japanese|Thai|Malay|Indonesian|Filipino|Arabic|Indian|Spanish|Portugeuse|French|German|Russian|Italian" label="10003" default="0" />
+        <setting id="default_subtitle" type="enum" values="All|English|Chinese|Malay|Spanish|Arabic|Korean|Thai" label="10004" default="0" />
+        <setting id="movie_directory" type="folder" label="10006" default="special://userdata/addon_data/plugin.video.youtubeonfire/movies"/>
+        <setting id="enable_meta" type="bool" label="10007" default="true" />
+        <setting id="play_max" type="bool" label="10008" default="true" />
+        <setting id="service_time" type="text" label="Service Time" default="2000-01-01 00:00:00" visible="false"/>
+
+	</category>
+</settings>

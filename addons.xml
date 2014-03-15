@@ -303,6 +303,29 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 
 </addon>
 
+<addon id="plugin.video.youtubeonfire"
+       name="YouTube on Fire"
+       version="0.5.6"
+       provider-name="kinkin, art by Christara">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+        <import addon="script.module.metahandler" version="2.4.0"/>
+        <import addon="script.module.requests" version="1.1.0"/>
+        <import addon="plugin.video.youtube"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Stream movies from youtubeonfire</summary>
+        <description>Stream movies from youtubeonfire</description>
+    </extension>
+
+</addon>
+
 <addon id="repository.Kinkin" name="Kinkins REPO" version="1.2" provider-name="Kinkin">
 	<extension point="xbmc.addon.repository" name="Kinkin Addon Repository">
 		<info compressed="false">http://kinkin-xbmc-repository.googlecode.com/svn/trunk/addons.xml</info>

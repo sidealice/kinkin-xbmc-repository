@@ -1,0 +1,9 @@
+<strings>
+	<!-- Settings -->
+    <string id="10002">Default Sort</string>
+    <string id="10003">Default Language</string>
+    <string id="10004">Default Subtitle</string>
+    <string id="10006">Movie Directory</string>
+    <string id="10007">Enable Metadata</string>
+    <string id="10008">Autoplay maximum quality from library</string>
+</strings>

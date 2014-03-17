@@ -247,7 +247,9 @@ def play(name, url, iconimage, showname):
     handle = str(sys.argv[1])
     link = open_url(url).strip().replace('\n', '').replace('\t', '')
     try:
-        url = regex_from_to(link, 'var xxxx = "', '"')
+        findfile = regex_from_to(link, 'playlist:', 'type')
+        key = regex_from_to(findfile, 'file: ', ',')
+        url = regex_from_to(link, 'var ' + key + ' = "', '"')
     except:
         if name.count('-')==4:
             showname = "%s %s" % (showname, name)
@@ -255,7 +257,9 @@ def play(name, url, iconimage, showname):
             showname = name
         url = regex_from_to(link, 'target="_blank" href="', '">')
         link = open_url(url).strip().replace('\n', '').replace('\t', '')
-        url = regex_from_to(link, 'var xxxx = "', '"')
+        findfile = regex_from_to(link, 'playlist:', 'type')
+        key = regex_from_to(findfile, 'file: ', ',')
+        url = regex_from_to(link, 'var ' + key + ' = "', '"')
     filepos = url.index('ses=')-5   
     filetype = url[filepos:filepos+4]
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)

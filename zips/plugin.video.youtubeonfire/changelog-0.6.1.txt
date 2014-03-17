@@ -1,5 +1,5 @@
 0.6.1
-Art updated by Chistara
+Art updated by Christara
 Music art added
 Favourite Artists option added to Music Videos
 Code tweaks

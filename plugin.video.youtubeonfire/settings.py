@@ -102,6 +102,9 @@ def favourites_file():
 def favourites_music_file():
     return create_file(DATA_PATH, "favourites_music.list")
 	
+def favourites_artists_file():
+    return create_file(DATA_PATH, "favourites_artists.list")
+	
 def subscription_file():
     return create_file(DATA_PATH, "subscriptions.list")
 		

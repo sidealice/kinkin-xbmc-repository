@@ -305,7 +305,7 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 
 <addon id="plugin.video.youtubeonfire"
        name="YouTube on Fire"
-       version="0.6.0"
+       version="0.6.1"
        provider-name="kinkin, art by Christara">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

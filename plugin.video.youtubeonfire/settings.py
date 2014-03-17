@@ -99,6 +99,9 @@ def movie_directory():
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")
 	
+def favourites_music_file():
+    return create_file(DATA_PATH, "favourites_music.list")
+	
 def subscription_file():
     return create_file(DATA_PATH, "subscriptions.list")
 		

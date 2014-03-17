@@ -1,7 +1,7 @@
 '''
 kinkin
 '''
-
+#coding=UTF8
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
 import settings
 import time,datetime
@@ -28,6 +28,7 @@ ADDON = settings.addon()
 ENABLE_META = settings.enable_meta()
 MOVIE_PATH = settings.movie_directory()
 FAV = settings.favourites_file()
+FAV_MUSIC = settings.favourites_music_file()
 SUB = settings.subscription_file()
 SORT = settings.default_sort()
 LANGUAGE = settings.default_language()
@@ -73,7 +74,10 @@ def POST_URL(url,a,c,p):#, form_data
     header_dict['Connection'] = 'keep-alive'
     header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
     if 'mvtube' in url:
-        header_dict['Referer'] = 'http://mvtube.co/search.php'
+        if a == 'retrieveplaylists':
+            header_dict['Referer'] = 'http://mvtube.co/details.php'
+        else:
+            header_dict['Referer'] = 'http://mvtube.co/search.php'
     else:
         header_dict['Referer'] = 'http://www.movietube.co/search.php'
     #header_dict['Content-Length'] = '113'
@@ -97,7 +101,7 @@ def GET_URL(url):
 	
 def CATEGORIES(name):
     addDir("Movies", 'url',100,xbmc.translatePath(os.path.join(art,'movies1.png')), '1<>""','qq')
-    #addDir("Music Videos", 'url',200,'', '1<>""','qq')
+    addDir("Music Videos", 'url',200,xbmc.translatePath(os.path.join(art,'musicvideos.png')), '1<>""','qq')
     addDirPlayable('Apply YouTube fix','url',999,xbmc.translatePath(os.path.join(art,'youtubefix1.png')), '','')
 
 
@@ -133,10 +137,10 @@ def movie_directory_1(name):
     
 	
 def movie_directory_2(name):
-    addDir("1080P", 'http://www.movietube.co/index.php',7,'', '1<>1080<><>','qq')
-    addDir("720P", 'http://www.movietube.co/index.php',7,'', '1<>720<><>','qq')
-    addDir("G/PG-13", 'http://www.movietube.co/index.php',7,'', '1<>PG<><>','qq')
-    addDir("R-Rated", 'http://www.movietube.co/index.php',7,'', '1<>R-Rated<><>','qq')
+    addDir("1080P", 'http://www.movietube.co/index.php',7,xbmc.translatePath(os.path.join(art,'1080p.png')), '1<>1080<><>','qq')
+    addDir("720P", 'http://www.movietube.co/index.php',7,xbmc.translatePath(os.path.join(art,'720p.png')), '1<>720<><>','qq')
+    addDir("G/PG-13", 'http://www.movietube.co/index.php',7,xbmc.translatePath(os.path.join(art,'gpg13.png')), '1<>PG<><>','qq')
+    addDir("R-Rated", 'http://www.movietube.co/index.php',7,xbmc.translatePath(os.path.join(art,'r-rated.png')), '1<>R-Rated<><>','qq')
 	
 def movie_directory_3(name,url):
     req = GET_URL(url)
@@ -203,8 +207,8 @@ def search_moviefile(query):
         url = '{"KeyWord":"' + vurl + '"}'
         hosturl = 'http://www.movietube.co/watch.php?v=' + vurl
         thumb = regex_from_to(all_td[0], 'img src="', '"')
-        title = regex_from_to(all_td[1], 'target="_blank">', '</a>')
-        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ')
+        title = regex_from_to(all_td[1], 'target="_blank">', '</a>').replace('&nbsp', '').replace('<img', '')
+        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
         tomato = regex_from_to(all_td[1], '/>', '</h3_light')
         quality = regex_from_to(all_td[2], 'height="20" />', '</h3>')
         infoLabels =None
@@ -238,8 +242,8 @@ def movies(name,url,page,token):
         url = '{"KeyWord":"' + vurl + '"}'
         hosturl = 'http://www.movietube.co/watch.php?v=' + vurl
         thumb = regex_from_to(all_td[0], 'img src="', '"')
-        title = regex_from_to(all_td[1], 'target="_blank">', '</a>')
-        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ')
+        title = regex_from_to(all_td[1], 'target="_blank">', '</a>').replace('&nbsp', '').replace('<img', '')
+        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
         tomato = regex_from_to(all_td[1], '/>', '</h3_light')
         quality = regex_from_to(all_td[2], 'height="20" />', '</h3>')
         infoLabels =None
@@ -251,7 +255,6 @@ def movies(name,url,page,token):
         
 
 def movie_quality(name,url,iconimage,list):
-
     if '[color' in name:
         splitname = name.split('[color lime][max ')
         name = splitname[0].rstrip()
@@ -259,7 +262,7 @@ def movie_quality(name,url,iconimage,list):
     else:
         splitname = name.split('[COLOR lime][max ')
         name = splitname[0].rstrip()
-        q = splitname[1].replace('][/COLOR]', '')
+        q = splitname[1].replace('][/COLOR]', '').replace('&nbsp', '').replace('<img', '')
     a = 'getplayerinfo'
     c = 'result'
     p = url 
@@ -304,6 +307,8 @@ def play_movie(name,url,iconimage,hosturl):
     header_dict['Host'] = 'redirector.googlevideo.com'
     
     if 'plugin://plugin.video.youtube' in url:
+        url1 = url
+    elif 'http://watch32.com/?getlink' in url:
         url1 = url
     elif 'docs.google.com' in url:
         header_dict = {}
@@ -533,48 +538,203 @@ def get_file_size(url):
 
     return size
 
-'''
+
 #MUSIC
 def music_video_menu(name):
-    addDir("Billboard", 'http://mvtube.co/index.php',205,'', '1<><>BillBoard<>','qq')
-    addDir("Koreaboard", 'http://mvtube.co/index.php',205,'', '1<><>KoreaBoard<>','qq')
-    addDir("Japanboard", 'http://mvtube.co/index.php',205,'', '1<><>JapanBoard<>','qq')
-    addDir("Chineseboard", 'http://mvtube.co/index.php',205,'', '1<><>ChineseBoard<>','qq')
-    addDir("Movies by Genre", 'url',101,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '1<>','qq')
+    addDir("Billboard Chart", 'http://mvtube.co/index.php',205,'', '1<><>BillBoard<><>','qq')
+    addDir("Most Popular", 'http://mvtube.co/index.php',205,'', '1<><><><>YouTubeView','qq')
+    addDir("Top Rated", 'http://mvtube.co/index.php',205,'', '1<><><><>YouTubeScore','qq')
+    addDir("Newly Added", 'http://mvtube.co/index.php',205,'', '1<><><><>addTime','qq')
+    addDir("High Definition", 'http://mvtube.co/index.php',205,'', '1<><><><>HD','qq')
+    addDir("Moods", 'url',207,'', '','')
+    addDir("Artists", 'http://mvtube.co/index.php',208,'', '1<><><><>','qq')
+    addDir("Playlists", 'http://mvtube.co/index.php',208,'', '1<><><><>','qq')
+    addDir("Favourites", 'url',206,xbmc.translatePath(os.path.join(art,'favourites.png')), '','')
+	
+def music_moods(name,url):
+    addDir("Sexy", 'http://mvtube.co/index.php',205,'', '1<><>Sexy<><>YouTubeView','qq')
+    addDir("Dance", 'http://mvtube.co/index.php',205,'', '1<><>Dance<><>YouTubeView','qq')
+    addDir("Love", 'http://mvtube.co/index.php',205,'', '1<><>Love<><>YouTubeView','qq')
+    addDir("Happy", 'http://mvtube.co/index.php',205,'', '1<><>Happy<><>YouTubeView','qq')
+    addDir("Sad", 'http://mvtube.co/index.php',205,'', '1<><>Sad<><>YouTubeView','qq')
+    addDir("Male", 'http://mvtube.co/index.php',205,'', '1<><><>Male<>YouTubeView','qq')
+    addDir("Female", 'http://mvtube.co/index.php',205,'', '1<><><>Female<>YouTubeView','qq')
+    
 
 def music(name,url,page,token):
+    token = token.replace('%0a', '\n')
     splitpage=page.split('<>')
     page = splitpage[0]
-    genre = splitpage[1]
-    chart = splitpage[2]
-    if splitpage[3] =='':
-        sort = ""
+    language = splitpage[1]
+    mood = splitpage[2]
+    mf = splitpage[3]
+    sort = splitpage[4]
+	
+    if len(token)>50:
+        line = token.split('\n')
+
+   
+    if token == 'qq':
+        token = ''
+        if 'billboard' in name.lower():
+            p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token, mood)
+        elif sort == 'artist_pl' or sort == 'playlists':
+            p = '{"Keyword":"%s","Page":"%s","NextToken":"%s"}' % (language, page, token)
+        else:
+            p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,token,LANGUAGE,mood,mf,sort)
+        
     else:
-        sort = splitpage[3]#{"Page":"1","NextToken":"","BillBoard":"ChineseBoard"}
+        if 'billboard' in name.lower():
+            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],mood)
+        elif sort == 'artist_pl' or sort == 'playlists':
+            p = '{"Keyword":"%s","Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s"}' % (language,page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8])
+        else:
+            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],LANGUAGE,mood,mf,sort)
+    a = 'retrieve'
+    if 'billboard' in name.lower():
+        c = 'chart'
+    elif sort == 'artist_pl':
+        c = 'detail'
+        a = 'retrievesingers'
+    elif sort == 'playlists':
+        c = 'detail'
+        a = 'retrieveplaylists'
+    else:
+        c = 'song'
+		
+    req = POST_URL(url,a,c,p).replace('&nbsp', '').replace("'", '"')
+    token = str(req).split('|')[0]
+    token = token.replace('%0a', '\n')
+
+    match2 = re.compile('<tr style="(.+?)value="(.+?)<div class="idx">(.+?)</div></td><td width="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><span class="dtl_singer">(.+?)watch.(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
+    for d1,d2,pos,d3,thumb,d4,title,d5,d6,vurl in match2:
+        title = title.decode("utf8").encode("utf8").replace('"',"'")
+        url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
+        addDirVideo(title,'useicon',210,thumb,'',str(vurl))
+    if len(token)>50:		
+        nextpage=int(page)+1
+        nextpage = "%s<>%s<>%s<>%s<>%s" % (nextpage,language,mood,mf,sort)
+        addDir("Next Page", 'http://mvtube.co/index.php',205,'', nextpage,token)
+		
+def queue_all(name,url,page,token):
+    token = token.replace('%0a', '\n')
+    splitpage=page.split('<>')
+    page = splitpage[0]
+    language = splitpage[1]
+    mood = splitpage[2]
+    mf = splitpage[3]
+    sort = splitpage[4]
+	
+    if len(token)>50:
+        line = token.split('\n')
+
+   
+    if token == 'qq':
+        token = ''
+        if 'billboard' in name.lower():
+            p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token, mood)
+        elif sort == 'artist_pl' or sort == 'playlists':
+            p = '{"Keyword":"%s","Page":"%s","NextToken":"%s"}' % (language, page, token)
+        else:
+            p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,token,LANGUAGE,mood,mf,sort)
+        
+    else:
+        if 'billboard' in name.lower():
+            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],mood)
+        elif sort == 'artist_pl' or sort == 'playlists':
+            p = '{"Keyword":"%s","Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s"}' % (language,page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8])
+        else:
+            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],LANGUAGE,mood,mf,sort)
+    a = 'retrieve'
+    if 'billboard' in name.lower():
+        c = 'chart'
+    elif sort == 'artist_pl':
+        c = 'detail'
+        a = 'retrievesingers'
+    elif sort == 'playlists':
+        c = 'detail'
+        a = 'retrieveplaylists'
+    else:
+        c = 'song'
+		
+    req = POST_URL(url,a,c,p).replace('&nbsp', '').replace("'", '"')
+    token = str(req).split('|')[0]
+    token = token.replace('%0a', '\n')
+
+    match2 = re.compile('<tr style="(.+?)value="(.+?)<div class="idx">(.+?)</div></td><td width="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><span class="dtl_singer">(.+?)watch.(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
+    for d1,d2,pos,d3,thumb,d4,title,d5,d6,vurl in match2:
+        title = title.decode("utf8").encode("utf8").replace('"',"'")
+        url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
+        play_music_video(title, url, thumb,False)
+	
+def music_artists(name,url,page,token):
+    splitpage=page.split('<>')
+    page = splitpage[0]
+    language = splitpage[1]
+    mood = splitpage[2]
+    mf = splitpage[3]
+    sort = splitpage[4]
     
     if token == 'qq':
         token = ''
-        p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token, chart)
+        p = '{"Page":"%s","NextToken":"%s"}' % (page, token)
     else:
         line = token.split('\n')
-        #line = str(line.replace(' ', ,'+'))
-        p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],chart)
+        p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8])
     a = 'retrieve'
-    c = 'chart'
-
+    if 'artist' in name.lower():
+        c = 'artist'
+    else:
+        c = 'playlist'
     req = POST_URL(url,a,c,p).replace('&nbsp', '')
-    token = str(req).split('|')[0]
-    
-    match = re.compile('<tr style="(.+?)value="(.+?)<div class="idx">(.+?)</div></td><td width="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><span class="dtl_singer">(.+?)data="(.+?)">(.+?)</a></span></div></td><td width="100"><div class="vors">(.+?)</div></td><td width="250"><div class="ctm"></div></td><td width="50"><div class="ytlk"><a href="(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
-    for d1,d2,pos,d3,thumb,d4,title,d5,artist,d6,views,d7,vurl in match:
-        url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
-        addDirVideo(artist,title,url,210,thumb,'')
-		
-    #nextpage=int(page)+1
-    #nextpage = "%s<>%s<>%s<>%s" % (nextpage,genre,chart,sort)
-    #addDir("Next Page", 'http://mvtube.co/index.php',205,'', nextpage,token)
+    print req
+    try:
+        token = str(req).split('|')[0]
+    except:
+        pass
+    if c == 'artist': 
+        match = re.compile('<li><span class="pdl3"><b>(.+?)</b></span>(.+?)data="(.+?)"><img src="(.+?)" width=(.+?)data="(.+?)">(.+?)</a></span></li>').findall(req)
+        for pos,d1,artist,thumb,d2,data,d3 in match:
+            url = 'http://mvtube.co/index.php'
+            data = "%s<>%s<>%s<>%s<>%s" % ('1',data,'','','artist_pl')
+            addDir(artist, url,205,thumb, data,'qq')
+        nextpage=int(page)+1
+        nextpage = "%s<>%s<>%s<>%s<>%s" % (nextpage,language,mood,mf,sort)
+        addDir("Artist Next Page", 'http://mvtube.co/index.php',208,'', nextpage,token)
+    else:                  #
+        all_pl = regex_get_all(req,'<li>', '</li>')
+        for pl in all_pl:
+            url = 'http://mvtube.co/index.php'
+            data1 = regex_from_to(pl, 'data="', '"')
+            thumb = regex_from_to(pl, 'img src="', '"')
+            title = regex_from_to(pl, 'class="grey" data="', '</span>')
+            title = regex_from_to(title, '">', '</a>').lstrip()
+            data = "%s<>%s<>%s<>%s<>%s" % ('1',data1,'','','playlists')
+            addDir(title, url,205,thumb, data,'qq')
+
+
+	
+def favourites_music():
+    if os.path.isfile(FAV_MUSIC):
+        s = read_from_file(FAV_MUSIC)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                title = list1[0]
+                title = title.replace('->-', ' & ')
+                url = list1[1]
+                thumb = list1[2]
+                print url, thumb
+                addDirVideo(title,'useicon',210,thumb,'mus',url)
 
 def play_music_video(name, url, iconimage,clear):
+    if url == 'useicon':
+        url = iconimage
+    if 'http://img.youtube.com/vi/' in url:
+        iconimage = url
+        vurl = regex_from_to(url, 'http://img.youtube.com/vi/', '/mqdefault')
+        url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl)
     playlist=[]
     pl = get_XBMCPlaylist(clear)
     liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
@@ -597,7 +757,7 @@ def get_XBMCPlaylist(clear):
     if clear:
         pl.clear()
     return pl
-'''
+
 	
 def subscriptions():
     if os.path.isfile(SUB):
@@ -867,12 +1027,14 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         if description == "mov":
             contextMenuItems.append(("[COLOR cyan]Download Movie[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=109&iconimage=%s&list=%s)'%(sys.argv[0], name, url,iconimage, str(url)+'<>'+str(name)+'<>'+'download')))
             contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=106&iconimage=%s&list=%s)'%(sys.argv[0], name, url,iconimage, str(url)+'<>'+str(name))))
-            if find_list(list, FAV) < 0:
+            if find_list(favlist, FAV) < 0:
                 suffix = ""
                 contextMenuItems.append(("[COLOR lime]Add to Addon Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=11&list=%s)'%(sys.argv[0], name, url, str(favlist).replace('http:','hhhh'))))
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Addon Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=13&list=%s)'%(sys.argv[0], name, url, str(favlist).replace('http:','hhhh'))))
+        if 'mvtube' in url:
+            contextMenuItems.append(("[COLOR lime]Queue all videos[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=209&list=%s&description=%s)'%(sys.argv[0], name, url,list, description)))
         liz=xbmcgui.ListItem(name + suffix + suffix2, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels=infoLabels)
         try:
@@ -882,56 +1044,38 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
-'''		
-def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
-        #shname = name.split(' | ')
-        #urlstring = "%s<>%s<>%s" % (shname[1],url,iconimage)
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
-        ok=True
-        #contextMenuItems = []
-        #contextMenuItems.append(("[COLOR lime]Download Movie[/COLOR]",'XBMC.RunPlugin((%s?showname=%s&mode=111)'%(sys.argv[0], urlstring)))
-        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels=infoLabels)
-        try:
-            liz.setProperty( "fanart_image", infoLabels['fanart'] )
-        except:
-            liz.setProperty('fanart_image', fanart )
-        #contextMenuItems.append(("[COLOR red]Report an error[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&showname=%s)'%(sys.argv[0],name, url, showname)))
-        #liz.addContextMenuItems(contextMenuItems, replaceItems=False)
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
-        return ok
-'''		
+
+
 def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
         contextMenuItems = []
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.unquote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
         ok=True
         
-        liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
+        liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels=infoLabels)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setProperty('fanart_image', fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
-		
-def addDirVideo(artist,name,url,mode,iconimage,artist_url):
-        url1 = url.replace(',','<>')
+	
+def addDirVideo(name,url,mode,iconimage,list,vurl):
         contextMenuItems = []
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+urllib.quote_plus(list)+"&vurl="+str(vurl)
         ok=True
-        text = "%s<>%s<>%s" % (name, url, iconimage)
-        if artist_url == 'fav':
-            contextMenuItems.append(('Remove from Favourites', 'XBMC.RunPlugin(%s?mode=15&url=%s)'% (sys.argv[0], text)))
+        text = "%s<>%s<>%s" % (name, vurl,iconimage)
+        if list == 'mus':
+            contextMenuItems.append(('Remove from Favourites', 'XBMC.RunPlugin(%s?mode=213&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, text)))
         else:
-            contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, url1, iconimage)))
-            contextMenuItems.append(('Mark as Favourite', 'XBMC.RunPlugin(%s?mode=12&url=%s)'% (sys.argv[0], text)))
-            contextMenuItems.append(('Mark as Broken', 'XBMC.RunPlugin(%s?mode=11&url=%s)'% (sys.argv[0], url)))
-        liz=xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+            contextMenuItems.append(('Mark as Favourite', 'XBMC.RunPlugin(%s?mode=212&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, text)))
+        contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&iconimage=%s&url=%s)'% (sys.argv[0], name,vurl,iconimage)))
+        
+        liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, False)
         liz.setInfo( type="Video", infoLabels={ "Title": name } )
         liz.setProperty('fanart_image', fanart)
-        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
+        ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz)
         return ok
-        
+      
               
 params=get_params()
 
@@ -973,6 +1117,10 @@ except:
         pass
 try:
         description=urllib.unquote_plus(params["description"])
+except:
+        pass
+try:
+        vurl=str(params["vurl"])
 except:
         pass
 
@@ -1062,11 +1210,29 @@ elif mode == 200:
 elif mode == 205:
         music(name,url,list,description)
 		
+elif mode==206:
+        favourites_music()
+
+elif mode==207:
+        music_moods(name,url)
+		
+elif mode == 208:
+        music_artists(name,url,list,description)
+		
+elif mode == 209:
+        queue_all(name,url,list,description)
+		
 elif mode == 210:
         play_music_video(name, url, iconimage,True)
 		
 elif mode == 211:
         play_music_video(name, url, iconimage,False)
+		
+elif mode == 212:
+        add_favourite(name, url, iconimage, FAV_MUSIC, "Added to Favourites")
+	
+elif mode == 213:
+        remove_from_favourites(name, url, iconimage, FAV_MUSIC, "Removed from Favourites")
 		
 elif mode == 999:
         youtubefix()

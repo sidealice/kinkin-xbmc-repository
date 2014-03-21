@@ -166,14 +166,14 @@ def nzvmovie_url():
     return "http://www.nzbmovieseeker.com/"
   
 def imdb_actors_url():
-    return "http://m.imdb.com/search/name?"
+    return "http://www.imdb.com/search/name?"
 		
 def imdb_search_url():
     region = ADDON.getSetting('imdb_region')
     if region == '0':
         return "http://akas.imdb.com/search/title?"
     else:
-        return "http://m.imdb.com/search/title?"
+        return "http://www.imdb.com/search/title?"
 	
 def imdb_list_url():
     region = ADDON.getSetting('imdb_region')

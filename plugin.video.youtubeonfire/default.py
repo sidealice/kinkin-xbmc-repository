@@ -34,12 +34,19 @@ SORT = settings.default_sort()
 LANGUAGE = settings.default_language()
 SUBTITLE = settings.default_subtitle()
 MAX_MV = settings.play_max()
+PC_ENABLE = settings.enable_pc()
+PC_WATERSHED = settings.watershed_pc()
+PC_RATING = settings.pw_required_at()
+PC_PASS = settings.pc_pass()
+PC_DEFAULT = settings.pc_default()
+PC_TOGGLE = settings.enable_pc_settings()
+CUSTOM_PC = settings.custom_pc_file()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'icon.png'))
 movie_url = 'http://www.movietube.co/'
-posturl = 'http://www.movietube.co/index.php'
+posturl = 'http://movietube.co/index.php'
 ytplayerfixed = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'helpers', 'YouTubePlayer.py'))
 ytplayercopyto = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtube', ''))
 ytplayerorig = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtube', 'YouTubePlayer.py'))
@@ -69,6 +76,8 @@ def POST_URL(url,a,c,p):#, form_data
     header_dict['Pragma'] = 'no-cache'
     if 'mvtube' in url:
         header_dict['Host'] = 'mvtube.co'
+    elif 'knowledge' in url:
+        header_dict['Host'] = 'knowledgetube.co'
     else:
         header_dict['Host'] = 'www.movietube.co'
     header_dict['Connection'] = 'keep-alive'
@@ -78,13 +87,16 @@ def POST_URL(url,a,c,p):#, form_data
             header_dict['Referer'] = 'http://mvtube.co/details.php'
         else:
             header_dict['Referer'] = 'http://mvtube.co/search.php'
+    elif 'knowledge' in url:
+        header_dict['Referer'] = 'http://knowledgetube.co/search.php'
     else:
         header_dict['Referer'] = 'http://www.movietube.co/search.php'
     #header_dict['Content-Length'] = '113'
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
     header_dict['X-Requested-With'] = 'XMLHttpRequest'
     net.set_cookies(cookie_jar)
-    req = net.http_POST(url, form_data=form_dict, headers=header_dict).content.rstrip()
+    trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
+    req = net.http_POST(url, form_data=form_dict, headers=header_dict).content.translate(trans_table).rstrip()
     net.save_cookies(cookie_jar)
     return req
 	
@@ -99,10 +111,88 @@ def GET_URL(url):
     net.save_cookies(cookie_jar)
     return req
 	
+def pc_setting():
+    pw = ""
+    dialog = xbmcgui.Dialog()
+    keyboard = xbmc.Keyboard(pw, 'Enter your PIN/Password', True)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        pw = keyboard.getText()
+        if pw == PC_PASS:
+            if PC_TOGGLE == "UNLOCKED":
+                ADDON.setSetting('enable_pc_settings', value='LOCKED')
+                xbmc.executebuiltin("Container.Refresh")
+            else:
+                ADDON.setSetting('enable_pc_settings', value='UNLOCKED')
+                xbmc.executebuiltin("Container.Refresh")
+                ADDON.openSettings()				
+        else:
+            dialog.ok("Incorrect PIN/Password","")
+
+def parental_control(name,mpaa):
+    if mpaa != "G" and mpaa != "PG" and mpaa != "PG-13" and mpaa != "R":
+        mpaa = "Unrated"
+    dialog = xbmcgui.Dialog()
+    rating_list = ["No thanks, I'll choose later", "G", "PG","PG-13", "R"]
+    rating_list_return = ["No thanks, I'll choose later", "G", "PG","PG-13", "R"]
+    if mpaa=="Unrated" or mpaa=="":
+        mpaa = PC_DEFAULT
+        if os.path.isfile(CUSTOM_PC):
+            s = read_from_file(CUSTOM_PC)
+            if name in s:
+                search_list = s.split('\n')
+                for list in search_list:
+                    if list != '':
+                        list1 = list.split('<>')
+                        title = list1[0]
+                        cmpaa = list1[1]
+                        if title==name:
+                            mpaa=cmpaa
+            else:		
+                rating_id = dialog.select("No rating found....set/save your own?", rating_list)
+                if(rating_id < 0):
+                    return (None, None)
+                    dialog.close()
+                if(rating_id == 0):
+                    mpaa = PC_DEFAULT
+                else:
+                    pw=''
+                    keyboard = xbmc.Keyboard(pw, 'Enter your PIN/Password to save the rating', True)
+                    keyboard.doModal()
+                    if keyboard.isConfirmed():
+                        pw = keyboard.getText()
+                    else:
+                        pw=''
+                    if pw == PC_PASS:
+                        mpaa = rating_list_return[rating_id]
+                        content = '%s<>%s' % (name, mpaa)
+                        add_to_list(content,CUSTOM_PC)
+                    else:
+                        mpaa = PC_DEFAULT
+
+
+    if mpaa == "PLAY":
+        mpaa_n = 0
+    elif mpaa == "G":
+        mpaa_n = 1
+    elif mpaa == "PG":
+        mpaa_n = 2
+    elif mpaa == "PG-13":
+        mpaa_n = 3
+    elif mpaa == "R" or mpaa == "REQUIRE PIN":
+        mpaa_n = 4
+    return mpaa_n			
+
+	
 def CATEGORIES(name):
     addDir("Movies", 'url',100,art + 'movies.png', '1<>""','qq')
     addDir("Music Videos", 'url',200,art + 'musicvideos.png', '1<>""','qq')
+    addDir("Knowledge", 'url',300,art + 'knowledge.png', '1<>""','qq')
     addDirPlayable('Apply YouTube fix','url',999,art + 'youtubefix.png', '','')
+    if PC_TOGGLE == 'LOCKED':
+        addDirPlayable('[COLOR lime]UNLOCK Parental Control Settings[/COLOR]','url',800,art + 'pcunlocked.png', '','')
+    else:
+        addDirPlayable('[COLOR red]LOCK Parental Control Settings[/COLOR]','url',800,art + 'pcunlocked.png', '','')
 
 
 def movie_directory(name):
@@ -241,6 +331,7 @@ def search_moviefile(query):
     setView('movies', 'movies-view')
 
 def movies(name,url,page,token):
+    token = token.replace('+', ' +')
     splitpage=page.split('<>')
     page = splitpage[0]
     genre = splitpage[1]
@@ -295,11 +386,19 @@ def movies(name,url,page,token):
 
     nextpage=int(page)+1
     nextpage = "%s<>%s<>%s<>%s" % (nextpage,genre,year,sort)
-    addDir("Next Page", 'http://www.movietube.co/index.php',7,'', nextpage,token)
+    addDir("Next Page", 'http://www.movietube.co/index.php',7,art +  'nextpage.png', nextpage,token)
     setView('movies', 'movies-view')
         
 
 def movie_quality(name,url,iconimage,list):
+    try:
+        mpaa = name.split('[/color] ')[1]
+    except:
+        try:
+            mpaa = name.split('[/COLOR] ')[1]
+        except:
+            mpaa = "Unrated"
+  
     if '[color' in name:
         splitname = name.split('[color lime][max ')
         name = splitname[0].rstrip()
@@ -308,61 +407,104 @@ def movie_quality(name,url,iconimage,list):
         splitname = name.split('[COLOR lime][max ')
         name = splitname[0].rstrip()
         q = splitname[1].replace('][/COLOR]', '').replace('&nbsp', '').replace('<img', '')
+    
     a = 'getplayerinfo'
     c = 'result'
     p = url 
     req = POST_URL(posturl,a,c,p)
-    if 'src="//www.youtube.com/embed' in req:
-        vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
-        for link in vlink:
-            link = link.replace('src="//www.youtube.com/embed/', '').replace('"', '')
-            url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
-            infoLabels =None
-            addDirPlayable('[COLOR lime]'+ q + '[/COLOR] | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
-    elif 'streamin.to' in req:
-        url = regex_from_to(req, 'src="', '"')
-        size = get_file_size(url)
-        size = "%.2fGB" % size
-        infoLabels =None
-        addDirPlayable('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
-    elif 'docs.google.com' in req:
-        url = regex_from_to(req, 'src="', '"')
-        size = get_file_size(url)
-        size = "%.2fGB" % size
-        infoLabels =None
-        addDirPlayable('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+
+    #PARENTAL CONTROL
+    now = time.strftime("%H")
+    dialog = xbmcgui.Dialog()
+    if PC_ENABLE:
+        mpaa = parental_control(name,mpaa)
     else:
-        match = re.compile('<source data-res="(.+?)" src="(.+?)"').findall(req)
-        for quality, url in match:
-            quality = quality + 'p'
-            size = get_file_size(url)
-            size = "%.2fGB" % size
+        mpaa = 0
+    pw=''
+    if mpaa >= PC_RATING and PC_ENABLE and ((int(now) < int(PC_WATERSHED) and int(now) > 6) or int(PC_WATERSHED) == 25):
+        keyboard = xbmc.Keyboard(pw, 'Enter your PIN/Password to play', True)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            pw = keyboard.getText()
+        else:
+            pw=''
+    if int(now) >= int(PC_WATERSHED) or not(PC_ENABLE) or ((pw == PC_PASS) or mpaa < PC_RATING or (int(now) < 6 and int(PC_WATERSHED) != 25)):
+        if 'src="//www.youtube.com/embed' in req:
+            vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
+            for link in vlink:
+                link = link.replace('src="//www.youtube.com/embed/', '').replace('"', '')
+                url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
+                infoLabels =None
+                list = "%s<>%s<>%s" % (list,url,name)
+                addDirPlayable('[COLOR lime]'+ q + '[/COLOR] | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+        elif 'streamin.to' in req:
+            url = regex_from_to(req, 'src="', '"')
+            try:
+                size = get_file_size(url)
+                size = "%.2fGB" % size
+            except:
+                size = ""
             infoLabels =None
-            addDirPlayable('[COLOR lime]'+ quality + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+            list = "%s<>%s<>%s" % (list,url,name)
+            addDirPlayable('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+        elif 'docs.google.com' in req:
+            url = regex_from_to(req, 'src="', '"')
+            try:
+                size = get_file_size(url)
+                size = "%.2fGB" % size
+            except:
+                size = ""
+            infoLabels =None
+            list = "%s<>%s<>%s" % (list,url,name)
+            addDirPlayable('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+        else:
+            match = re.compile('<source data-res="(.+?)" src="(.+?)"').findall(req)
+            for quality, url in match:
+                quality = quality + 'p'
+                try:
+                    size = get_file_size(url)
+                    size = "%.2fGB" % size
+                except:
+                    size = ""
+                infoLabels =None
+                list = "%s<>%s<>%s" % (list,url,name)
+                addDirPlayable('[COLOR lime]'+ quality + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+    else:
+        dialog.ok("You cannot play this video","PIN incorrect")
         		
 def play_movie(name,url,iconimage,hosturl):
-    splitname = name.split(' | ')
-    name = splitname[1]
-    header_dict = {}
-    header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
-    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
-    header_dict['Connection'] = 'keep-alive'
-    header_dict['Range'] = 'bytes=0-'
-    header_dict['Referer'] = hosturl
-    header_dict['Host'] = 'redirector.googlevideo.com'
+    spliturl = hosturl.split('<>')
+    url = spliturl[1]
+    hosturl = spliturl[0]
+    name = spliturl[2]	
     
     if 'plugin://plugin.video.youtube' in url:
         url1 = url
-    elif 'http://watch32.com/?getlink' in url:
-        url1 = url
+    elif 'http://watch32.com' in url:
+        header_dict = {}
+        header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Referer'] = 'http://www.youtubeonfire.com/watch.php?v=y36iVzlH4fs'#hosturl
+        header_dict['Range'] = 'bytes=0-'
+        header_dict['Host'] = 'watch32.com'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+        response = requests.get(url,headers=header_dict,allow_redirects=False)
+        url1 = response.headers['location']
+        net.save_cookies(cookie_jar)
+
     elif 'docs.google.com' in url:
         header_dict = {}
         header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Accept-Encoding'] = 'gzip, deflate'
         header_dict['Connection'] = 'keep-alive'
         header_dict['Referer'] = hosturl
         header_dict['Host'] = 'docs.google.com'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+        #net.set_cookies(cookie_jar)
         req = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+        #net.save_cookies(cookie_jar)
         url1 = 'https://r' + regex_from_to(req, 'https://r','https://r').replace('|', '').replace('\u003d','=').replace('\u0026','&')
     elif 'streamin.to' in url:
         header_dict = {}
@@ -378,6 +520,13 @@ def play_movie(name,url,iconimage,hosturl):
         pageurl = hosturl
         url1 = "%s playpath=%s swfUrl=%s pageUrl=%s" % (streamer, playpath, swfurl, pageurl)
     else:
+        header_dict = {}
+        header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Range'] = 'bytes=0-'
+        header_dict['Referer'] = hosturl
+        header_dict['Host'] = 'redirector.googlevideo.com'
         response = requests.get(url,headers=header_dict,allow_redirects=False)
         url1 = response.headers['location']
     listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url1)
@@ -390,6 +539,10 @@ def play_movie(name,url,iconimage,hosturl):
         xbmcPlayer.play(url1, listitem)
 		
 def strm_movie_quality(name,url,iconimage,list):
+    try:
+        mpaa = name.split('[/color] ')[1]
+    except:
+        mpaa = name.split('[/COLOR] ')[1]
     download = ""
     if 'download' in list:
         splitlist = list.split('<>')
@@ -408,80 +561,101 @@ def strm_movie_quality(name,url,iconimage,list):
         splitname = name.split('[COLOR lime][max ')
         name = splitname[0].rstrip()
         q = splitname[1].replace('][/COLOR]', '')
+    
     a = 'getplayerinfo'
     c = 'result'
     p = url 
     req = POST_URL(posturl,a,c,p)
-    if 'src="//www.youtube.com/embed' in req:
-        vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
-        for link in vlink:
-            link = link.replace('src="//www.youtube.com/embed/', '').replace('"', '')
-            url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
-            menu_texts.append('[COLOR lime]'+ q + '[/COLOR] | ' + name)
-            menu_data.append(url)
-    elif 'docs.google.com' in req:
-        url = regex_from_to(req, 'src="', '"')
-        size = get_file_size(url)
-        size = "%.2fGB" % size
-        menu_texts.append('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name)
-        menu_data.append(url)
-    elif 'streamin.to' in url:
-        header_dict = {}
-        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
-        header_dict['Connection'] = 'keep-alive'
-        header_dict['Referer'] = hosturl
-        header_dict['Host'] = 'streaming.to'
-        req = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
-        streamer = regex_from_to(req, 'streamer: "', '"')
-        playpath = regex_from_to(req, 'file: "', '"')
-        swfurl = 'http://streamin.to/player/player.swf'
-        pageurl = hosturl
-        url1 = "%s playpath=%s swfUrl=%s pageUrl=%s" % (streamer, playpath, swfurl, pageurl)
-    elif 'streamin.to' in req:
-        url = regex_from_to(req, 'src="', '"')
-        size = get_file_size(url)
-        size = "%.2fGB" % size
-        menu_texts.append('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name)
-        menu_data.append(url)
+	
+    #PARENTAL CONTROL
+    now = time.strftime("%H")
+    dialog = xbmcgui.Dialog()
+    if PC_ENABLE:
+        mpaa = parental_control(name,mpaa)
     else:
-        match = re.compile('<source data-res="(.+?)" src="(.+?)"').findall(req)
-        for quality, url in match:
-            quality = quality + 'p'
-            size = get_file_size(url)
-            size = "%.2fGB" % size
-            menu_texts.append('[COLOR lime]'+ quality + '[/COLOR] ' + size + ' | ' + name)
+        mpaa = 0
+    pw=''
+    if mpaa >= PC_RATING and PC_ENABLE and ((int(now) < int(PC_WATERSHED) and int(now) > 6) or int(PC_WATERSHED) == 25):
+        keyboard = xbmc.Keyboard(pw, 'Enter your PIN/Password to play', True)
+        keyboard.doModal()
+        if keyboard.isConfirmed():
+            pw = keyboard.getText()
+        else:
+            pw=''
+    if int(now) >= int(PC_WATERSHED) or not(PC_ENABLE) or ((pw == PC_PASS) or mpaa < PC_RATING or (int(now) < 6 and int(PC_WATERSHED) != 25)):
+        if 'src="//www.youtube.com/embed' in req:
+            vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
+            for link in vlink:
+                link = link.replace('src="//www.youtube.com/embed/', '').replace('"', '')
+                url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
+                menu_texts.append('[COLOR lime]'+ q + '[/COLOR] | ' + name)
+                menu_data.append(url)
+        elif 'docs.google.com' in req:
+            url = regex_from_to(req, 'src="', '"')
+            try:
+                size = get_file_size(url)
+                size = "%.2fGB" % size
+            except:
+                size = ""
+            menu_texts.append('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name)
             menu_data.append(url)
+        elif 'streamin.to' in req:
+            url = regex_from_to(req, 'src="', '"')
+            try:
+                size = get_file_size(url)
+                size = "%.2fGB" % size
+            except:
+                size = ""
+            menu_texts.append('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name)
+            menu_data.append(url)
+        else:
+            match = re.compile('<source data-res="(.+?)" src="(.+?)"').findall(req)
+            for quality, url in match:
+                quality = quality + 'p'
+                try:
+                    size = get_file_size(url)
+                    size = "%.2fGB" % size
+                except:
+                    size = ""
+                menu_texts.append('[COLOR lime]'+ quality + '[/COLOR] ' + size + ' | ' + name)
+                menu_data.append(url)
 			
-    if MAX_MV and not 'download' in list:
-        menu_id =0
-    else:
-        menu_id = dialog.select('Select Quality', menu_texts)
-    if(menu_id < 0):
-        return (None, None)
-        dialog.close()
-    else:	
-        url = menu_data[menu_id]
-        name = menu_texts[menu_id]
+        if MAX_MV and not 'download' in list:
+            menu_id =0
+        else:
+            menu_id = dialog.select('Select Quality', menu_texts)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        else:	
+            url = menu_data[menu_id]
+            name = menu_texts[menu_id]
         
-        if download == 'download':
-            download_only(name,url)	
-        else:			
-            strm_movie(name,url,iconimage,hosturl)
+            if download == 'download':
+                download_only(name,url)	
+            else:			
+                strm_movie(name,url,iconimage,hosturl)
+    else:
+        dialog.ok("You cannot play this video","PIN incorrect")
         		
 def strm_movie(name,url,iconimage,hosturl):
     splitname = name.split(' | ')
     name = splitname[1]
-    header_dict = {}
-    header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
-    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
-    header_dict['Connection'] = 'keep-alive'
-    header_dict['Range'] = 'bytes=0-'
-    header_dict['Referer'] = hosturl
-    header_dict['Host'] = 'redirector.googlevideo.com'
     
     if 'plugin://plugin.video.youtube' in url:
         url1 = url
+    elif 'http://watch32.com' in url:
+        header_dict = {}
+        header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Referer'] = 'http://www.youtubeonfire.com/watch.php?v=y36iVzlH4fs'#hosturl
+        header_dict['Range'] = 'bytes=0-'
+        header_dict['Host'] = 'watch32.com'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+        response = requests.get(url,headers=header_dict,allow_redirects=False)
+        url1 = response.headers['location']
+        net.save_cookies(cookie_jar)
     elif 'docs.google.com' in url:
         header_dict = {}
         header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -505,6 +679,13 @@ def strm_movie(name,url,iconimage,hosturl):
         pageurl = hosturl
         url1 = "%s playpath=%s swfUrl=%s pageUrl=%s" % (streamer, playpath, swfurl, pageurl)
     else:
+        header_dict = {}
+        header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Range'] = 'bytes=0-'
+        header_dict['Referer'] = hosturl
+        header_dict['Host'] = 'redirector.googlevideo.com'
         response = requests.get(url,headers=header_dict,allow_redirects=False)
         url1 = response.headers['location']
     listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url1)
@@ -577,6 +758,28 @@ def get_file_size(url):
 
     return size
 
+#KNOWLEDGE
+def knowledge_menu(name):
+    form_dict = {}
+    form_dict['NavigatonType'] = 's'
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Host'] = 'knowledgetube.co'
+    header_dict['Connection'] = 'keep-alive'
+    header_dict['Referer'] = 'http://knowledgetube.co/search.php'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+    net.set_cookies(cookie_jar)
+    req = net.http_POST('http://knowledgetube.co/search.php', form_data=form_dict, headers=header_dict).content.rstrip().replace('\n', '')
+    net.save_cookies(cookie_jar)
+    addDir("Featured", 'http://knowledgetube.co/index.php',205,art + 'knowledge/' + 'featured.png', '1<><><><>Rate','qq')
+    addDir("Newly Added", 'http://knowledgetube.co/index.php',205,art + 'knowledge/' + 'newlyadded.png', '1<><><><>addTime','qq')
+    match = re.compile('<a style="(.+?)inline-block;" href="(.+?)data="(.+?)">(.+?)</a>').findall(req)
+    for d1,d2,data,title in match:
+        if title != 'Newly Added':
+            addDir(title, 'http://knowledgetube.co/index.php',205,art + 'knowledge/' + title.lower() + '.png', '1<><>' + str(data) + '<><>Rate','qq')
+
 
 #MUSIC
 def music_video_menu(name):
@@ -587,9 +790,10 @@ def music_video_menu(name):
     addDir("High Definition", 'http://mvtube.co/index.php',205,art + 'music/' + 'hd.png', '1<><><><>HD','qq')
     addDir("Moods", 'url',207,art + 'music/' + 'moods.png', '','')
     addDir("Artists", 'http://mvtube.co/index.php',208,art + 'music/' + 'artists.png', '1<><><><>','qq')
+    addDir("Artist A-Z", 'url',202,art + 'music/' + 'artists.png', '','')
     addDir("Playlists", 'http://mvtube.co/index.php',208,art + 'music/' + 'playlists.png', '1<><><><>','qq')
     addDir("Favourite Videos", 'url',206,art + 'music/' + 'favourites.png', '','')
-    addDir("Favourite Artists", 'url',201,art + 'music/' + 'favourites.png', '','')
+    addDir("Favourite Artists", 'url',201,art + 'music/' + 'favouriteartist.png', '','')
 	
 def music_moods(name,url):
     addDir("Sexy", 'http://mvtube.co/index.php',205,art + 'music/' + 'sexy.png', '1<><>Sexy<><>YouTubeView','qq')
@@ -599,7 +803,26 @@ def music_moods(name,url):
     addDir("Sad", 'http://mvtube.co/index.php',205,art + 'music/' + 'sad.png', '1<><>Sad<><>YouTubeView','qq')
     addDir("Male", 'http://mvtube.co/index.php',205,art + 'music/' + 'male.png', '1<><><>Male<>YouTubeView','qq')
     addDir("Female", 'http://mvtube.co/index.php',205,art + 'music/' + 'female.png', '1<><><>Female<>YouTubeView','qq')
+	
+def a_to_z(url):
+    alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
+    for a in alphabet:
+        addDir(a, 'http://www.azvideos.com/%s.html' % (a.lower().replace('#', '19')),203,art + a +'.png', '','')
     
+def a_to_z_list(name, url):
+    link = open_url(url)
+    match=re.compile('<a href="(.+?)">(.+?)</a><br><br>').findall(link)
+    for url, title in match:
+        url = 'http://www.azvideos.com/' + url
+        addDir(title, url,204,art + 'music/' + name.lower().replace('#', '19') +'.png', '','')
+        
+def a_to_z_videos(name, url, iconimage):
+    link = open_url(url)#d1,url,thumb,d2,d3,title
+    match=re.compile('<FONT (.+?)href="../(.+?)"><img src="(.+?)" border(.+?)<a href="(.+?)">(.+?)</a></FONT>').findall(link)
+    for d1,url,thumb,d2,d3,title in match:
+        url = 'http://www.azvideos.com/' + url 
+        addDirVideo(title,url,210,thumb,'',str(url))
+
 
 def music(name,url,page,token):
     token = token.replace('%0a', '\n')
@@ -612,14 +835,17 @@ def music(name,url,page,token):
 	
     if len(token)>50:
         line = token.split('\n')
+        for l in line:
+            print l
 
-   
     if token == 'qq':
         token = ''
         if 'billboard' in name.lower():
             p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token, mood)
         elif 'artist_pl' in sort or sort == 'playlists':
             p = '{"Keyword":"%s","Page":"%s","NextToken":"%s"}' % (language, page, token)
+        elif 'knowledge' in url:
+            p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Sortby":"%s"}' % (page,token,mood,sort)
         else:
             p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,token,LANGUAGE,mood,mf,sort)
         
@@ -628,6 +854,8 @@ def music(name,url,page,token):
             p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],mood)
         elif sort == 'artist_pl' or sort == 'playlists':
             p = '{"Keyword":"%s","Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s"}' % (language,page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8])
+        elif 'knowledge' in url:
+            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],mood,sort)
         else:
             p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],LANGUAGE,mood,mf,sort)
     a = 'retrieve'
@@ -641,20 +869,28 @@ def music(name,url,page,token):
         a = 'retrieveplaylists'
     else:
         c = 'song'
+        a = 'retrieve'
 		
     req = POST_URL(url,a,c,p).replace('&nbsp', '').replace("'", '"')
     token = str(req).split('|')[0]
     token = token.replace('%0a', '\n')
 
-    match2 = re.compile('<tr style="(.+?)value="(.+?)<div class="idx">(.+?)</div></td><td width="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><span class="dtl_singer">(.+?)watch.(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
-    for d1,d2,pos,d3,thumb,d4,title,d5,d6,vurl in match2:
-        title = title.decode("utf8").encode("utf8").replace('"',"'")
-        url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
-        addDirVideo(title,'useicon',210,thumb,'',str(vurl))
+    if 'knowledge' in url:
+        match = re.compile('<tr style="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><br/>(.+?)<div class="vors">(.+?)</div></td><td width="250"><div class="ctm"></div></td><td width="50"><div class="ytlk"><a href="(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
+        for d1,thumb,d2,title,d3,dt,d4,vurl in match:
+            title = title.decode("utf8").encode("utf8").replace('"',"'")
+            url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
+            addDirVideo(title,'useicon',210,thumb,'',str(vurl))
+    else:
+        match2 = re.compile('<tr style="(.+?)value="(.+?)<div class="idx">(.+?)</div></td><td width="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><span class="dtl_singer">(.+?)watch.(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
+        for d1,d2,pos,d3,thumb,d4,title,d5,d6,vurl in match2:
+            title = title.decode("utf8").encode("utf8").replace('"',"'")
+            url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
+            addDirVideo(title,'useicon',210,thumb,'',str(vurl))
     if len(token)>50:		
         nextpage=int(page)+1
         nextpage = "%s<>%s<>%s<>%s<>%s" % (nextpage,language,mood,mf,sort)
-        addDir("Next Page", 'http://mvtube.co/index.php',205,'', nextpage,token)
+        addDir("Next Page", 'http://mvtube.co/index.php',205,art +  'nextpage.png', nextpage,token)
 		
 def queue_all(name,url,page,token):
     token = token.replace('%0a', '\n')
@@ -739,7 +975,7 @@ def music_artists(name,url,page,token):
             addDir(artist, url,205,thumb, data,'qq')
         nextpage=int(page)+1
         nextpage = "%s<>%s<>%s<>%s<>%s" % (nextpage,language,mood,mf,sort)
-        addDir("Artist Next Page", 'http://mvtube.co/index.php',208,'', nextpage,token)
+        addDir("Artist Next Page", 'http://mvtube.co/index.php',208,art +  'nextpage.png', nextpage,token)
     else:                  #
         all_pl = regex_get_all(req,'<li>', '</li>')
         for pl in all_pl:
@@ -764,7 +1000,10 @@ def favourites_music():
                 title = title.replace('->-', ' & ')
                 url = list1[1]
                 thumb = list1[2]
-                addDirVideo(title,'useicon',210,thumb,'mus',url)
+                if 'azvideo' in url:
+                   addDirVideo(title,url,210,thumb,'mus',url)
+                else:
+                    addDirVideo(title,'useicon',210,thumb,'mus',url)
 				
 def favourite_artists():
     if os.path.isfile(FAV_ARTISTS):
@@ -777,10 +1016,33 @@ def favourite_artists():
                 title = title.replace('->-', ' & ')
                 url = list1[1]
                 thumb = list1[2]
-                data = "%s<>%s<>%s<>%s<>%s" % ('1',list1[4],list1[5],list1[6],'favartist_pl')
-                addDir(title, url,205,thumb, data,'qq')
+                if 'mvtube' in url:
+                    data = "%s<>%s<>%s<>%s<>%s" % ('1',list1[4],list1[5],list1[6],'favartist_pl')
+                    addDir(title, url,205,thumb, data,'qq')
+                else:
+                    data = "%s<>%s<>%s<>%s<>%s" % ('','','','','favartist_pl')
+                    addDir(title, url,204,thumb, data,'qq')
 
 def play_music_video(name, url, iconimage,clear):
+    if 'azvideo' in url:
+        link = open_url(url)
+        if 'dailymotion' in link:
+            url = regex_from_to(link, 'movie" value="', '"').replace('swf', 'embed/video')
+            link = open_url(url)
+            if 'stream_h264_hd1080_url":"http' in link:
+                url = regex_from_to(link, 'stream_h264_hd1080_url":"', '"').replace('\/', '/')
+            elif 'stream_h264_hd_url":"http' in link:
+                url = regex_from_to(link, 'stream_h264_hd_url":"', '"').replace('\/', '/')
+            elif 'stream_h264_hq_url":"http' in link:
+                url = regex_from_to(link, 'stream_h264_hq_url":"', '"').replace('\/', '/')
+            elif 'stream_h264_ld_url":"http' in link:
+                url = regex_from_to(link, 'stream_h264_ld_url":"', '"').replace('\/', '/')
+            elif 'stream_h264_url":"http' in link:
+                url = regex_from_to(link, 'stream_h264_url":"', '"').replace('\/', '/')
+        else:
+            vurl = regex_from_to(link, 'src="//www.youtube.com/embed/', '"')
+            url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl)
+    
     if url == 'useicon':
         url = iconimage
     if 'http://img.youtube.com/vi/' in url:
@@ -886,10 +1148,16 @@ def create_strm_file(name, url, mode, dir_path, iconimage,list):
     splitlist = list.split('<>')
     list = splitlist[0]
     name = splitlist[1]
+    if '[color' in name:
+        splitname = name.split('[color lime][max ')
+        name1 = splitname[0].rstrip()
+    else:
+        splitname = name.split('[COLOR lime][max ')
+        name1 = splitname[0].rstrip()
 	
     try:
         strm_string = create_url(name, mode, url=list, iconimage=iconimage, list=list)
-        name1 = re.sub(r'\[[^]]*\]', '', name)
+        #name1 = re.sub(r'\[[^]]*\]', '', name1)
         filename = clean_file_name("%s.strm" % name1)
         path = os.path.join(dir_path, filename)
         if not os.path.exists(path):
@@ -1095,10 +1363,10 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Addon Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=13&list=%s)'%(sys.argv[0], name.replace(',', ' '), url, str(favlist).replace('http:','hhhh'))))
-        if 'mvtube' in url:
+        if 'mvtube' in url or 'azvideo'in url:
             if 'favartist_pl' in list:
                 contextMenuItems.append(('Remove from Favourites', 'XBMC.RunPlugin(%s?mode=215&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, favlist2)))
-            elif mode == 205:
+            elif mode == 205 or mode == 204:
                 contextMenuItems.append(('Mark as Favourite', 'XBMC.RunPlugin(%s?mode=214&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, favlist2)))
             contextMenuItems.append(("[COLOR lime]Queue all videos[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=209&list=%s&description=%s)'%(sys.argv[0], name, url,list, description)))
         liz=xbmcgui.ListItem(name + suffix + suffix2, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
@@ -1126,14 +1394,21 @@ def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
 	
 def addDirVideo(name,url,mode,iconimage,list,vurl):
         contextMenuItems = []
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+urllib.quote_plus(list)+"&vurl="+str(vurl)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&vurl="+str(vurl)
         ok=True
         text = "%s<>%s<>%s" % (name, vurl,iconimage)
+        text1 = "%s<>%s<>%s" % (name, url,iconimage)
         if list == 'mus':
             contextMenuItems.append(('Remove from Favourites', 'XBMC.RunPlugin(%s?mode=213&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, text)))
         else:
-            contextMenuItems.append(('Mark as Favourite', 'XBMC.RunPlugin(%s?mode=212&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, text)))
-        contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&iconimage=%s&url=%s)'% (sys.argv[0], name,vurl,iconimage)))
+            if 'azvideo' in url:
+                contextMenuItems.append(('Mark as Favourite', 'XBMC.RunPlugin(%s?mode=212&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, text1)))
+            else:
+                contextMenuItems.append(('Mark as Favourite', 'XBMC.RunPlugin(%s?mode=212&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, text)))
+        if 'azvideo' in url:
+            contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&iconimage=%s&url=%s)'% (sys.argv[0], name,iconimage,url)))
+        else:
+            contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&iconimage=%s&url=%s)'% (sys.argv[0], name,vurl,iconimage)))
         
         liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, False)
@@ -1220,7 +1495,7 @@ elif mode==3:
         movie_quality(name,url,iconimage,list)
 		
 elif mode==5:
-        play_movie(name,url,iconimage,list)
+        play_movie(name,url,iconimage,showname)
 		
 elif mode==109:
         strm_movie_quality(name,url,iconimage,list)
@@ -1276,6 +1551,15 @@ elif mode == 200:
 elif mode==201:
         favourite_artists()
 		
+elif mode == 202:
+        a_to_z(url)
+		
+elif mode == 203:
+        a_to_z_list(name,url)
+		
+elif mode == 204:
+        a_to_z_videos(name, url, iconimage)
+		
 elif mode == 205:
         music(name,url,list,description)
 		
@@ -1308,6 +1592,15 @@ elif mode == 214:
 	
 elif mode == 215:
         remove_from_favourites(name, url, iconimage, FAV_ARTISTS, "Removed from Favourites")
+		
+elif mode == 216:
+        play_az(name,url,iconimage)
+		
+elif mode == 300:
+        knowledge_menu(name)
+
+elif mode == 800:
+        pc_setting()
 		
 elif mode == 999:
         youtubefix()

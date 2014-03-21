@@ -6,4 +6,10 @@
     <string id="10006">Movie Directory</string>
     <string id="10007">Enable Metadata</string>
     <string id="10008">Autoplay maximum quality from library</string>
+    <!-- Parental Control -->
+    <string id="20001">Enable Parental Control</string>
+    <string id="20002">Set watershed time</string>
+    <string id="20003">Set minimum watershed rating</string>
+    <string id="20004">Set PIN</string>
+    <string id="20005">Set action if no rating is available or "Unrated"</string>
 </strings>

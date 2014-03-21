@@ -111,6 +111,65 @@ def subscription_file():
 def cookie_jar():
     return create_file(DATA_PATH, "cookiejar.lwp")
 	
+#Parental controls
+def custom_pc_file():
+    return create_file(DATA_PATH, "custom_pc.list")
+	
+def enable_pc():
+    if ADDON.getSetting('enable_pc') == "true":
+        return True
+    else:
+        return False
+		
+def watershed_pc():
+    id = ADDON.getSetting('watershed_pc')
+    if id == '9':
+        return 25
+    elif id == '8':
+        return 23 
+    elif id == '7':
+        return 22 
+    elif id == '6':
+        return 21
+    elif id == '5':
+        return 20
+    elif id == '4':
+        return 19
+    elif id == '3':
+        return 18
+    elif id == '2':
+        return 17
+    elif id == '1':
+        return 16
+    else:
+        return 15
+		
+def pw_required_at():
+    id = ADDON.getSetting('pw_required_at')
+    if id == '3':
+        return 4
+    elif id == '2':
+        return 3
+    elif id == '1':
+        return 2
+    else:
+        return 1
+
+def enable_pc_settings():
+    return ADDON.getSetting('enable_pc_settings')
+		
+def pc_pass():
+    return ADDON.getSetting('pc_pass')
+	
+def pc_default():
+    id = ADDON.getSetting('pc_default')
+    if id == '1':
+        return "REQUIRE PIN"
+    else:
+        return "PLAY"
+	
+#End Parental Control
+	
 def create_directory(dir_path, dir_name=None):
     if dir_name:
         dir_path = os.path.join(dir_path, dir_name)

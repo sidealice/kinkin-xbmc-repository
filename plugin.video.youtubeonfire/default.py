@@ -331,7 +331,9 @@ def search_moviefile(query):
     setView('movies', 'movies-view')
 
 def movies(name,url,page,token):
-    token = token.replace('+', ' +')
+    origurl=url
+    print origurl,page
+    token = token.replace(' ', '+')
     splitpage=page.split('<>')
     page = splitpage[0]
     genre = splitpage[1]
@@ -778,7 +780,7 @@ def knowledge_menu(name):
     match = re.compile('<a style="(.+?)inline-block;" href="(.+?)data="(.+?)">(.+?)</a>').findall(req)
     for d1,d2,data,title in match:
         if title != 'Newly Added':
-            addDir(title, 'http://knowledgetube.co/index.php',205,art + 'knowledge/' + title.lower() + '.png', '1<><>' + str(data) + '<><>Rate','qq')
+            addDir(title, 'http://knowledgetube.co/index.php',205,art + 'knowledge/' + title.replace(' ', '').lower() + '.png', '1<><>' + str(data) + '<><>Rate','qq')
 
 
 #MUSIC
@@ -790,9 +792,9 @@ def music_video_menu(name):
     addDir("High Definition", 'http://mvtube.co/index.php',205,art + 'music/' + 'hd.png', '1<><><><>HD','qq')
     addDir("Moods", 'url',207,art + 'music/' + 'moods.png', '','')
     addDir("Artists", 'http://mvtube.co/index.php',208,art + 'music/' + 'artists.png', '1<><><><>','qq')
-    addDir("Artist A-Z", 'url',202,art + 'music/' + 'artists.png', '','')
+    addDir("Artist A-Z", 'url',202,art + 'music/' + 'artista-z.png', '','')
     addDir("Playlists", 'http://mvtube.co/index.php',208,art + 'music/' + 'playlists.png', '1<><><><>','qq')
-    addDir("Favourite Videos", 'url',206,art + 'music/' + 'favourites.png', '','')
+    addDir("Favourite Videos", 'url',206,art + 'music/' + 'favouritevideo.png', '','')
     addDir("Favourite Artists", 'url',201,art + 'music/' + 'favouriteartist.png', '','')
 	
 def music_moods(name,url):
@@ -825,7 +827,9 @@ def a_to_z_videos(name, url, iconimage):
 
 
 def music(name,url,page,token):
-    token = token.replace('%0a', '\n')
+    origurl = url
+    token = token.replace(' ','+')
+
     splitpage=page.split('<>')
     page = splitpage[0]
     language = splitpage[1]
@@ -835,13 +839,11 @@ def music(name,url,page,token):
 	
     if len(token)>50:
         line = token.split('\n')
-        for l in line:
-            print l
 
     if token == 'qq':
         token = ''
-        if 'billboard' in name.lower():
-            p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token, mood)
+        if 'billboard' in mood.lower():
+            p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token,mood)
         elif 'artist_pl' in sort or sort == 'playlists':
             p = '{"Keyword":"%s","Page":"%s","NextToken":"%s"}' % (language, page, token)
         elif 'knowledge' in url:
@@ -850,8 +852,8 @@ def music(name,url,page,token):
             p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,token,LANGUAGE,mood,mf,sort)
         
     else:
-        if 'billboard' in name.lower():
-            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],mood)
+        if mood == 'BillBoard':
+            p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8], mood)
         elif sort == 'artist_pl' or sort == 'playlists':
             p = '{"Keyword":"%s","Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s"}' % (language,page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8])
         elif 'knowledge' in url:
@@ -859,7 +861,7 @@ def music(name,url,page,token):
         else:
             p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],LANGUAGE,mood,mf,sort)
     a = 'retrieve'
-    if 'billboard' in name.lower():
+    if 'billboard' in mood.lower():
         c = 'chart'
     elif 'artist_pl' in sort:
         c = 'detail'
@@ -873,7 +875,7 @@ def music(name,url,page,token):
 		
     req = POST_URL(url,a,c,p).replace('&nbsp', '').replace("'", '"')
     token = str(req).split('|')[0]
-    token = token.replace('%0a', '\n')
+    #token = token.replace('%0a', '\n')
 
     if 'knowledge' in url:
         match = re.compile('<tr style="(.+?)<img src="(.+?)" /></a></td><td><div class="dtl"><span class="dtl_name">(.+?)">(.+?)</a></span><br/>(.+?)<div class="vors">(.+?)</div></td><td width="250"><div class="ctm"></div></td><td width="50"><div class="ytlk"><a href="(.+?)v=(.+?)" target="_blank"><img src="./views/images/ytlink.png" /></a></div></td></tr>').findall(req)
@@ -889,8 +891,9 @@ def music(name,url,page,token):
             addDirVideo(title,'useicon',210,thumb,'',str(vurl))
     if len(token)>50:		
         nextpage=int(page)+1
+        print language
         nextpage = "%s<>%s<>%s<>%s<>%s" % (nextpage,language,mood,mf,sort)
-        addDir("Next Page", 'http://mvtube.co/index.php',205,art +  'nextpage.png', nextpage,token)
+        addDir("Next Page", origurl,205,art +  'nextpage.png', nextpage,token)
 		
 def queue_all(name,url,page,token):
     token = token.replace('%0a', '\n')

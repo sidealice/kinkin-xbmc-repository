@@ -16,7 +16,9 @@ FAV_SONG = settings.favourites_file_songs()
 PLAYLIST_FILE = settings.playlist_file()
 MUSIC_DIR = settings.music_dir()
 QUEUE_SONGS = settings.default_queue()
+QUEUE_ALBUMS = settings.default_queue_album()
 DOWNLOAD_LIST = settings.download_list()
+XBMCPLAYER = settings.default_player()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'fanart.jpg'))
 art = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/'
 artgenre = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/genre/'
@@ -292,11 +294,11 @@ def find_url(id):
         return 'http://listen.musicmp3.ru/6b5ee4f8422b6e8d/'
 			
 
-def play_album(name, url, iconimage,clear,mix):
+def play_album(name, url, iconimage,mix,clear):
     browse=False
     playlist=[]
     dialog = xbmcgui.Dialog()
-    if mode != 6 and mix != 'mix':
+    if mode != 6 and mix != 'mix' and mix != 'queue':
         if dialog.yesno("MP3 Streams", 'Browse songs or play full album?', '', '', 'Play Now','Browse'):
             browse=True
     if browse == True:
@@ -361,7 +363,10 @@ def play_album(name, url, iconimage,clear,mix):
             except:
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
-           xbmc.Player().play(pl)
+            if XBMCPLAYER == 'paplayer':
+                xbmc.Player().play(pl)
+            else:
+                xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
 			
 			
 def play_song(url,name,songname,artist,album,iconimage,dur,clear):
@@ -374,6 +379,7 @@ def play_song(url,name,songname,artist,album,iconimage,dur,clear):
         url1 = stored_path
     else:
         url1=str(url)
+    print url1
     liz=xbmcgui.ListItem(show_name, iconImage=iconimage, thumbnailImage=iconimage)
     liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
     liz.setProperty('mimetype', 'audio/mpeg')
@@ -387,7 +393,10 @@ def play_song(url,name,songname,artist,album,iconimage,dur,clear):
         except:
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
-        xbmc.Player().play(pl)
+        if XBMCPLAYER == 'paplayer':
+            xbmc.Player().play(pl)
+        else:
+            xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
 		
 def download_song(url,name,songname,artist,album,iconimage):
     track = songname[:songname.find('.')]
@@ -577,7 +586,7 @@ class ShuffleAlbumThread(Thread):
                     except:
                         plname = "Ungrouped"
                     if (plname == groupname) or groupname == "All Albums": 
-                        play_album(title, url, thumb,False,'mix')
+                        play_album(title, url, thumb,'mix',False)
                         playlist.shuffle()
                     time.sleep(15)
 
@@ -945,7 +954,7 @@ def addDir(name,url,mode,iconimage,type):
             else:
                 list = "%s<>%s<>%s" % (str(name).lower(),url,str(iconimage))
         list = list.replace(',', '')
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&type="+str(type)
         ok=True
         contextMenuItems = []
         if type == "artists":
@@ -958,8 +967,12 @@ def addDir(name,url,mode,iconimage,type):
         if 'album' in type:
             download_album = '%s?name=%s&url=%s&iconimage=%s&mode=202' % (sys.argv[0], urllib.quote(name), url, iconimage)  
             contextMenuItems.append(('[COLOR cyan]Download Album[/COLOR]', 'XBMC.RunPlugin(%s)' % download_album))
-            queue_music = '%s?name=%s&url=%s&iconimage=%s&mode=6' % (sys.argv[0], urllib.quote(name), url, iconimage)  
-            contextMenuItems.append(('[COLOR cyan]Queue Album[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_music))
+            if QUEUE_ALBUMS:
+                play_music = '%s?name=%s&url=%s&iconimage=%s&mode=7' % (sys.argv[0], urllib.quote(name), url, iconimage)  
+                contextMenuItems.append(('[COLOR cyan]Play/Browse Album[/COLOR]', 'XBMC.RunPlugin(%s)' % play_music))
+            else:
+                queue_music = '%s?name=%s&url=%s&iconimage=%s&mode=6' % (sys.argv[0], urllib.quote(name), url, iconimage)  
+                contextMenuItems.append(('[COLOR cyan]Queue Album[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_music))
             if not 'qq' in type1:
                 suffix = ""
                 contextMenuItems.append(("[COLOR lime]Add to Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=64)'%(sys.argv[0], name.replace(',', ''), str(list))))
@@ -981,7 +994,7 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur,type):
             list = "%s<>%s<>%s<>%s<>%s" % (str(artist),str(album),str(songname).lower(),url,str(iconimage))
         list = list.replace(',', '')
         contextMenuItems = []
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&songname="+urllib.quote_plus(songname)+"&artist="+urllib.quote_plus(artist)+"&album="+urllib.quote_plus(album)+"&dur="+str(dur)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&songname="+urllib.quote_plus(songname)+"&artist="+urllib.quote_plus(artist)+"&album="+urllib.quote_plus(album)+"&dur="+str(dur)+"&type="+str(type)
         ok=True
         if name == "Add ID3 Tags":
             contextMenuItems.append(("Clear Download Lock",'XBMC.RunPlugin(%s?name=%s&mode=333)'%(sys.argv[0], name)))
@@ -1048,6 +1061,10 @@ try:
         dur=str(params["dur"])
 except:
         pass
+try:
+        type=str(params["type"])
+except:
+        pass
 
 
 if mode==None or url==None or len(url)<1:
@@ -1062,10 +1079,16 @@ elif mode==1:
     audio_result(name, url)
 	
 elif mode ==5:
-    play_album(name, url, iconimage, True,'')
+    if QUEUE_ALBUMS:
+        play_album(name, url, iconimage, 'queue', False)
+    else:
+        play_album(name, url, iconimage, '', True)
 	
 elif mode ==6:
-    play_album(name, url, iconimage, False,'')
+    play_album(name, url, iconimage,'', False)
+	
+elif mode ==7:
+    play_album(name, url, iconimage,'browse', False)
 	
 elif mode ==8:
     ADDON.openSettings()

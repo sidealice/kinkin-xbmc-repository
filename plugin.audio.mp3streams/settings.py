@@ -13,6 +13,13 @@ def addon():
 def artist_icons():
     return create_directory(DATA_PATH, "artist_icons")
 	
+def default_player():
+    option = ADDON.getSetting('default_player')
+    if option == '0':
+        return 'paplayer'
+    elif option == '1':
+        return 'dvdplayer'
+	
 def favourites_file_artist():
     return create_file(DATA_PATH, "favourites_artist.list")
 	
@@ -36,6 +43,12 @@ def custom_directory():
 		
 def default_queue():
     if ADDON.getSetting('default_queue') == "true":
+        return True
+    else:
+        return False
+		
+def default_queue_album():
+    if ADDON.getSetting('default_queue_album') == "true":
         return True
     else:
         return False

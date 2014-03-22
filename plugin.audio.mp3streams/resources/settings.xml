@@ -3,5 +3,7 @@
         <setting id="custom_directory" type="bool" label="10000" default="false" />
         <setting id="music_dir" type="folder" label="10001" default="set" enable="!eq(-1,false)"/>
         <setting id="default_queue" type="bool" label="10002" default="false" />
+        <setting id="default_queue_album" type="bool" label="10003" default="false" />
+        <setting id="default_player" type="enum" values="PAPlayer|DVDPlayer" label="10004" default="0" />
 	</category>
 </settings>

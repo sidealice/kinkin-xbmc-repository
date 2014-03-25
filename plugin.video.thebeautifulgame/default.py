@@ -32,7 +32,7 @@ net = Net()
 def open_url(url):
     trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
     req = urllib2.Request(url)
-    req.add_header('User-Agent','Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>')
+    req.add_header('User-Agent','Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7')
     response = urllib2.urlopen(req)
     link=response.read().replace('\xe9', 'e')#.translate(trans_table)
     response.close()
@@ -145,20 +145,32 @@ def ninety_minutes_latest(name,url,iconimage):
                 addDir('[COLOR cyan]' + '>> Page ' + pg + '[/COLOR]',url,92,"","","")
 		
 def ninety_minutes_source(name,url,iconimage):
+#'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
     link = open_url(url).replace("'", '"').replace('\n','')
     print link
-    match = re.compile('<h3 class="heading-more open"><span>(.+?)</span></h3>(.+?)</p></div></div>').findall(link)
-
-    for title, urls in match:
-        title = "%s (%s)" % (name,title)
-        match_urls = re.compile('src="(.+?)"').findall(urls)
+    fullmatch = regex_from_to(link, 'Full Match Video', 'Start Iframe')
+    all_lang = regex_get_all(fullmatch, '<h3 class="heading', '</p></div>')
+    for lang in all_lang:
+        language = regex_from_to(lang, '<span>', '</span>')
+        match_urls=re.compile('src="(.+?)"').findall(lang)
         for url in match_urls:
             url = url.replace('&amp;', '&')
             if 'dailymotion' in url:
                 videoid = regex_from_to(url, 'http://www.dailymotion.com/embed/video/', '?logo').replace('?', '')
                 iconimage = dm_icon(videoid)
-            
-            addDirPlayable(title,url,3,iconimage,"")
+            if 'dailymotion' in url:
+                title = " [dailymotion.com]"
+            elif 'vk.com' in url:
+                title = " [vk.com]"
+            elif 'videa' in url:
+                title = " [videa.com]"
+            elif 'rutube' in url:
+                title = " [rutube.com]"
+            elif 'youtube' in url:
+                title = " [youtube.com]"
+            elif 'firedrive' in url:
+                title = " [firedrive.com]"            
+            addDirPlayable(name + ' - ' + language + title,url,3,iconimage,"")
 		
 def best_videos_list(url):
     link= open_url(url).rstrip()
@@ -361,7 +373,6 @@ def dm_icon(videoid):
 			
 		
 def play_video(name, url, iconimage):
-
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name)
     playlink = resolve_url(url)
@@ -462,7 +473,6 @@ def resolve_url(url):
 			
     #RUTUBE
     if 'rutube' in url:
-        print url
         try:
             if 'http' in url:
                 video_id = url[29:36]
@@ -481,6 +491,32 @@ def resolve_url(url):
             playlink = regex_from_to(link, 'video-url="', '"')
         except:
             playlink = 'skypremium'
+			
+    #FIREDRIVE
+    if 'firedrive' in url:
+        trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
+        #url = url.replace('embed', 'file')
+        hosturl = url
+        header_dict = {}
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header_dict['Host'] = 'www.firedrive.com'
+        header_dict['Referer'] = str(hosturl)
+        net.set_cookies(cookie_jar)
+        link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+        regex_from_to(link, 'confirm" value="', '"')
+        net.save_cookies(cookie_jar)
+        confirm = regex_from_to(link, 'confirm" value="', '"')
+        form_data = ({'confirm': confirm})
+        url = url.replace('embed', 'file')
+        header_dict['Referer'] = str(url)
+        net.set_cookies(cookie_jar)
+        link = net.http_POST(url, form_data=form_data,headers=header_dict).content.translate(trans_table).rstrip()
+        sources = regex_from_to(link, 'sources:', 'fileref')
+        fileurl = regex_from_to(sources, "file: '", "'")
+        if 'hd=' in sources:
+            playlink = fileurl.replace('stream', 'hd')
+        else:
+            playlink = fileurl		
 		
     return playlink
 

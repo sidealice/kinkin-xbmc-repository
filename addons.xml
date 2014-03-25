@@ -172,7 +172,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.thebeautifulgame"
        name="The Beautiful Game"
-       version="0.8.2"
+       version="0.8.3"
        provider-name="kinkin, art by tb4ll">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

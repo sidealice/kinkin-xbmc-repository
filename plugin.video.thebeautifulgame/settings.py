@@ -19,6 +19,17 @@ def force_sd():
         return True
     else:
         return False
+		
+def hide_scores():
+    option = ADDON.getSetting('hide_scores')
+    if option == '0':
+        return 'ask'
+    elif option == '1':
+        return 'hide'
+    elif option == '2':
+        return 'show'
+    else:
+        return 'ask'
 	
 def create_directory(dir_path, dir_name=None):
     if dir_name:

@@ -21,6 +21,7 @@ from t0mm0.common.net import Net
 
 ADDON = settings.addon()
 FAV = settings.favourites_file()
+HIDESCORE = settings.hide_scores()
 FORCE_SD = settings.force_sd()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
@@ -66,9 +67,14 @@ def highlights_country(url):
 
 def highlights_list(url):
     hidescores = False
-    dialog = xbmcgui.Dialog()
-    if dialog.yesno("Hide Results?", '', 'Do you want hide the scores?'):
-       hidescores = True
+    if HIDESCORE == 'hide':
+        hidescores = True
+    elif HIDESCORE == 'show':
+        hidescores = False
+    else:
+        dialog = xbmcgui.Dialog()
+        if dialog.yesno("Hide Results?", '', 'Do you want hide the scores?'):
+           hidescores = True
     link= open_url(url).rstrip()
     list = regex_from_to(link, '<table cellpadding=0 cellspacing=3 width=4', '</table>')
     all_hl = regex_get_all(list, '<tr valign=', '</tr>')
@@ -100,7 +106,6 @@ def ninety_minutes_menu():
 
 def ninety_minutes_submenu(name, url):
     link = open_url(url).replace('\n','')
-    print link
     if name == "90 Minutes - Top Competitions":#url, title
         data = regex_from_to(link, '>Competitions<', 'title="All')
         match = re.compile('<a href="(.+?)">(.+?)</a>').findall(data)
@@ -109,12 +114,14 @@ def ninety_minutes_submenu(name, url):
             iconimage = 'http://livefootballvideo.com/images/leagues/big/x%s.png.pagespeed.ic.45fxD8-tJP.png' % urlname
             addDir(title,url,92,iconimage,"","")
     else:
-        #match = re.compile('<li><img src="(.+?)"/> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
-        match = re.compile('<li><img style="display:none;visibility:hidden;" data-cfsrc="(.+?)"/><noscript><img src="(.+?)"/></noscript> <a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(link)
-        for d2,iconimage,url,d1,title in match:
-            iconimage = iconimage.replace('small', 'big')
+        all_comp = regex_from_to(link, 'All Competitions', '</ul><div class="cleaner">')
+        match = re.compile('<a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(all_comp)
+        for url,d1,title in match:
             url = 'http://livefootballvideo.com' + url
-            addDir(title,url,92,iconimage,"","")		
+            urlname = url.replace('http://livefootballvideo.com/competitions/', '')
+            iconimage = 'http://livefootballvideo.com/images/leagues/big/x%s.png.pagespeed.ic.45fxD8-tJP.png' % urlname
+            if not '<img' in title:
+                addDir(title,url,92,iconimage,"","")		
 
 def ninety_minutes_teams(name,url,iconimage):
     link = open_url(url).replace('\n','')
@@ -147,7 +154,6 @@ def ninety_minutes_latest(name,url,iconimage):
 def ninety_minutes_source(name,url,iconimage):
 #'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
     link = open_url(url).replace("'", '"').replace('\n','')
-    print link
     fullmatch = regex_from_to(link, 'Full Match Video', 'Start Iframe')
     all_lang = regex_get_all(fullmatch, '<h3 class="heading', '</p></div>')
     for lang in all_lang:
@@ -247,9 +253,14 @@ def club_menu(name, url, list):
 	
 def club_results(name, url, iconimage):
     hidescores = False
-    dialog = xbmcgui.Dialog()
-    if dialog.yesno("Hide Results?", '', 'Do you want hide the scores?'):
-       hidescores = True
+    if HIDESCORE == 'hide':
+        hidescores = True
+    elif HIDESCORE == 'show':
+        hidescores = False
+    else:
+        dialog = xbmcgui.Dialog()
+        if dialog.yesno("Hide Results?", '', 'Do you want hide the scores?'):
+           hidescores = True
     try:
         splitname = name.split(']')
         teamname = splitname[5].replace('[/COLOR','')
@@ -379,7 +390,7 @@ def play_video(name, url, iconimage):
     if playlink == 'none available':
         notification(name, 'Video is no longer available', '3000', iconart)
     elif playlink == 'skypremium':
-        notification(name, 'Video only for Sky Sports subscribers', '3000', iconart)
+        notification(name, 'Sky Sports videos not working', '3000', iconart)
     else:
         playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
         playlist.clear()

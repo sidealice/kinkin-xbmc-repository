@@ -42,6 +42,7 @@ def open_url(url):
 def CATEGORIES(name):
     addDir("News", 'url',29,iconart, '','')
     addDir("90 Minutes", 'url',89,iconart, '','')
+    addDir("Match of the Day", 'http://www.matchdrama.com/category/match-of-the-day/',501,iconart, '','')
     addDir("Highlights", 'url',10,iconart, '','')
     addDir("Top Videos", 'http://eurorivals.net/best-football-videos.html',4,iconart, '','')   
     addDir("Top Clubs", 'http://eurorivals.net/european-football-clubs.html',20,iconart, '','')
@@ -95,6 +96,18 @@ def highlights_list(url):
             url = base_url + u
             text = "> Page %s" % p
             addDir(text,url,1,"","","")
+    except:
+        pass
+		
+def matchoftheday(url):
+    link = open_url(url)
+    match = re.compile('<a class="layer-link" href="(.+?)">&nbsp;</a><div class="article-image-wrapper"><div class="article-image"><div class="layer-gradient"></div><a href="(.+?)"><img width="263" height="180" src="(.+?)" class="attachment-grid-4 wp-post-image" alt="(.+?)" title="(.+?) &#8211; Watch Online" /></a>').findall(link)
+    for url,url2,iconimage,alt,title in match:
+        title = title.replace('&#8211;', '-')
+        addDirPlayable(title,url,3,iconimage,"")
+    try:
+        nexturl = regex_from_to(link, 'link rel="next" href="', '"')
+        addDir("Next Page >", nexturl,501,'', '','')
     except:
         pass
 		
@@ -386,6 +399,12 @@ def dm_icon(videoid):
 def play_video(name, url, iconimage):
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name)
+    if 'matchdrama' in url:
+        link = open_url(url)#d1,w,h,url
+        vid=regex_from_to(link,'<div class="wpb_raw_code wpb_raw_js">', '</div>')
+        match = re.compile('<iframe frameborder="(.+?)" width="(.+?)" height="(.+?)" src="(.+?)"></iframe>').findall(vid)
+        for d1,w,h,url in match:
+            url = url
     playlink = resolve_url(url)
     if playlink == 'none available':
         notification(name, 'Video is no longer available', '3000', iconart)
@@ -1071,6 +1090,9 @@ elif mode == 16:
 		
 elif mode == 17:
         get_subscriptions()
+		
+elif mode==501:
+        matchoftheday(url)
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

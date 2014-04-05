@@ -429,12 +429,13 @@ def tv_show_episodes(name, list, iconimage, showname):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def play(name, url, iconimage, showname):
+    urlkey = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.video.tvonline.cc/urlkeys.txt'
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name)
     splitkey = url.replace('http://www.tvonline.cc/play.php?id=', '').split('-')
+	
     key1 = splitkey[0]
     key4 = splitkey[1]
-    #http://ddd5.tvonline.cc/getinfo.php?key=nywetln-ltttewzzbnn-ekkn
     keychar = "beklm"
     key_length = 3
     key2 = ""
@@ -448,8 +449,18 @@ def play(name, url, iconimage, showname):
     for i in range(key_length):
         next_index = random.randrange(len(keychar))
         key3 = key3 + keychar[next_index]# friday k saturday w sunday z
+    
+
+    try:
+        a = open_url(urlkey	).replace('\n','')
+        data = a.split('<>')
+        key5 = data[0].rstrip()
+        dom = data[1].rstrip()
+    except:
+        key5 = 'lttte'
+        dom = 'ddd5'
    
-    playlink = 'http://ddd5.tvonline.cc/ip.mp4?key=%s-lttte%s%s-%s' % (key1, key2, key3, key4)
+    playlink = 'http://%s.tvonline.cc/ip.mp4?key=%s-%s%s%s-%s' % (dom,key1,key5, key2, key3, key4)
     playlink1 = 'http://ddd5.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()

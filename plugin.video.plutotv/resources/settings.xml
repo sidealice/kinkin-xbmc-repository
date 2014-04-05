@@ -1,0 +1,5 @@
+<settings>
+	<category label="Settings">
+        <setting id="hide_pluto_vid" type="bool" label="10001" default="false" />
+	</category>
+</settings>

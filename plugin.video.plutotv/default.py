@@ -122,14 +122,18 @@ def play_channel(name,url,iconimage,clear):
     for field in data:
         video_id = field['code']
         name = field['name']
-        iconimage = 'https://i1.ytimg.com/vi/%s/hqdefault.jpg' % video_id
-        url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' +  video_id)
+        provider = field['provider']
+        if provider == 'youtube':
+            iconimage = 'https://i1.ytimg.com/vi/%s/hqdefault.jpg' % video_id
+            url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' +  video_id)
+        else:
+            url,iconimage = resolve_nonyoutube(provider,video_id)
         liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
         liz.setInfo('video', {'Title':name})
         liz.setThumbnailImage(iconimage)
         liz.setProperty('fanart_image', fanart)
         liz.setProperty("IsPlayable","true")
-        if HIDE_PLUTO==False or (HIDE_PLUTO==True and 'Pluto.TV' not in name and 'PlutoTV' not in name and name != 'Music 15 3'):
+        if HIDE_PLUTO==False or (HIDE_PLUTO==True and 'pluto.tv' not in name.lower() and 'plutotv' not in name.lower() and name != 'Music 15 3'):
             playlist.append((url, liz))
             progress = len(playlist) / float(nItem) * 100               
             dp.update(int(progress), 'Adding to channel',name)
@@ -151,6 +155,31 @@ def play_channel(name,url,iconimage,clear):
                 xbmc.Player().play(pl)
             except:
                 pass
+				
+def resolve_nonyoutube(provider,video_id):
+    if provider == 'vimeo':
+        geturl = 'http://player.vimeo.com/video/%s?api=1&autoplay=1&badge=0&byline=0&color=2C95C4&player_id=vimeo4847&portrait=0&title=0' % video_id
+        header_dict = {}
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header_dict['Host'] = 'player.vimeo.com'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Referer'] = 'http://pluto.tv/'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+        net.set_cookies(cookie_jar)
+        req = net.http_GET(geturl, headers=header_dict).content
+        net.save_cookies(cookie_jar)
+        iconimage = regex_from_to(req, '"640":"', '"')
+        files = regex_from_to(req, 'files"', '}}')
+        try:
+            hd = regex_from_to(files, '"hd":', 'availability')
+        except:
+            hd = regex_from_to(files, '"sd":', 'availability')
+        url = regex_from_to(hd,'"url":"', '"')
+        
+    else:
+        url = provider
+        iconimage = iconart
+    return (url,iconimage)
 			
 def browse_channel(name,url,iconimage,clear):
     if not 'sched' in url:
@@ -177,10 +206,14 @@ def browse_channel(name,url,iconimage,clear):
     for field in data:
         video_id = field['code']
         name = field['name']
-        iconimage = 'https://i1.ytimg.com/vi/%s/hqdefault.jpg' % video_id 
-        url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' +  video_id)
+        provider = field['provider']
+        if provider == 'youtube':
+            iconimage = 'https://i1.ytimg.com/vi/%s/hqdefault.jpg' % video_id
+            url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' +  video_id)
+        else:
+            url,iconimage = resolve_nonyoutube(provider,video_id)
         if HIDE_PLUTO==False or (HIDE_PLUTO==True and 'Pluto.TV' not in name and 'PlutoTV' not in name and name != 'Music 15 3'):
-            addDirPlayable(name,url,5,iconimage,'')   
+            addDirPlayable(name,url,5,iconimage,'myvideos')   
             liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('video', {'Title':name})
             liz.setThumbnailImage(iconimage)
@@ -240,21 +273,19 @@ def favourites():
                 title = list1[0]
                 title = title.replace('->-', ' & ')
                 url = list1[1]
-                thumb = list1[1]
-                video_id = regex_from_to(url,'https://i1.ytimg.com/vi/', '/hqdefault.jpg') 
-                url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' +  video_id)
-                addDirPlayable(title,url,5,thumb,'fav')
+                thumb = list1[2]
+                addDirPlayable(title,url,5,thumb,'favmyvideos')
 				
 	
 def add_favourite(name, url, iconimage, dir, text):
     list_data = "%s<>%s<>%s" % (name,url,iconimage)
     add_to_list(list_data, dir)
-    notification(name, "[COLOR lime]" + text + "[/COLOR]", '4000', url)
+    notification(name, "[COLOR lime]" + text + "[/COLOR]", '4000', iconimage)
 	
 def remove_from_favourites(name, url, iconimage, dir, text):
     list_data = "%s<>%s<>%s" % (name,url,iconimage)
     remove_from_list(list_data, dir)
-    notification(name, "[COLOR orange]" + text + "[/COLOR]", '4000', url)
+    notification(name, "[COLOR orange]" + text + "[/COLOR]", '4000', iconimage)
 		
 def create_directory(dir_path, dir_name=None):
     if dir_name:
@@ -350,7 +381,7 @@ def add_to_list(list, file):
         if len(line) > 0:
             s = s + line + '\n'
     write_to_file(file, s)
-    xbmc.executebuiltin("Container.Refresh")
+
     
 def remove_from_list(list, file):
     index = find_list(list, file)
@@ -463,16 +494,16 @@ def addDirPlayable(name,url,mode,iconimage,showname):
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': showname })
         liz.setProperty('fanart_image', fanart )
-        if not 'plugin' in url:
+        if not 'myvideos' in showname:
             contextMenuItems.append(("[COLOR lime]Channel Schedule[/COLOR]",'XBMC.Container.Update(%s?name=%s&url=%s&mode=7&iconimage=%s&showname=%s)'%(sys.argv[0],name, url, iconimage,showname)))
             contextMenuItems.append(("[COLOR lime]Queue Channel[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=3&iconimage=%s&showname=%s)'%(sys.argv[0],name, url, iconimage,showname)))
             contextMenuItems.append(("[COLOR lime]Browse Channel[/COLOR]",'XBMC.Container.Update(%s?name=%s&url=%s&mode=4&iconimage=%s&showname=%s)'%(sys.argv[0],name, url, iconimage,showname)))
-        if 'plugin' in url:
-            contextMenuItems.append(("[COLOR lime]Queue Video[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=6&iconimage=%s&showname=%s)'%(sys.argv[0],name, iconimage, "TEST",'video')))
-            if showname != 'fav':
-                contextMenuItems.append(("[COLOR lime]Save Video to Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=8&iconimage=%s&showname=%s)'%(sys.argv[0],name, iconimage, "TEST",'video')))
-            if showname == 'fav':
-                contextMenuItems.append(("[COLOR orange]Remove from Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&iconimage=%s&showname=%s)'%(sys.argv[0],name, iconimage, "TEST",'video')))        
+        if 'myvideos' in showname:
+            contextMenuItems.append(("[COLOR lime]Queue Video[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=6&iconimage=%s&showname=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url), urllib.quote(iconimage),'video')))
+            if not 'fav' in showname:
+                contextMenuItems.append(("[COLOR lime]Save Video to Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=8&iconimage=%s&showname=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url), urllib.quote(iconimage),'video')))
+            if 'fav' in showname:
+                contextMenuItems.append(("[COLOR orange]Remove from Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=10&iconimage=%s&showname=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url), urllib.quote(iconimage),'video')))        
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok

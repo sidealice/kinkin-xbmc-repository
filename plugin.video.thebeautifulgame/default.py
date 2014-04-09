@@ -167,7 +167,8 @@ def ninety_minutes_latest(name,url,iconimage):
 def ninety_minutes_source(name,url,iconimage):
 #'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
     link = open_url(url).replace("'", '"').replace('\n','')
-    fullmatch = regex_from_to(link, 'Full Match Video', 'Start Iframe')
+    print link
+    fullmatch = regex_from_to(link, 'Full Match Video', '</div><br/><div style')
     all_lang = regex_get_all(fullmatch, '<h3 class="heading', '</p></div>')
     for lang in all_lang:
         language = regex_from_to(lang, '<span>', '</span>')

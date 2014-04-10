@@ -1,0 +1,5 @@
+<settings>
+	<category label="Settings">
+        <setting id="timezone" type="enum" values="East Coast|West Coast|UK (London)|CET (Amsterdam)|Asia (Hong Kong)" label="10001" default="0" />
+	</category>
+</settings>

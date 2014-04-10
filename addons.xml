@@ -191,6 +191,25 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 </addon>
 
+<addon id="plugin.video.smoothschedule"
+       name="Smooth Schedule"
+       version="0.5.0"
+       provider-name="Kinkin">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>An easier to read schedule for Smoothstreams</summary>
+        <description>An easier to read schedule for Smoothstreams. A valid subscription to Smoothstreams is still required!</description>
+    </extension>
+
+</addon>
+
 <addon id="plugin.video.thebeautifulgame"
        name="The Beautiful Game"
        version="0.8.5"

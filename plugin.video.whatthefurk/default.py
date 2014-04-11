@@ -1250,10 +1250,11 @@ def imdb_similar_menu(name, data, imdb_id):
         body = get_url(url, cache=CACHE_PATH)
         try:
             body = body.replace('\n',''	).replace('(','AX').replace(')','AZ')
+            print body
             all_tr = regex_from_to(body, '<section class="similarities posters">', '</section>')
-            match = re.compile('<a href="/title/(.+?)/"(.+?)>(.+?)</a> AX(.+?)AZ').findall(all_tr)
+            match = re.compile('<a href="/title/(.+?)/">(.+?)</a> AX(.+?)AZ').findall(all_tr)
             movies.append({'imdb_id': imdb_id, 'name': '[COLOR cyan]' + 'IMDB USERS WHO LIKE ' + '[/COLOR]' + '[COLOR gold]' + clean_file_name(name, use_blanks=False).replace(' TV Series','').replace(' Mini-Series','').replace(' TV Special','') +  '[/COLOR]' + '[COLOR cyan]' + ' ALSO LIKE:' + '[/COLOR]', 'year': 'rem', 'rating': "", 'votes': "D"})
-            for imdb_id,blank,name,year in match:
+            for imdb_id,name,year in match:
                 movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': "", 'votes': ""})
         except:
             xbmc.log("[What the Furk...XBMCHUB.COM] IMDB SIMILARITIES regex error")

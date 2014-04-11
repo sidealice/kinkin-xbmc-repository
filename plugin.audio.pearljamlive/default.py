@@ -1,4 +1,5 @@
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
+import plugintools
 
 pearljam_url = 'http://www.pearljamlive.com/'
 pjbootlegs_url = 'http://www.pearljambootlegs.org/modules/jinzora2/'
@@ -7,9 +8,19 @@ pjbootleg_logo = xbmc.translatePath(os.path.join('special://home/addons/plugin.a
 pjbootleg_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart2.jpg'))
 audio_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart1.jpg'))
 
+def open_url(url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent','Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>')
+    response = urllib2.urlopen(req)
+    link=response.read()
+    response.close()
+    return link
+	
 def CATEGORIES():
         addDir('Pearl Jam Live',pearljam_url,1,'http://www.pearljamlive.com/images/polaroid_home.jpg')
         addDir( 'Pearl Jam Bootlegs','url',4,pjbootleg_logo)
+        addDir( 'Pearl Jam Official YouTube','http://gdata.youtube.com/feeds/api/users/PearlJamOfficial/uploads?start-index=1&max-results=20',12,pjbootleg_logo)
+        #addDirAudio('Pearl Jam Radio','http://tunein.com/radio/Pearl-Jam-Radio-s124658/',13,pjbootleg_logo)
 
 #########################  PEARL JAM	#################################################	
 def LISTEN_YEAR(url):
@@ -242,7 +253,45 @@ def PJB_SINGLELINKS(url,name,clear):
             except:
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
-            xbmc.Player().play(pl)	
+            xbmc.Player().play(pl)
+
+def YOUTUBE_CHANNELS(url):
+    find_url=url.find('?')+1
+    keep_url=url[:find_url]
+    
+    iconimage=""
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+    response = urllib2.urlopen(req)
+    link=response.read()
+    response.close()
+
+    # Extract items from feed
+    pattern = ""
+    matches = plugintools.find_multiple_matches(link,"<entry>(.*?)</entry>")
+    
+    for entry in matches:
+        
+        # Not the better way to parse XML, but clean and easy
+        title = plugintools.find_single_match(entry,"<titl[^>]+>([^<]+)</title>").replace("&amp;","&")
+        plot = plugintools.find_single_match(entry,"<media\:descriptio[^>]+>([^<]+)</media\:description>")
+        thumbnail = plugintools.find_single_match(entry,"<media\:thumbnail url='([^']+)'")
+        video_id = plugintools.find_single_match(entry,"http\://www.youtube.com/watch\?v\=([^\&]+)\&").replace("&amp;","&")
+        play_url = "plugin://plugin.video.youtube/?path=/root/video&action=play_video&videoid="+video_id
+
+        plugintools.add_item( action="play" , title=title , plot=plot , url=play_url ,thumbnail=thumbnail , folder=True )
+    
+    # Calculates next page URL from actual URL
+    start_index = int( plugintools.find_single_match( link ,"start-index=(\d+)") )
+    max_results = int( plugintools.find_single_match( link ,"max-results=(\d+)") )
+    next_page_url = keep_url+"start-index=%d&max-results=%d" % ( start_index+max_results , max_results)
+
+    addDir(">> Next page",next_page_url,12,"")
+
+def pj_radio(url):
+    link = open_url(url)
+    print link
+    xbmc.Player().play(url)	
 
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
@@ -390,6 +439,12 @@ elif mode==10:
 elif mode==11:
         print ""+url
         PJB_YEAR_SHOWS(url)
+		
+elif mode==12:
+        YOUTUBE_CHANNELS(url)
+		
+elif mode==13:
+        pj_radio(url)
 		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

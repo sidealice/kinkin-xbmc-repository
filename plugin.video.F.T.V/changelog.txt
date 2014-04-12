@@ -1,3 +1,7 @@
+1.1.7
+Fixed login message if user is not logged in
+Added cartoons & More (Disney Junior moved to this section)
+
 1.1.6a
 Fix script error if no userdata path found
 

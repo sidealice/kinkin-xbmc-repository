@@ -1,0 +1,80 @@
+1.1.7
+Fixed login message if user is not logged in
+Added cartoons & More (Disney Junior moved to this section)
+
+1.1.6a
+Fix script error if no userdata path found
+
+1.1.6
+Added context option to hide channel groups
+
+1.1.5
+Fixed error when channel description is blank
+
+1.1.4
+Added UK LIVE TV menu in case of geo-blocking
+New setting to sort channel lists alphabetically
+Added context option to add a channel from the Non Geo (xml) section to a channel group
+
+1.1.3
+Fixed US (LOCAL TV) and UK channels (non-geo)
+Added new menu "Non Geo", xml-based list (not all channels work)
+
+1.1.2
+Cleaned up non-geo channels (UK & US)
+
+1.1.1
+Bug Fix
+
+1.1.0
+Fixed playback
+Integrated "Non-Geo" function for US and UK channels
+
+1.0.11
+Moved Chelsea TV to UK Live section
+Removed "Other Video Links"
+Added new category "Disney Junior Videos"
+
+1.0.10
+Fixed script errors
+
+
+1.0.9
+Fixed change in page source returning no channels
+
+1.0.8
+Updated python version to 2.1.0
+
+1.0.7
+Added Channel 5 +1 to UK TV
+
+1.0.6
+Fixed BBC1 and ITV1
+
+1.0.5
+Complete re-write, no longer using FilmOn api
+Cleaner login
+Added On Demand from Filmon
+
+1.0.4
+Fixed some more channels not playing
+Added setting: Auto-switch to SD mode if timeout value is too low
+New icon by azad720.
+
+1.0.3
+Fixed some channels not playing
+Fixed My Channels
+
+1.0.2
+Now launches directly into FilmOn
+Added settings to enable/disable "My Video Addons", "My Audio Addons" and "Other Video Links" menus
+
+1.0.1
+Added Most Watched menu
+Added context option to add to xbmc favourites
+Changed FilmOn option to "Add to My Channels"
+
+1.0.0
+Initial release
+
+

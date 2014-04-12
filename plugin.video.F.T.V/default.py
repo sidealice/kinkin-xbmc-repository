@@ -36,8 +36,10 @@ addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'icon.png'))
 channel_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'channel.list'))
+cartoonlinks = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'cartoonlinks.list'))
 group_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'groups.list'))
 xml_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'FilmOn.xml'))
+ct_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'cartoons.list'))
 base_url = 'http://www.filmon.com/'
 disneyjrurl = 'http://www.disney.co.uk/disney-junior/content/video.jsp?b='
 
@@ -93,7 +95,7 @@ def CATEGORIES():
     if MY_AUDIO:
         addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
     addDir('Non Geo','url',110,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'xml.png')), '', '')
-    addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
+    addDir('Cartoons & More','url',399,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
@@ -112,9 +114,7 @@ def CATEGORIES():
         if not title in hidden_links:
             addDir(title,url,123,thumb, '','')
     setView('episodes', 'episodes-view')
-    if FILMON_USER != "" and not FILMON_USER in link:
-        notification('Not logged in at Filmon', 'Check settings', '5000', iconart)
-    else:
+    if FILMON_USER in link and FILMON_ACCOUNT:
         notification('Logged in at Filmon', FILMON_USER, '5000', iconart)
 
 		
@@ -657,6 +657,59 @@ def play(name, url, iconimage):
         playlist.add(stream_url,listitem)
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(playlist)
+
+def cartoons(name,url):
+    addDir('Top Movies','picasa_topmovie',398,'https://lh4.googleusercontent.com/-xwlVx-Rv1qw/UrQN_iy5w0I/AAAAAAAABnY/l_wjhLjykuY/s630/marvel-rankings.jpg', '', '')
+    addDir('Disney','picasa_disneycollection',398,'https://lh6.googleusercontent.com/-srGy1JeuoxU/UmpVe7gEGBI/AAAAAAAABbA/m0LgdL3mAwQ/s640/WaltDisneyPicturesSpecialPoster.jpeg', '', '')
+    addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
+    addDir('IMDB','picasa_imdb',398,'https://lh5.googleusercontent.com/-U-eB6iRwwns/UxxNvZrXHFI/AAAAAAAACmA/8HAwCVDzuSg/s800/imdb_top_250_bg.jpg', '', '')
+    addDir('Top Cartoons','picasa_topcartoon',398,'https://lh5.googleusercontent.com/-l6lQqrU7BW0/UrQqqA4AlqI/AAAAAAAAIyE/LqwNMn_RBHo/s800/Disney-Pixar-Wallpaper-for-Desktop1.jpg', '', '')
+    addDir('Other Cartoons','url',397,'https://lh6.googleusercontent.com/-jcF96PO3xPA/UpaegauaWNI/AAAAAAAABgY/FnNZ5kRj3fI/s800/the_simpsons.jpg', '', '')
+	
+def other_cartoons(name,url):
+    list = read_from_file(ct_list)
+    match = re.compile('"Name":"(.+?)","Action":"(.+?)","Type":"(.+?)","ImageVideo":(.+?),"Image":"(.+?)"').findall(list)
+    for name,action,type,iv,iconimage in match:
+        if action != 'picasa_topmovie' and action != 'picasa_disneycollection' and action != 'picasa_topimdb' and action != 'picasa_topcartoon':
+            url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % action
+            addDir(name,action,398,iconimage, '', '')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+
+def cartoon_list(name,url):
+    try:
+        url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
+        link = open_url(url)
+        if not 'Link' in link:
+            list = read_from_file(cartoonlinks)
+            link = regex_from_to(list, name + '<<', '>>')
+    except:
+        list = read_from_file(cartoonlinks)
+        link = regex_from_to(list, name + '<<', '>>')
+    match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
+    for title,type,url,iconimage in match:
+        url=url.replace('\/', '/')
+        iconimage=iconimage.replace('\/', '/')
+        addDirPlayable(title,url,396,iconimage,'cartoons', '', '', '')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+
+def play_cartoons(name,url,iconimage):
+    if 'auengine.com' in url:
+        link=open_url(url)
+        url=re.compile("url: '(.+?)'").findall(link)[0]
+        
+    if 'animeonhand.com' in url:
+        html=open_url(url)
+        url=re.compile("'file': '(.+?)'").findall(link)[0]
+    
+    handle = str(sys.argv[1])
+    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)
+    if handle != "-1":	
+        listitem.setProperty("IsPlayable", "true")
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+    else:
+        xbmcPlayer = xbmc.Player()
+        xbmcPlayer.play(url,listitem)	
+        
 		
 def disney_jr(url):
     link = open_url(url)#.replace('\n','')
@@ -744,6 +797,20 @@ def strip_text(r, f, t, excluding=True):
     return r
 	
 def write_to_file(path, content, append=False, silent=False):
+    try:
+        if append:
+            f = open(path, 'a')
+        else:
+            f = open(path, 'w')
+        f.write(content)
+        f.close()
+        return True
+    except:
+        if not silent:
+            print("Could not write to " + path)
+        return False
+		
+def add_to_file(path, content, append=True, silent=False):
     try:
         if append:
             f = open(path, 'a')
@@ -1010,7 +1077,19 @@ elif mode == 201:
 
 elif mode == 203:
         play_od(name, url, iconimage)
-
+		
+elif mode == 399:
+        cartoons(name,url)
+		
+elif mode == 398:
+        cartoon_list(name,url)
+		
+elif mode == 397:
+        other_cartoons(name,url)
+		
+elif mode == 396:
+        play_cartoons(name,url,iconimage)
+		
 elif mode == 301:
         disney_jr(url)	
 

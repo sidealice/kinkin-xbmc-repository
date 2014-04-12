@@ -14,10 +14,10 @@ class AutoUpdater:
         self.last_run = 0
         while not xbmc.abortRequested:
             if settings.enable_subscriptions():
-                next_run  = datetime.datetime.fromtimestamp(time.mktime(time.strptime(ADDON.getSetting('service_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
-                now = datetime.datetime.now()
-                if now > next_run:
-                    try:
+                try:
+                    next_run  = datetime.datetime.fromtimestamp(time.mktime(time.strptime(ADDON.getSetting('service_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
+                    now = datetime.datetime.now()
+                    if now > next_run:
                         if xbmc.Player().isPlaying() == False:
                             if xbmc.getCondVisibility('Library.IsScanningVideo') == False:      
                                 xbmc.log('[MovieStorm] Refreshing subscriptions')
@@ -29,8 +29,8 @@ class AutoUpdater:
                                 xbmc.log("[MovieStorm] Subscriptions and Library updated. Next run at " + ADDON.getSetting('service_time'))
                         else:
                             xbmc.log("[MovieStorm] Player is running, waiting until finished")
-                    except:
-                        pass
+                except:
+                    pass
             xbmc.sleep(1000)
 
 

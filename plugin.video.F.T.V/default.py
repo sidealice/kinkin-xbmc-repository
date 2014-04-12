@@ -13,6 +13,7 @@ import json
 import glob
 from threading import Thread
 import cookielib
+import plugintools
 from t0mm0.common.net import Net
 net = Net()
 
@@ -663,6 +664,7 @@ def cartoons(name,url):
     addDir('Disney','picasa_disneycollection',398,'https://lh6.googleusercontent.com/-srGy1JeuoxU/UmpVe7gEGBI/AAAAAAAABbA/m0LgdL3mAwQ/s640/WaltDisneyPicturesSpecialPoster.jpeg', '', '')
     addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('IMDB','picasa_imdb',398,'https://lh5.googleusercontent.com/-U-eB6iRwwns/UxxNvZrXHFI/AAAAAAAACmA/8HAwCVDzuSg/s800/imdb_top_250_bg.jpg', '', '')
+    addDir('Disney Classic','http://gdata.youtube.com/feeds/api/users/UCa0h983kQj5OYa06gYhxgiw/uploads?start-index=1&max-results=50',395,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'mickey.gif')),'','')
     addDir('Top Cartoons','picasa_topcartoon',398,'https://lh5.googleusercontent.com/-l6lQqrU7BW0/UrQqqA4AlqI/AAAAAAAAIyE/LqwNMn_RBHo/s800/Disney-Pixar-Wallpaper-for-Desktop1.jpg', '', '')
     addDir('Other Cartoons','url',397,'https://lh6.googleusercontent.com/-jcF96PO3xPA/UpaegauaWNI/AAAAAAAABgY/FnNZ5kRj3fI/s800/the_simpsons.jpg', '', '')
 	
@@ -779,6 +781,40 @@ def disney_playlist(name, url, iconimage):
             pass
     if not xbmc.Player().isPlayingVideo():
         xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(pl)
+		
+def youtube_videos(name,url,iconimage):
+    print url
+    find_url=url.find('?')+1
+    keep_url=url[:find_url]
+    
+    iconimage=""
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+    response = urllib2.urlopen(req)
+    link=response.read()
+    response.close()
+
+    # Extract items from feed
+    pattern = ""
+    matches = plugintools.find_multiple_matches(link,"<entry>(.*?)</entry>")
+    
+    for entry in matches:
+        
+        # Not the better way to parse XML, but clean and easy
+        title = plugintools.find_single_match(entry,"<titl[^>]+>([^<]+)</title>").replace("&amp;","&")
+        plot = plugintools.find_single_match(entry,"<media\:descriptio[^>]+>([^<]+)</media\:description>")
+        thumbnail = plugintools.find_single_match(entry,"<media\:thumbnail url='([^']+)'")
+        video_id = plugintools.find_single_match(entry,"http\://www.youtube.com/watch\?v\=([^\&]+)\&").replace("&amp;","&")
+        play_url = "plugin://plugin.video.youtube/?path=/root/video&action=play_video&videoid="+video_id
+
+        plugintools.add_item( action="play" , title=title , plot=plot , url=play_url ,thumbnail=thumbnail , folder=True )
+    
+    # Calculates next page URL from actual URL
+    start_index = int( plugintools.find_single_match( link ,"start-index=(\d+)") )
+    max_results = int( plugintools.find_single_match( link ,"max-results=(\d+)") )
+    next_page_url = keep_url+"start-index=%d&max-results=%d" % ( start_index+max_results , max_results)
+
+    addDir(">> Next page",next_page_url,395,"",'','')
 
 		
 def regex_from_to(text, from_string, to_string, excluding=True):
@@ -1089,6 +1125,9 @@ elif mode == 397:
 		
 elif mode == 396:
         play_cartoons(name,url,iconimage)
+		
+elif mode == 395:
+        youtube_videos(name,url,iconimage)
 		
 elif mode == 301:
         disney_jr(url)	

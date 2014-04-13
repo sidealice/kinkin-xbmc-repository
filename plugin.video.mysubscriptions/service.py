@@ -29,7 +29,7 @@ class AutoUpdater:
                             xbmc.log("[My Subscriptions] Player is running, waiting until finished")
                 except:
                     pass
-            txbmc.sleep(1000)
+            xbmc.sleep(1000)
 
 
 xbmc.log("[My Subscriptions] Subscription service starting...")

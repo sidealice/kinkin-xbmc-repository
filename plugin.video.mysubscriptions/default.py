@@ -43,11 +43,11 @@ def find_shows(name,url):
                                 text = text.replace(yr,'').rstrip()
                         if text.find('(') >-1:
                             text = text[:text.find('(')].rstrip()
-                        add_to_list(text, SUB_FILE)
+                        add_to_list(text.lower(), SUB_FILE)
     subscription_imdb()
-    get_subscriptions()
-    time.sleep(1)
-    xbmc.executebuiltin('UpdateLibrary(video)')
+    #get_subscriptions()
+    #time.sleep(1)
+    #xbmc.executebuiltin('UpdateLibrary(video)')
 
 
 def subscription_imdb():
@@ -56,13 +56,37 @@ def subscription_imdb():
         show_list = s.split('\n')
         for show in show_list:
             if show != '':
-                try:
-                    imdb_id = get_imdb(show)
-                    text = "%s<>%s" % (show, imdb_id)
-                    if imdb_id != 'notfound':
-                        add_to_list(text, SUB_IMDB_FILE)
-                except:
-                    pass
+                dialog = xbmcgui.Dialog()
+                menu_texts = []
+                menu_data = []
+                params = {}
+                params["title"] = show
+                params["view"] = "simple"
+                params["count"] = "10"
+                params["title_type"] = "tv_series,mini_series,tv_special"
+                url = "%s%s" % ("http://www.imdb.com/search/title?", urllib.urlencode(params))
+                body = open_url(url)
+ 	
+                first_show = regex_get_all(body, '<tr class=', '</tr>')
+                if len(first_show) == 565:
+                    all_td = regex_get_all(first_show, '<td', '</td>')
+                    imdb_id = regex_from_to(all_td[1], '/title/', '/')
+                else:
+                    for f in first_show:
+                        all_td = regex_get_all(f, '<td', '</td>')#year_type">
+                        imdb_id = regex_from_to(all_td[1], '/title/', '/')#/">
+                        title = regex_from_to(all_td[1], '/">', '</a') + ' ' + regex_from_to(f, 'year_type">', '</span>')
+                        menu_data.append(imdb_id)
+                        menu_texts.append(title)
+                    menu_id = dialog.select('Select Show', menu_texts)
+                    if(menu_id < 0):
+                        return (None, None)
+                        dialog.close()
+                    else:	
+                        imdb_id = menu_data[menu_id]
+                text="%s<>%s" % (show,imdb_id)
+                add_to_list(text, SUB_IMDB_FILE)
+        get_subscriptions()
 
 				
 def get_subscriptions():
@@ -77,26 +101,7 @@ def get_subscriptions():
             tv_show_mode = "3"
             create_tv_show_strm_files(tv_show_name, tv_show_imdb, tv_show_mode, TV_SHOWS_PATH)
 				
-def get_imdb(show):
-    params = {}
-    params["title"] = show
-    params["view"] = "simple"
-    params["count"] = "1"
-    params["title_type"] = "tv_series,mini_series,tv_special"
-    url = "%s%s" % ("http://m.imdb.com/search/title?", urllib.urlencode(params))
-    try:
-        imdb_id = search_imdb(url)
-        return imdb_id
-    except:
-        return 'notfound'
 
-def search_imdb(url):
-    body = open_url(url)
- 	
-    first_show = regex_from_to(body, '<tr class=', '</tr>')
-    all_td = regex_get_all(first_show, '<td', '</td>')
-    imdb_id = regex_from_to(all_td[1], '/title/', '/')
-    return imdb_id
 
 def create_tv_show_strm_files(name, imdb_id, mode, dir_path):
     info = TheTVDBInfo(imdb_id)
@@ -148,7 +153,6 @@ def stream_episode(name, data):
                                     for episode in all_episodes:
                                         episode1 = episode.replace('_', ' ').rstrip()
                                         epnum1 = episode1.replace(s, '').replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '').replace('_', '').lstrip()
-                                        print addons, epnum1
                                         if ' ' in epnum1:
                                             epnum1 = epnum1.split(' ')[0]
                                         if 'E' in epnum1:
@@ -159,7 +163,6 @@ def stream_episode(name, data):
                                             epnum1 = epnum1.replace('0', '')
                                         if epnum1 == showepisode:
                                             ep_path = os.path.join(episode_path, episode)
-                                            print ep_path
                                             addon_name = addons.replace('plugin.video.', '').upper()
                                             menu_texts.append(addon_name)
                                             menu_path.append(ep_path)
@@ -175,8 +178,12 @@ def stream_episode(name, data):
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     playlist.add(dummy_file)
+    
     playlist.add(url_id)
     xbmc.Player().play(playlist)
+    xbmc.executebuiltin("XBMC.ActivateWindow(12005)")
+    currentWindow = xbmcgui.getCurrentWindowId()
+    print '###################### ' + str(currentWindow)
 
 def help():
     msg = os.path.join(ADDON.getAddonInfo('path'),'resources', 'messages', 'help.txt')

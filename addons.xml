@@ -89,7 +89,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
        version="1.1.7a"
-       provider-name="kinkin">
+       provider-name="kinkin, icon by azad720">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
         <import addon="script.module.t0mm0.common" version="1.1.0"/>
@@ -150,7 +150,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.mysubscriptions"
        name="My Subscriptions"
-       version="0.5.6"
+       version="0.5.7"
        provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

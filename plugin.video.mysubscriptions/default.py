@@ -7,6 +7,7 @@ from meta import TheTVDBInfo
 USERDATA = xbmc.translatePath(os.path.join('special://home/userdata', 'addon_data'))
 check_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 dummy_file = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'dummyclip.mp4')
+iconart = os.path.join(xbmc.translatePath('special://home/addons/plugin.video.mysubscriptions'), 'icon.png')
 fanart = ''
 ADDON = settings.addon()
 yrlist = os.path.join(ADDON.getAddonInfo('path'),'resources', 'messages', 'years.list')
@@ -15,9 +16,9 @@ SUB_IMDB_FILE = settings.subs_imdb_file()
 TV_SHOWS_PATH = settings.tv_directory()
 
 def CATEGORIES():
-    addDir( 'Refresh Subscriptions','url',1,'')
-    addDir( 'Settings','url',2,'')
-    addDir( 'Help','url',4,'')
+    addDir( 'Find Subscriptions','url',1,iconart)
+    addDir( 'Settings','url',2,iconart)
+    addDir( 'Help','url',4,iconart)
 		
 def open_settings():
     ADDON.openSettings()
@@ -37,7 +38,7 @@ def find_shows(name,url):
                     subshowpath = os.listdir(show_path)
                     for s in subshowpath:
                         season_path = os.path.join(show_path, s)
-                        text = s.replace('_',' ').rstrip()
+                        text = s.replace('_',' ').replace(' s ',' ').rstrip()
                         for yr in yr_list:
                             if yr in text:
                                 text = text.replace(yr,'').rstrip()
@@ -45,17 +46,16 @@ def find_shows(name,url):
                             text = text[:text.find('(')].rstrip()
                         add_to_list(text.lower(), SUB_FILE)
     subscription_imdb()
-    #get_subscriptions()
-    #time.sleep(1)
-    #xbmc.executebuiltin('UpdateLibrary(video)')
 
 
 def subscription_imdb():
+    if os.path.isfile(SUB_IMDB_FILE):
+        existing = read_from_file(SUB_IMDB_FILE)
     if os.path.isfile(SUB_FILE):
         s = read_from_file(SUB_FILE)
         show_list = s.split('\n')
         for show in show_list:
-            if show != '':
+            if show != '' and not show in existing:
                 dialog = xbmcgui.Dialog()
                 menu_texts = []
                 menu_data = []
@@ -75,7 +75,7 @@ def subscription_imdb():
                     for f in first_show:
                         all_td = regex_get_all(f, '<td', '</td>')#year_type">
                         imdb_id = regex_from_to(all_td[1], '/title/', '/')#/">
-                        title = regex_from_to(all_td[1], '/">', '</a') + ' ' + regex_from_to(f, 'year_type">', '</span>')
+                        title = regex_from_to(all_td[1], '/">', '</a').replace("&#x27;", "'") + ' ' + regex_from_to(f, 'year_type">', '</span>')
                         menu_data.append(imdb_id)
                         menu_texts.append(title)
                     menu_id = dialog.select('Select Show', menu_texts)
@@ -86,6 +86,8 @@ def subscription_imdb():
                         imdb_id = menu_data[menu_id]
                 text="%s<>%s" % (show,imdb_id)
                 add_to_list(text, SUB_IMDB_FILE)
+            else:
+                notification('My Subsciptions', 'No new shows found', '3000', iconart)
         get_subscriptions()
 
 				
@@ -100,6 +102,7 @@ def get_subscriptions():
             tv_show_imdb = data[1]
             tv_show_mode = "3"
             create_tv_show_strm_files(tv_show_name, tv_show_imdb, tv_show_mode, TV_SHOWS_PATH)
+    xbmc.executebuiltin('UpdateLibrary(video)')
 				
 
 
@@ -142,7 +145,7 @@ def stream_episode(name, data):
                     subshowpath = os.listdir(show_path)
                     for s in subshowpath:
                         season_path = os.path.join(show_path, s)
-                        if showname.lower() in s.replace('_', ' ').replace('&', ' ').lower():
+                        if showname.lower() in s.replace('_', ' ').replace(' s ',' ').replace('&', ' ').lower():
                             season_path = os.path.join(show_path, s)
                             seasonpath = os.listdir(season_path)
                             for se in seasonpath:
@@ -151,8 +154,8 @@ def stream_episode(name, data):
                                     episode_path = os.path.join(season_path, se)
                                     all_episodes = os.listdir(episode_path)
                                     for episode in all_episodes:
-                                        episode1 = episode.replace('_', ' ').rstrip()
-                                        epnum1 = episode1.replace(s, '').replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '').replace('_', '').lstrip()
+                                        episode1 = episode#.replace('_', ' ').replace(' s ', ' ').rstrip()
+                                        epnum1 = episode1.replace(s, '').replace(showname + ' ', '').replace(showname, '').replace(showname + ' ', '').replace('.strm', '').replace('[', '').replace(']', '').replace('_', ' ').replace(' s ', ' ').lstrip()
                                         if ' ' in epnum1:
                                             epnum1 = epnum1.split(' ')[0]
                                         if 'E' in epnum1:
@@ -161,6 +164,7 @@ def stream_episode(name, data):
                                             epnum1 = epnum1.split('x')[1]
                                         if epnum1.startswith('0'):
                                             epnum1 = epnum1.replace('0', '')
+                                        print epnum1 + ' ### ' + showepisode
                                         if epnum1 == showepisode:
                                             ep_path = os.path.join(episode_path, episode)
                                             addon_name = addons.replace('plugin.video.', '').upper()
@@ -182,9 +186,13 @@ def stream_episode(name, data):
     playlist.add(url_id)
     xbmc.Player().play(playlist)
     xbmc.executebuiltin("XBMC.ActivateWindow(12005)")
+    xbmc.executebuiltin("XBMC.PlayerControl(Play)")
     currentWindow = xbmcgui.getCurrentWindowId()
     print '###################### ' + str(currentWindow)
 
+def notification(title, message, ms, nart):
+    xbmc.executebuiltin("XBMC.notification(" + title + "," + message + "," + ms + "," + nart + ")")
+	
 def help():
     msg = os.path.join(ADDON.getAddonInfo('path'),'resources', 'messages', 'help.txt')
     TextBoxes("[B][COLOR red]My Subscriptions[/B][/COLOR]",msg)

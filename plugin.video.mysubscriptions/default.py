@@ -88,10 +88,10 @@ def subscription_imdb():
                 add_to_list(text, SUB_IMDB_FILE)
             else:
                 notification('My Subsciptions', 'No new shows found', '3000', iconart)
-        get_subscriptions()
+        get_subscriptions(name,url)
 
 				
-def get_subscriptions():
+def get_subscriptions(name,url):
     content = read_from_file(SUB_IMDB_FILE)
     lines = content.split('\n')
         
@@ -420,6 +420,9 @@ elif mode == 3:
 	
 elif mode == 4:
     help()
+	
+elif mode == 5:
+    get_subscriptions(name, url)
 
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

@@ -21,7 +21,7 @@ class AutoUpdater:
                             if xbmc.getCondVisibility('Library.IsScanningVideo') == False:      
                                 xbmc.log('[My Subscriptions] Updating video library')
                                 time.sleep(1)
-                                xbmc.executebuiltin('RunPlugin(plugin://plugin.video.mysubscriptions/?mode=1&name=nm&url=u)')
+                                xbmc.executebuiltin('RunPlugin(plugin://plugin.video.mysubscriptions/?mode=5&name=nm&url=u)')
                                 self.last_run = now
                                 ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
                                 xbmc.log("[My Subscriptions] Subscriptions and Library updated. Next run at " + ADDON.getSetting('service_time'))

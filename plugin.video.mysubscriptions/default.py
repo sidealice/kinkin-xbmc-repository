@@ -45,10 +45,10 @@ def find_shows(name,url):
                         if text.find('(') >-1:
                             text = text[:text.find('(')].rstrip()
                         add_to_list(text.lower(), SUB_FILE)
-    subscription_imdb()
+    subscription_imdb(name,url)
 
 
-def subscription_imdb():
+def subscription_imdb(name,url):
     if os.path.isfile(SUB_IMDB_FILE):
         existing = read_from_file(SUB_IMDB_FILE)
     if os.path.isfile(SUB_FILE):

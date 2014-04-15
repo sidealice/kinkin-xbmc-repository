@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.tv4me"
        name="TV4ME"
-       version="1.0.4b"
+       version="1.0.4c"
        provider-name="kinkin, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

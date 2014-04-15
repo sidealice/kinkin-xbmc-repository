@@ -437,8 +437,8 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
         season_path = create_directory(tv_show_path, str(snum))
         eplist = regex_get_all(str(s), '<a', '</a>')
         for e in eplist:
-            episode = re.compile('<a title="(.+?)" href="(.+?)"> <div class="(.+?)data-original="(.+?)"(.+?)nseasnumep"> (.+?) <br />(.+?) </div> </div> </a>').findall(e)
-            for epname, url, a, thumb, b, snum, epnum in episode:
+            episodes = re.compile('<a title="(.+?)" href="(.+?)"> <div class="(.+?)data-original="(.+?)"(.+?)nseasnumep"> (.+?) <br(.+?)>(.+?) </div> </div> </a>').findall(e)
+            for epname, url, a, thumb, b, snum, c, epnum in episodes:
                 url = 'http://www.watch-tvseries.net' + url
                 epnum = epnum.replace('episode ', 'E')
                 snum = snum.replace('season ', 'S')

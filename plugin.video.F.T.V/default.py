@@ -43,6 +43,7 @@ xml_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F
 ct_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V/helpers', 'cartoons.list'))
 base_url = 'http://www.filmon.com/'
 disneyjrurl = 'http://www.disney.co.uk/disney-junior/content/video.jsp?b='
+session_url = 'http://www.filmon.com/api/init/'
 
 
 def open_url(url):
@@ -126,6 +127,7 @@ def group_channels(url, title):
     if url != 'url':
         net.set_cookies(cookie_jar)
         link = net.http_GET(url).content.encode("utf-8").rstrip()
+        print link
 
         channels = regex_get_all(link, '<li class="channel', '</li>')
         for channel in channels:
@@ -491,11 +493,12 @@ def recordings(url):
     url = base_url + 'my/recordings'
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    match = re.compile('window.user_storage = {"total":(.+?),"available":(.+?),"recorded":(.+?)}').findall(link)
-    for t, a, r in match:
-        acc_status = "Allowed: %shrs - Recorded: %shrs - Available %shrs" % (t, r, a)
+    t = regex_from_to(link, '<span class="total" >', '</span>')
+    r = regex_from_to(link, 'span class="recordedTime recorded">', '</span>')
+    a = regex_from_to(link, '<span class="leftTime available">', '</span>')
+    acc_status = "Allowed: %shrs - Recorded: %shrs - Available %shrs" % (t, r, a)
     addLink('[COLOR cyan]'+acc_status+'[/COLOR]',"","","","","", "", "", "")
-    recordings = regex_get_all(link, 'stream_url', 'isSoftDeleted')
+    recordings = regex_get_all(link, '"id"', 'is_deleted"')
     for r in recordings:
         STname = regex_from_to(r, 'stream_name":"', '",').replace("\/", "/")
         STurl = regex_from_to(r, 'stream_url":"', '",').replace("\/", "/") + " playpath=" + "mp4:" + STname + " swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf pageUrl=http://www.filmon.com/my/recordings"
@@ -504,12 +507,12 @@ def recordings(url):
         description = regex_from_to(r, 'description":"', '",')
         channel_id = regex_from_to(r, 'channel_id":"', '",')
         logo = 'https://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
-        start = regex_from_to(r, 'start_timestamp":"', '",')
-        start_time = datetime.datetime.fromtimestamp(int(regex_from_to(r, 'start_timestamp":"', '",')))
+        start = regex_from_to(r, 'time_start":"', '",')
+        start_time = datetime.datetime.fromtimestamp(int(regex_from_to(r, 'time_start":"', '",')))
         duration = regex_from_to(r, 'duration":"', '",')
         status = regex_from_to(r, 'status":"', '",')
         try:
-            download_link = 'http://s2.dvr.gv.filmon.com/' + STname
+            download_link = regex_from_to(r, 'download_link":"', '"')#'http://s2.dvr.gv.filmon.com/' + STname
         except:
             download_link = "error"
         text = "[COLOR gold]%s[/COLOR] %s (%s)" % (p_name, start_time.strftime('%d %b %H:%M'), status)
@@ -548,56 +551,73 @@ class DownloadThread(Thread):
         xbmc.executebuiltin(notify)	
 		
 def on_demand()	:
-    url = "http://demand.filmon.com"
+    url = "http://www.filmon.com/vod/"#"http://demand.filmon.com"
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    all_cat = regex_from_to(link, '<div class="categories-list', '</div>')
-    categories = regex_get_all(all_cat, '<a', '</a>')
+    net.save_cookies(cookie_jar)
+    all_cat = regex_from_to(link, 'var Genres = function', 'Genres.prototype')
+    categories = regex_get_all(all_cat, '"id"', 'logo-retina')
     for c in categories:
-        title = regex_from_to(c, '>', '</').strip()
-        url = "http://demand.filmon.com/" + regex_from_to(c, 'href="', '"')
+        title = regex_from_to(c, 'name":"', '"').strip()
+        slug = regex_from_to(c, 'slug":"', '"')
+        url = slug + '<>0'
         addDir(title,url,201,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '','')
         setView('episodes', 'episodes-view')
 
 def on_demand_list(url):
-    if "page=" in url:
-        np_url = url[:len(url)-1] + str(int(url[len(url)-1:]) + 1)
-    else:
-        np_url = url + "?page=1"
+    urlsplit=url.split('<>')
+    genre = urlsplit[0]
+    startindex=urlsplit[1]
+    nextindex=int(startindex) + 25
+    link = open_url(session_url)
+    match= re.compile('"session_key":"(.+?)"').findall(link)
+    session_id=match[0]
     net.set_cookies(cookie_jar)
+    url = 'http://www.filmon.com/api/vod/search?session_key=%s&term=&genre=%s&start_index=%s' % (session_id, genre, startindex)
+    np_url = "%s<>%s" % (genre, nextindex)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
-    all_videos = regex_get_all(link, '<div class="product-item col', '<div class="popover-content-bottom">')
-    for video in all_videos:
-        title = regex_from_to(video, 'popover-title">', '</span>')
-        url = "http://demand.filmon.com" + regex_from_to(video, 'product-item-info" href="', '"')
-        thumb = regex_from_to(video, 'img src="', '"')
-        try:
-            description = regex_from_to(video, '<p>', '</p>')
-        except:
-            description = ""
-        addDirPlayable(title,url,203,thumb,"",description, "", "od")
+	#rtmp://flash-cloud.filmon.com/demand/storage/226/109999/377916<playpath>mp4:377916.mp4 <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 <pageUrl>http://www.filmon.com/vod/view/2273-1-the-legend-of-bruce-lee-series
+    #rtmp://flash-cloud.filmon.com/demand/storage/25/1583/115122<playpath>mp4:115122.mp4 <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 <pageUrl>http://www.filmon.com/vod/view/6854-0-nitti-the-enforcer
+    #rtmp://flash-cloud.filmon.com/demand/storage/25/1583/115122 playpath=mp4:115122.mp4  swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54  pageUrl=http://www.filmon.com/vod/view/6854-0-nitti-the-enforcer
+    #id,title,slug,plot,d1,host,d2,iconimage,d3,lowurl,lowname,d4,highurl,highname
+    match = re.compile('{"id":(.+?),"title":"(.+?)","slug":"(.+?)","description":"(.+?)","type_id":(.+?)"content_host":"(.+?)","low_quality_file_id"(.+?)"couchdb_url":"(.+?)","alt":"","copyright":"(.+?)"streams":{"low":{"quality":"low","url":"(.+?)","name":"(.+?)","watch-timeout"(.+?)"high":{"quality":"high","url":"(.+?)","name":"(.+?)","watch-timeout"').findall(link)
+    for id,title,slug,plot,d1,host,d2,iconimage,d3,lowurl,lowname,d4,highurl,highname in match:
+        thumb='http://static.filmon.com/couch/' + iconimage
+        url = '%s playpath=mp4:%s swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 pageUrl=http://www.filmon.com/vod/view/%s' % (lowurl.replace('\/','/'),lowname,slug)
+        url = 'http://flash-cloud.filmon.com/demand/storage/25/1583/115122.mp4'
+        addDirPlayable(title,url,203,thumb,"",plot, "", "od")
+    #all_videos = regex_get_all(link, '"id":', '<div class="popover-content-bottom">')
+    #for video in all_videos:
+        #title = regex_from_to(video, 'popover-title">', '</span>')
+        #url = "http://demand.filmon.com" + regex_from_to(video, 'product-item-info" href="', '"')
+        #thumb = regex_from_to(video, 'img src="', '"')
+        #try:
+            #description = regex_from_to(video, '<p>', '</p>')
+        #except:
+            #description = ""
+        #addDirPlayable(title,url,203,thumb,"",description, "", "od")
     addDir("[COLOR gold]>> Next Page[/COLOR]",np_url,201,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'next.png')), '','')
     setView('episodes', 'episodes-view')
 	
 def play_od(name, url, iconimage):
-    dp = xbmcgui.DialogProgress()
-    dp.create('Opening ' + name.upper())
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    swf = "%s%s" % ('http://demand.filmon.com/sites/all/modules/demand/flash/FilmonPlayer.swf?', 'mvfu3k')
-    stream = re.compile('livehttp":{(.+?),"url":"(.+?)","name":"(.+?)"}').findall(link)
-    for vast, stUrl, playpath in stream:
-        RTurl = stUrl.replace("\\/", "/").replace("\/", "/")
-    STurl = RTurl
+    #dp = xbmcgui.DialogProgress()
+    #dp.create('Opening ' + name.upper())
+    #net.set_cookies(cookie_jar)
+    #link = net.http_GET(url).content.encode("utf-8").rstrip()
+    #swf = "%s%s" % ('http://demand.filmon.com/sites/all/modules/demand/flash/FilmonPlayer.swf?', 'mvfu3k')
+    #stream = re.compile('livehttp":{(.+?),"url":"(.+?)","name":"(.+?)"}').findall(link)
+    #for vast, stUrl, playpath in stream:
+        #RTurl = stUrl.replace("\\/", "/").replace("\/", "/")
+    #STurl = RTurl
     handle = str(sys.argv[1])
-    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
+    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)
     if handle != "-1":	
         listitem.setProperty("IsPlayable", "true")
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
     else:
         xbmcPlayer = xbmc.Player()
-        xbmcPlayer.play(STurl,listitem)
-    dp.close()
+        xbmcPlayer.play(url,listitem)
+    #dp.close()
 
 
 def my_addons():

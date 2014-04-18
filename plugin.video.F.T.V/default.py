@@ -501,7 +501,7 @@ def recordings(url):
     recordings = regex_get_all(link, '"id"', 'is_deleted"')
     for r in recordings:
         STname = regex_from_to(r, 'stream_name":"', '",').replace("\/", "/")
-        STurl = regex_from_to(r, 'stream_url":"', '",').replace("\/", "/") + " playpath=" + "mp4:" + STname + " swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf pageUrl=http://www.filmon.com/my/recordings"
+        
         p_id = regex_from_to(r, 'id":"', '",')
         p_name = regex_from_to(r, 'title":"', '",')
         description = regex_from_to(r, 'description":"', '",')
@@ -512,11 +512,12 @@ def recordings(url):
         duration = regex_from_to(r, 'duration":"', '",')
         status = regex_from_to(r, 'status":"', '",')
         try:
-            download_link = regex_from_to(r, 'download_link":"', '"')#'http://s2.dvr.gv.filmon.com/' + STname
+            download_link = regex_from_to(r, 'download_link":"', '"').replace("\/", "/")#'http://s2.dvr.gv.filmon.com/' + STname
         except:
             download_link = "error"
+        STurl = regex_from_to(r, 'stream_url":"', '",').replace("\/", "/") + " playpath=" + "mp4:" + STname + " swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf pageUrl=http://www.filmon.com/my/recordings"
         text = "[COLOR gold]%s[/COLOR] %s (%s)" % (p_name, start_time.strftime('%d %b %H:%M'), status)
-        addLink(text,STurl,logo,description,status,download_link, p_id, start,p_name)
+        addLink(text,download_link,logo,description,status,download_link, p_id, start,p_name)
         setView('episodes', 'episodes-view')
 
 def download_rec(name, url, iconimage):

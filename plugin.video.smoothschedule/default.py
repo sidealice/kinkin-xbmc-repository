@@ -3,9 +3,15 @@ import time,datetime
 from datetime import date, timedelta
 import settings
 import json
+from t0mm0.common.net import Net
+net = Net()
+import cookielib
 
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.smoothschedule', 'fanart.jpg'))
 art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.smoothschedule/art', ''))
+cookie_jar = settings.cookie_jar()
+USER = settings.username()
+PW = settings.user_password()
 
 
 TIMEZONE = settings.timezone()
@@ -19,6 +25,31 @@ t3 = (i + timedelta(days=3)).strftime('%Y-%m-%d')
 t4 = (i + timedelta(days=4)).strftime('%Y-%m-%d')
 t5 = (i + timedelta(days=5)).strftime('%Y-%m-%d')
 
+def GET_URL(url):
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    header_dict['Host'] = 'smoothstreams.tv'
+    header_dict['Referer'] = 'http://starstreams.tv/'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:28.0) Gecko/20100101 Firefox/28.0'
+    net.set_cookies(cookie_jar)
+    req = net.http_GET(url, headers=header_dict).content.rstrip()
+    net.save_cookies(cookie_jar)
+    return req
+
+def login():
+    header_dict = {}
+    header_dict['Accept'] = '	text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    header_dict['Host'] = 'starstreams.tv'
+    header_dict['Referer'] = 'http://starstreams.tv/wp-login.php?loggedout=true'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:28.0) Gecko/20100101 Firefox/28.0'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Connection'] = 'keep-alive'
+    form_data = ({'username': USER, 'password': PW,'remember_me': '1','protect_login': 'Log+in'})	
+    net.set_cookies(cookie_jar)
+    login = net.http_POST('http://starstreams.tv/wp-login.php?loggedout=true', form_data=form_data, headers=header_dict).content
+    if USER in login and USER !='':
+        notification('Smooth Schedule', 'Logged in to Smoothstreams', '3000', xbmc.translatePath(os.path.join('special://home/addons/plugin.video.smoothschedule', 'icon.png')))
+    net.save_cookies(cookie_jar)
 
 def open_url(url):
     req = urllib2.Request(url)
@@ -55,7 +86,7 @@ def main_menu():
     addDir('Wrestling','39',3,xbmc.translatePath(os.path.join(art, 'wrestling.gif')))
 	
 def channels(name,url,iconimage):
-    link =open_url(url).replace("'", '"').replace("|", '<>')
+    link =GET_URL(url).replace("'", '"').replace("|", '<>')
     all_ch = regex_get_all(link, '<ul class="row">', '</ul>')
     for a in all_ch:
         all_li = regex_get_all(a, '<li', '</li>')
@@ -69,34 +100,7 @@ def channels(name,url,iconimage):
         url = str("plugin://plugin.video.mystreamstv.beta/?path=/root/channels/&action=play_channel&chan=%s" % (ch_id))
         name = "%s [COLOR gold]%s[/COLOR]" % (alt, title)
         addDirPlayable(name,url,2,iconimage)
-'''
-        endtime = dttime[11:]
-        starttime = dttime[5:10]
-        if not '<i>' in title:
-            chan = channel.replace('#','').replace('|','')
-            title = "[COLOR gold]%s[/COLOR] | [COLOR cyan]%s[/COLOR] | %s" % (chan, title, dttime[5:])
-            chan = channel.replace('#','').replace('|','')
-            url = str("plugin://plugin.video.mystreamstv.beta/?path=/root/channels/&action=play_channel&chan=%s" % (chan))
-            if (endtime > t0time or endtime < starttime) and starttime < t0time:
-                addDirPlayable(title,url,2,iconimage)
-            else:
-                addDirPlayable(channel,url,2,iconimage)
-        if '<i>' in title:
-            ch = regex_from_to(title, '<i>', '</i>')
-            title1 = title.split('<i>')[0]
-            all_ch = ch.split(' ; ')
-            for a in all_ch:
-                chan = a.replace('(','')[:2]
-                if a[:1] == '(':
-                    a = a[1:]
-                title = "[COLOR gold]%s[/COLOR] | [COLOR cyan]%s[/COLOR] | %s" % (a.replace('#','').replace('))',')'), title1, dttime[5:])
-                url = str("plugin://plugin.video.mystreamstv.beta/?path=/root/channels/&action=play_channel&chan=%s" % (chan))
-                if (endtime > t0time or endtime < starttime) and starttime < t0time:
-                    addDirPlayable(title,url,2,iconimage)
-                else:
-                    addDirPlayable(channel,url,2,iconimage)
-    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
-'''
+
 def CATEGORIES(name,url,iconimage):
     addDir(t0,'http://smoothstreams.tv/schedule/list.php?cat=%s&js=1&timezone=%s&day=%s&auto=null' % (url,TIMEZONE, t0),1,iconimage)
     addDir(t1,'http://smoothstreams.tv/schedule/list.php?cat=%s&js=1&timezone=%s&day=%s&auto=null' % (url,TIMEZONE, t1),1,iconimage)
@@ -106,8 +110,7 @@ def CATEGORIES(name,url,iconimage):
     addDir(t5,'http://smoothstreams.tv/schedule/list.php?cat=%s&js=1&timezone=%s&day=%s&auto=null' % (url,TIMEZONE, t5),1,iconimage)
 		
 def listings(name, url):
-    link =open_url(url).replace("'", '"').replace("|", '<>')
-    print link
+    link =GET_URL(url).replace("'", '"').replace("|", '<>')
     match = re.compile('<li class=(.+?) style="color:(.+?)">(.+?) <> <i>(.+?)</i> <> (.+?)</li>').findall(link)
     for cl,color,dttime,channel,title in match:
         endtime = dttime[11:]
@@ -233,6 +236,7 @@ print "URL: "+str(url)
 print "Name: "+str(name)
 
 if mode==None or url==None or len(url)<1:
+    login()
     main_menu()
        
 elif mode==1:

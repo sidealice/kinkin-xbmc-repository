@@ -14,6 +14,8 @@ from furk import FurkAPI
 from mediahandler import play, download, download_and_play, set_resolved_url
 from meta import TheTVDBInfo, set_movie_meta, download_movie_meta, set_tv_show_meta, download_tv_show_meta, meta_exist
 from threading import Thread
+from metahandler import metahandlers
+metainfo = metahandlers.MetaData()
 import time
 import datetime
 import zipfile
@@ -1275,6 +1277,7 @@ def dvd_release_menu():
     for list in lists:
         items.append(create_subdirectory_tuple(list, 'dvd releases menu', ''))
     return items
+
 	
 def dvd_releases(list):
     items = []
@@ -1310,7 +1313,56 @@ def dvd_releases(list):
         movies.append({'imdb_id': "", 'name': "error", 'year': "visit www.xbmchub.com", 'rating': "", 'votes': ""})
     
     return create_movie_items(movies,"","")
-	
+
+def threed_menu():#
+    items = []
+    items.append(create_subdirectory_tuple('Title','3d result menu','http://www.blu-ray.com/movies/search.php?action=search&other_bluray3d=1&sortby=title&page=0<>'))
+    items.append(create_subdirectory_tuple('Popularity','3d result menu','http://www.blu-ray.com/movies/search.php?action=search&other_bluray3d=1&sortby=popularity&page=0<>'))
+    items.append(create_subdirectory_tuple('Release Date','3d result menu','http://www.blu-ray.com/movies/search.php?action=search&other_bluray3d=1&sortby=releasetimestamp&page=0<>'))
+    return items
+
+def threed_releases(url):
+    url1 = url.replace('<>','')
+    page = regex_from_to(url, 'page=', '<>')
+    nextpage = int(page) + 1
+    npurl = 'http' + regex_from_to(url, 'http', 'page=') + 'page=' + str(nextpage) + '<>'
+    items = []
+    movies = []
+    body = get_url(url1, cache=CACHE_PATH).replace('\n', '').replace('\t', '')#url,d1,icon,title
+    data = regex_from_to(body, 'Displaying results from', '<br><br><br><table width')
+    match = re.compile('<a href="(.+?)">(.+?)img width="(.+?)" height="(.+?)" border="(.+?)" src="(.+?)" title="(.+?)"').findall(data)
+    dupname = []
+    for url,d1,d2,d3,d4,icon,title in match:
+        imdb_id = ""
+        name = title.replace(' (Blu-ray)', '').replace('  ', ' ')
+        if not ' 3D' in name:
+            if not '3D 'in name:
+                name = name + ' 3D'
+        year = "rem"
+        rating = ""
+        votes = ""
+        infoLabels = get_meta(name.replace(' 3D', '').replace('3D ', ''),'movie',year="")
+        if infoLabels['title']=='':
+             name=name
+        else:
+            name=infoLabels['title'] + ' 3D'
+        if infoLabels['cover_url']=='':
+            iconimage=icon
+        else:
+            iconimage=infoLabels['cover_url']
+        if not name.lower() in dupname:
+            dupname.append(name.lower())
+            addDir(clean_file_name(name),url,'movie dialog menu',iconimage,infoLabels=infoLabels)
+    addDir('>>> Next page',npurl,'3d result menu','')
+   
+    return create_movie_items(movies,"","") 
+
+def get_meta(name,types=None,year=None):
+    if 'movie' in types:
+        meta = metainfo.get_meta('movie',name,year)
+    infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
+        
+    return infoLabels  	
 
 def search_menu():
     items = []
@@ -1357,6 +1409,7 @@ def imdb_menu():
     items.append(create_movie_directory_tuple('New Movies', 'new movies menu', '1'))
     items.append(create_movie_directory_tuple('Coming Soon', 'movies soon menu', '1'))
     items.append(create_directory_tuple('DVD Releases', 'dvd release menu'))
+    items.append(create_directory_tuple('3D Movies', '3d menu'))
     items.append(create_directory_tuple('Movies by MPAA Rating', 'movie mpaas menu'))
     items.append(create_directory_tuple('Movies by Genre', 'movie genres menu')) 
     items.append(create_directory_tuple('Movies by Group', 'movie groups menu'))
@@ -1461,20 +1514,24 @@ def movies_actors_menu(name, imdb_id):
         dialog.close()
     
     type = filmtype_list_return[filmtype_id]
-    url = "%s%s%s%s" % ("http://m.imdb.com/name/", imdb_id, "/filmotype/", type)
+    url = "%s%s%s%s" % ("http://www.imdb.com/name/", imdb_id, "/#", type)
+    print url
 	
     try:
         body = get_url(url, cache=CACHE_PATH)
         try:
-            all_tr = regex_get_all(body, '<div class="poster', '<div class="detail')
+            all_tr = regex_get_all(body, '<div class="filmo-row', '</div>')
             for tr in all_tr:
-                all_td = regex_get_all(tr, '<div class="title">', '/div>')
-                imdb_id = regex_from_to(all_td[0], '/title/', '/')
-                name = regex_from_to(all_td[0], ';">', '</a')
-                year = regex_from_to(all_td[0], '</a> (', ') ').replace("(","").replace(")","").strip()
+                #all_td = regex_get_all(tr, '<div class="title">', '/div>')
+                imdb_id = regex_from_to(all_tr, '/title/', '/')
+                name = regex_from_to(all_tr, ';">', '</a')
+                year = regex_from_to(all_tr, 'nbsp;', '</span>').replace("(","").replace(")","").strip()
                 rating = ""
                 votes = ""
-                exclude = regex_from_to(all_td[0], '</a> (', ') ')
+                try:
+                    exclude = regex_from_to(all_td[0], '</b>', '<br/>')
+                except:
+                    exclude = "AA"
 
                 if exclude.find("(TV")<0 and exclude.find("(Shor")<0 and exclude.find("(Vid")<0:
                     movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
@@ -2409,10 +2466,12 @@ def movie_dialog(data, imdb_id, strm=False):################### SEARCH MOVIE ARC
     dialog = xbmcgui.Dialog()
     quality_list = ["Any", "3D", "1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
     quality_list_return = ["", "3D","1080P", "720P", "DVDSCR", "SCREENER", "BDRIP", "BRRIP", "BluRay 720P", "BluRay 1080P", "DVDRIP", "R5", "HDTV", "TELESYNC", "TS", "CAM"]
-    
-    if QUALITYSTYLE == "preferred":
+
+    if QUALITYSTYLE == "preferred" or ' 3D' in data:
         operator="%7C"
-        if mode=="music video menu":
+        if ' 3D' in data:
+            searchstring = str(data.replace(",","").replace("-"," ").replace(" Documentary","").replace(" TV Movie","").replace(":"," ").replace("(","").replace(")",""))
+        elif mode=="music video menu":
             searchstring = str(data.replace("-"," ").replace(" Documentary","").replace(" TV Movie","").replace(":"," ").replace("(","").replace(")",""))
         else:
             searchstring = "%s %s %s %s" % (str(data.replace("-"," ").replace(" Documentary","").replace(" TV Movie","").replace(":"," ").replace("(","").replace(")","")), str(CUSTOMQUALITY), str(operator), str(CUSTOMQUALITY2))
@@ -4269,7 +4328,7 @@ def addLink(name,url,iconimage,albumname):
     ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz)
     return ok
 
-def addDir(name,data,mode,imdb_id):
+def addDir(name,data,mode,imdb_id,infoLabels=None):
     contextMenuItems = []
     u=sys.argv[0]+"?data="+urllib.quote_plus(data)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&imdb_id="+str(imdb_id)
     ok=True
@@ -4279,7 +4338,14 @@ def addDir(name,data,mode,imdb_id):
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=imdb_id)
     contextMenuItems.append(('Search for music videos', "XBMC.Container.Update(%s?mode=music video menu&name=%s&data=%s&imdb_id=%s)" % (sys.argv[0], urllib.quote(name), "", "" ) ) )
     liz.addContextMenuItems(contextMenuItems, replaceItems=False)
-    liz.setInfo( type="Audio", infoLabels={ "Title": name } )
+    if mode =="music file disc menu":
+        liz.setInfo( type="Audio", infoLabels={ "Title": name } )
+    else:
+        liz.setInfo( type="Video", infoLabels=infoLabels)
+        try:
+            liz.setProperty( "fanart_image", infoLabels['fanart'] )
+        except:
+            liz.setProperty('fanart_image', fanart )
     ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
     return ok
 	
@@ -5021,10 +5087,17 @@ def get_menu_items(name, mode, data, imdb_id):
         enable_sort = XBMC_SORT#elif mode == "test":
     elif mode == "dvd release menu": #Genres menu
         items = dvd_release_menu()
+    elif mode == "3d menu": #Genres menu
+        items = threed_menu()
     elif mode  == "browse context menu":
         items = t_file_dialog_movie(name, data, imdb_id, strm=False)
     elif mode == "dvd releases menu":
         items, missing_meta = dvd_releases(str(name).lower())
+        get_missing_meta(missing_meta, 'movies')
+        setView('movies', 'movies-view')
+        enable_sort = XBMC_SORT#
+    elif mode == "3d result menu":
+        items, missing_meta = threed_releases(data)
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT

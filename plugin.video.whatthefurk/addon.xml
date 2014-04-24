@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="plugin.video.whatthefurk"
        name="What the Furk"
-       version="1.6.0"
+       version="1.6.1"
        provider-name="Batch,Kinkin,Blazetamer">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.metahandler"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">

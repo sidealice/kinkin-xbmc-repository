@@ -26,6 +26,7 @@ artbillboard = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plug
 urllist = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'lists', 'mp3url.list'))
 audio_fanart = ""
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'icon.png'))
+download_lock = os.path.join(MUSIC_DIR,  'downloading.txt')
 
 
 def open_url(url):
@@ -379,7 +380,6 @@ def play_song(url,name,songname,artist,album,iconimage,dur,clear):
         url1 = stored_path
     else:
         url1=str(url)
-    print url1
     liz=xbmcgui.ListItem(show_name, iconImage=iconimage, thumbnailImage=iconimage)
     liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
     liz.setProperty('mimetype', 'audio/mpeg')
@@ -452,9 +452,9 @@ def download_album(url,name,iconimage):
         os.remove(download_lock)
 		
 def clear_lock():
-    download_lock = os.path.join(MUSIC_DIR,  'downloading.txt')
     if os.path.exists(download_lock):
         os.remove(download_lock)
+        notification('Downloads', 'Unlocked', '3000', iconart)
 		
 def id3_tags():
     id3Thread = Getid3Thread()
@@ -967,6 +967,8 @@ def addDir(name,url,mode,iconimage,type):
         if 'album' in type:
             download_album = '%s?name=%s&url=%s&iconimage=%s&mode=202' % (sys.argv[0], urllib.quote(name), url, iconimage)  
             contextMenuItems.append(('[COLOR cyan]Download Album[/COLOR]', 'XBMC.RunPlugin(%s)' % download_album))
+            if os.path.exists(download_lock):
+                contextMenuItems.append(("Clear Download Lock",'XBMC.RunPlugin(%s?name=%s&url=%s&iconimage=%s&mode=333)'%(sys.argv[0], urllib.quote(name), url, iconimage)))
             if QUEUE_ALBUMS:
                 play_music = '%s?name=%s&url=%s&iconimage=%s&mode=7' % (sys.argv[0], urllib.quote(name), url, iconimage)  
                 contextMenuItems.append(('[COLOR cyan]Play/Browse Album[/COLOR]', 'XBMC.RunPlugin(%s)' % play_music))
@@ -996,8 +998,8 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur,type):
         contextMenuItems = []
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&songname="+urllib.quote_plus(songname)+"&artist="+urllib.quote_plus(artist)+"&album="+urllib.quote_plus(album)+"&dur="+str(dur)+"&type="+str(type)
         ok=True
-        if name == "Add ID3 Tags":
-            contextMenuItems.append(("Clear Download Lock",'XBMC.RunPlugin(%s?name=%s&mode=333)'%(sys.argv[0], name)))
+        if os.path.exists(download_lock):
+            contextMenuItems.append(("Clear Download Lock",'XBMC.RunPlugin(%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=333)'%(sys.argv[0], songname, url, iconimage,name,artist,album)))
         download_song = '%s?name=%s&url=%s&iconimage=%s&songname=%s&artist=%s&album=%s&mode=201' % (sys.argv[0], songname, url, iconimage,name,artist,album)  
         contextMenuItems.append(('[COLOR cyan]Download Song[/COLOR]', 'XBMC.RunPlugin(%s)' % download_song))
         if QUEUE_SONGS:

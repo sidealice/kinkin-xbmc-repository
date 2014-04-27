@@ -254,7 +254,7 @@
     <title>BBC Four / CBEEBIES [Borg TV Update]</title>
     <info resolution="" bitrate="" />
     <swfUrl>https://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=28</swfUrl>
-    <link>"rtmp://77.67.49.9/live/"</link>
+    <link>"rtmp://live306.edge.filmon.com/live/"</link>
     <pageUrl>https://www.filmon.com/</pageUrl>
     <playpath>103.low.stream</playpath>
     <language />
@@ -274,7 +274,7 @@
     <title>BBC One [Borg TV Update]</title>
     <info resolution="" bitrate="" />
     <swfUrl>https://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=28</swfUrl>
-    <link>"rtmp://77.67.49.9/live/"</link>
+    <link>"rtmp://live306.edge.filmon.com/live/"</link>
     <pageUrl>https://www.filmon.com/</pageUrl>
     <playpath>14.low.stream</playpath>
     <language />
@@ -284,7 +284,7 @@
     <title>BBC Parliament [Borg TV Update]</title>
     <info resolution="" bitrate="" />
     <swfUrl>https://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=28</swfUrl>
-    <link>"rtmp://77.67.49.9/live/"</link>
+    <link>"rtmp://live306.edge.filmon.com/live/"</link>
     <pageUrl>https://www.filmon.com/</pageUrl>
     <playpath>1666.low.stream</playpath>
     <language />
@@ -294,7 +294,7 @@
     <title>BBC Three / CBBC [Borg TV Update]</title>
     <info resolution="" bitrate="" />
     <swfUrl>https://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=28</swfUrl>
-    <link>"rtmp://77.67.49.9/live/"</link>
+    <link>"rtmp://live306.edge.filmon.com/live/"</link>
     <pageUrl>https://www.filmon.com/</pageUrl>
     <playpath>113.low.stream</playpath>
     <language />
@@ -304,7 +304,7 @@
     <title>BBC Two [Borg TV Update]</title>
     <info resolution="" bitrate="" />
     <swfUrl>https://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=28</swfUrl>
-    <link>"rtmp://77.67.49.9/live/"</link>
+    <link>"rtmp://live306.edge.filmon.com/live/"</link>
     <pageUrl>https://www.filmon.com/</pageUrl>
     <playpath>25.low.stream</playpath>
     <language />

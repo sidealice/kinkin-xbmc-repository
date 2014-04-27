@@ -127,7 +127,6 @@ def group_channels(url, title):
     if url != 'url':
         net.set_cookies(cookie_jar)
         link = net.http_GET(url).content.encode("utf-8").rstrip()
-        print link
 
         channels = regex_get_all(link, '<li class="channel', '</li>')
         for channel in channels:
@@ -155,7 +154,7 @@ def group_channels(url, title):
             st_url = list1[3]
             par = "%s<>%s" % (st_id, st_url)
             thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
-            if st_grp == gt and st_name not in name_lst:
+            if st_grp == gt  and st_name not in name_lst:#
                 addDirPlayable(st_name,gt,125,thumb,par,"", "", "")
 
     if gt == 'UK LIVE TV':

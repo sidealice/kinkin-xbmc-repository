@@ -1079,7 +1079,7 @@ def addDir(name,url,mode,iconimage,ch_fanart,description):
         ok=True
         contextMenuItems = []
         contextMenuItems.append(('Hide Channel Group', 'XBMC.RunPlugin(%s?mode=10&url=%s)'% (sys.argv[0],str(name))))
-        if url == 'picasa_topmovie' or ch_fanart == 'picasa_topcartoon' or ch_fanart == 'picasa_disneycollection':
+        if url == 'picasa_topmovie' or url == 'picasa_topcartoon' or url == 'picasa_disneycollection':
             contextMenuItems.append(("Add ALL to XBMC Library",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=402&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))	
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )

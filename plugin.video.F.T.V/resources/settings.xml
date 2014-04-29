@@ -8,6 +8,7 @@
         <setting id="filmon_quality" type="enum" values="High|Low" label="10004" default="0"/>
         <setting id="auto_switch" type="bool" label="10010" default="true"/>
         <setting id="download_path" type="folder" label="10005" default="notset"/>
+        <setting id="movie_directory" type="folder" label="10020" default="set"/>
         <setting id="separator" type="lsep" label="10006"/>
         <setting id="my_videos" type="bool" label="10007" default="true" />
         <setting id="my_audio" type="bool" label="10008" default="true" />

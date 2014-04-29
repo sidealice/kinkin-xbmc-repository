@@ -88,7 +88,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
-       version="1.1.7d"
+       version="1.1.8"
        provider-name="kinkin, icon by azad720">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
@@ -101,7 +101,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
         <summary>Free to view live streaming</summary>
-        <description>icon by azad720</description>
+        <description>Stream Live TV from FilmOn or watch cartoons and movies in the Cartoons and more section. Add movies to library or download.</description>
     </extension>
 
 </addon>

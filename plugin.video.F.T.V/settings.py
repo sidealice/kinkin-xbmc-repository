@@ -44,6 +44,12 @@ def auto_switch():
 
 def download_path():
     return ADDON.getSetting('download_path')
+	
+def movie_directory():
+    if ADDON.getSetting('movie_directory')=='set':
+        return create_directory(DATA_PATH, "movies")
+    else:
+        return ADDON.getSetting('movie_directory')
 
 def my_videos():
     if ADDON.getSetting('my_videos') == 'true':

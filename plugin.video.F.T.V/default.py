@@ -32,6 +32,7 @@ OTHER_MENU = settings.other_menu()
 HIDDEN_FILE = settings.hidden_file()
 SORT_ALPHA = settings.sort_alpha()
 DOWNLOAD_PATH = settings.download_path()
+MOVIE_DIR = settings.movie_directory()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'fanart.jpg'))
@@ -698,6 +699,7 @@ def other_cartoons(name,url):
     xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 
 def cartoon_list(name,url):
+    listname=url
     try:
         url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
         link = open_url(url)
@@ -709,9 +711,11 @@ def cartoon_list(name,url):
         link = regex_from_to(list, name + '<<', '>>')
     match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
     for title,type,url,iconimage in match:
+        if listname=='picasa_disneycollection':
+            title=title[5:]
         url=url.replace('\/', '/')
         iconimage=iconimage.replace('\/', '/')
-        addDirPlayable(title,url,396,iconimage,'cartoons', '', '', '')
+        addDirPlayable(title,url,396,iconimage,listname, '', '', '')
     xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 
 def play_cartoons(name,url,iconimage):
@@ -803,7 +807,6 @@ def disney_playlist(name, url, iconimage):
         xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(pl)
 		
 def youtube_videos(name,url,iconimage):
-    print url
     find_url=url.find('?')+1
     keep_url=url[:find_url]
     
@@ -944,12 +947,98 @@ def wait_dl_only(time_to_wait, title):
         print 'Done waiting'
         return True
 		
+def create_all_strm_file(name, url, mode, dir_path, iconimage):
+    listname=url
+    try:
+        url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
+        link = open_url(url)
+        if not 'Link' in link:
+            list = read_from_file(cartoonlinks)
+            link = regex_from_to(list, name + '<<', '>>')
+    except:
+        list = read_from_file(cartoonlinks)
+        link = regex_from_to(list, name + '<<', '>>')
+    match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
+    for title,type,url,iconimage in match:
+        if listname=='picasa_disneycollection':
+            title=title[5:]
+        url=url.replace('\/', '/')
+        iconimage=iconimage.replace('\/', '/')
+        create_strm_file(title, url, '396', dir_path, iconimage)
+    xbmc.sleep(1000)
+    scan_library()
+		
+def create_strm_file(name, url, mode, dir_path, iconimage):
+    strm_string = create_url(name, mode, url=url, iconimage=iconimage)
+    #name1 = re.sub(r'\[[^]]*\]', '', name1)
+    filename = clean_file_name("%s.strm" % name)
+    path = os.path.join(dir_path, filename)
+    if not os.path.exists(path):
+        stream_file = open(path, 'w')
+        stream_file.write(strm_string)
+        stream_file.close()
+        scan_library()
+    #except:
+        #xbmc.log("[F.T.V] Error while creating strm file for : " + name)
+		
+def create_url(name, mode, url, iconimage):
+    name = urllib.quote(str(name))
+    url = urllib.quote(str(url))
+    iconimage = urllib.quote(str(iconimage))
+    mode = str(mode)
+    url = sys.argv[0] + '?name=%s&url=%s&mode=%s&iconimage=%s' % (name, url, mode, iconimage)
+    return url
+	
+def download_only(name,url,iconimage,dir_path):
+    filename = name + '.mp4'
+    WAITING_TIME = 5
+    directory=dir_path
+    data_path = os.path.join(directory, filename)
+    dlThread = DownloadFileThread(name, url, data_path, WAITING_TIME)
+    dlThread.start()
+    wait_dl_only(WAITING_TIME, "Starting Download")
+    if os.path.exists(data_path):
+        notification('Download started', name, '5000', iconimage)
+        scan_library()
+		
+class DownloadFileThread(Thread):
+    def __init__(self, name, url, data_path, WAITING_TIME):
+        self.data = url
+        self.path = data_path
+        self.waiting = WAITING_TIME
+        self.name = name
+        Thread.__init__(self)
+
+    def run(self):
+        start_time = time.time() + 20 + self.waiting
+        waiting = self.waiting
+        path = self.path
+        data = self.data
+        name = self.name
+        urllib.urlretrieve(data, path)
+
+        notification('Download finished', name, '5000', iconart)
+		
+    def _dlhook(self, numblocks, blocksize, filesize, dt, start_time, path, waiting):
+        raise StopDownloading('Stopped Downloading')
+        callEndOfDirectory = False
+		
+class StopDownloading(Exception): 
+    def __init__(self, value): 
+        self.value = value 
+    def __str__(self): 
+        return repr(self.value)
+		
 def notification(title, message, ms, nart):
     xbmc.executebuiltin("XBMC.notification(" + title + "," + message + "," + ms + "," + nart + ")")
 		
 def setView(content, viewType):
 	if content:
 		xbmcplugin.setContent(int(sys.argv[1]), content)
+		
+def scan_library():
+    if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
+        xbmc.executebuiltin('UpdateLibrary(video)')
    
 
 def get_params():
@@ -990,6 +1079,8 @@ def addDir(name,url,mode,iconimage,ch_fanart,description):
         ok=True
         contextMenuItems = []
         contextMenuItems.append(('Hide Channel Group', 'XBMC.RunPlugin(%s?mode=10&url=%s)'% (sys.argv[0],str(name))))
+        if url == 'picasa_topmovie' or ch_fanart == 'picasa_topcartoon' or ch_fanart == 'picasa_disneycollection':
+            contextMenuItems.append(("Add ALL to XBMC Library",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=402&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))	
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.addContextMenuItems(contextMenuItems, False)
@@ -1011,6 +1102,9 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
             contextMenuItems.append(("Play All Videos",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=303&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),iconimage)))
         if function == 'ng':
             contextMenuItems.append(("Add Channel to Group",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=112&iconimage=%s)'%(sys.argv[0],urllib.quote(start), str(ch_fanart),str(description))))
+        if ch_fanart == 'picasa_topmovie' or ch_fanart == 'picasa_topcartoon' or ch_fanart == 'picasa_disneycollection':
+            contextMenuItems.append(("Add to XBMC Library",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=401&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))
+            contextMenuItems.append(("Download",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=403&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))			
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
@@ -1159,6 +1253,15 @@ elif mode == 303:
         disney_playlist(name, url, iconimage)
 
 elif mode == 310:
-        disney_play(name, url, iconimage)		
+        disney_play(name, url, iconimage)
+
+elif mode==401:
+        create_strm_file(name, url, '396', MOVIE_DIR, iconimage)
+
+elif mode==402:
+        create_all_strm_file(name, url, '396', MOVIE_DIR, iconimage)
+
+elif mode==403:
+        download_only(name, url, iconimage,MOVIE_DIR)		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

@@ -612,7 +612,7 @@ def network(name):
 	'curllowspeedtime<>num<>Time in seconds for libcurl to consider a connection lowspeed<>',
 	'httpproxyusername<>text<>username for Basic Proxy Authentication<>',
 	'httpproxypassword<>text<>password for Basic Proxy Authentication<>',
-	'cachemembuffersize<>num<>Number of bytes used for buffering streams ahead in memory XBMC will not buffer ahead more than this. WARNING: for the bytes set here, XBMC will consume 3x the amount of RAM. When set to 0 the cache will be written to disk instead of RAM, as of v12 Frodo \nRemember, 1MB = 1,048,576 bytes<>',
+	'cachemembuffersize<>text<>Number of bytes used for buffering streams ahead in memory XBMC will not buffer ahead more than this. WARNING: for the bytes set here, XBMC will consume 3x the amount of RAM. When set to 0 the cache will be written to disk instead of RAM, as of v12 Frodo \nRemember, 1MB = 1,048,576 bytes<>',
 	'buffermode<>dialog<>Choose what to buffer: 0) Buffer all internet filesystems (like "2" but additionally also ftp, webdav, etc.) (default) 1) Buffer all filesystems (including local) 2) Only buffer true internet filesystems (streams) (http, etc.) 3) No buffer<>["0","1","2","3","DISABLED"]',
 	'readbufferfactor<>text<>This factor determines the max readrate in terms of readbufferfactor * avg bitrate of a video file.This can help on bad connections to keep the cache filled. It will also greatly speed up buffering. Default value 1.0<>']
     for d in dirlist:

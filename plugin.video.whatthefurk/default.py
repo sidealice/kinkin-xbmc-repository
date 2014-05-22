@@ -1039,6 +1039,7 @@ def search_nzbmovie(params):
             xbmc.log("[What the Furk...XBMCHUB.COM] NZB Movie Seeker URL request timed out")
             display_error("NZB Movie Seeker URL request timed out", "Is the website down?")
         count = count + 250
+        count = count + 250
         if len(movies) < count:
             return movies
         setView('movies', 'movies-view')    
@@ -1196,12 +1197,6 @@ def exist_in_dir(name, path, isMovie=False):
 
 #Menu
 
-def setup():
-    if FIRST_TIME_STARTUP:
-        dialog = xbmcgui.Dialog()
-        if os.path.exists(xbmc.translatePath("special://home/addons/")+'plugin.video.XMLbackup'):
-            if dialog.yesno("What the Furk", "XML Backup addon found", "", 'Do you want to restore all settings?', "No Thanks", "Restore Settings"):
-                xbmc.executebuiltin('RunPlugin(plugin://plugin.video.XMLbackup/?mode=2&url="url")')
 			
 def setup_FURK():
     dialog = xbmcgui.Dialog()
@@ -1329,8 +1324,9 @@ def threed_releases(url):
     items = []
     movies = []
     body = get_url(url1, cache=CACHE_PATH).replace('\n', '').replace('\t', '')#url,d1,icon,title
-    data = regex_from_to(body, 'Displaying results from', '<br><br><br><table width')
-    match = re.compile('<a href="(.+?)">(.+?)img width="(.+?)" height="(.+?)" border="(.+?)" src="(.+?)" title="(.+?)"').findall(data)
+    #print body
+    #data = regex_from_to(body, 'Displaying results from', '<br><br><br><table width')
+    match = re.compile('<a href="(.+?)">(.+?)img width="(.+?)" height="(.+?)" border="(.+?)" src="(.+?)" title="(.+?)"').findall(body)
     dupname = []
     for url,d1,d2,d3,d4,icon,title in match:
         imdb_id = ""
@@ -5416,7 +5412,6 @@ if mode.endswith('menu'):
         pass
 
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
-    setup()
     dev_message()
     
 

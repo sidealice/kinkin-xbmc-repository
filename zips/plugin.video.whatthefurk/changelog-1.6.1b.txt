@@ -11,8 +11,8 @@ Added 3D movie section
 Fixed service.py startup error
 Fixed "Similar" menu
 
-1.5.9c
-Fixed issues with service.py hanging on close
+1.5.9a
+Fixed issue with service.py hanging on close
 
 1.5.9b
 Fixed imdb search
@@ -47,7 +47,7 @@ Added bitrate to results
 New art by Blazetamer!
 Fixed watchlist, now shows full list
 Fixed TMDB api, movie meta now works
-Fixed error with preferred setting when playing from library
+Fixed error with preferred option when playing through library
 
 1.5.3
 Added new movie menu...."Movies by MPAA Rating"

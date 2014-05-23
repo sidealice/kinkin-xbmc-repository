@@ -54,7 +54,6 @@ UNICODE_INDICATORS = settings.use_unicode()
 DOWNLOAD_META = settings.download_meta()
 MOVIES_PATH = settings.movies_directory()
 TV_SHOWS_PATH = settings.tv_show_directory()
-FIRST_TIME_STARTUP = settings.first_time_startup()
 PLAY_MODE = settings.play_mode()
 FURK = FurkAPI(COOKIE_JAR)
 SORT_TOP_MOV = settings.top_movies_sort()
@@ -211,45 +210,6 @@ def login_at_furk():
             return False
     else:
         return False
-    
-def register_account():
-    keyboard = xbmc.Keyboard('', 'Username', False)
-    keyboard.doModal()
-    username = None
-    if keyboard.isConfirmed():
-        username = keyboard.getText()
-    if username == None:
-        return False
-
-    password = None
-    keyboard = xbmc.Keyboard('', 'Password')
-    keyboard.doModal()
-    if keyboard.isConfirmed():
-        password = keyboard.getText()
-    if password == None:
-        return False
-     
-    email = None
-    keyboard = xbmc.Keyboard('', 'E-mail')
-    keyboard.doModal()
-    if keyboard.isConfirmed():
-        email = keyboard.getText()
-    if email == None:
-        return False
-        
-    dialog = xbmcgui.Dialog()
-    response = FURK.reg(username, password, password, email)
-    
-    if response['status'] == 'ok':
-        ADDON.setSetting('furk_user', value=username)
-        ADDON.setSetting('furk_pass', value=password)
-        dialog.ok("Registration", "Registration formula completed.", "In order to complete the registration you need to", "click the confirmation link sent to your email.")    
-        return True
-    else:
-        errors = response['errors']
-        for key in errors.keys():
-            dialog.ok("Registration error", "%s: %s" % (key, errors[key]))
-        return register_account()
 
 def account_info():
     if not login_at_furk():
@@ -798,47 +758,6 @@ def remove_tv_show_strm_files(name, dir_path):
     except:
         xbmc.log("[What the Furk...XBMCHUB.COM] Was unable to remove TV show: %s" % (name)) 
     
-def check_sources_xml(path):
-    try:
-        source_path = os.path.join(xbmc.translatePath('special://profile/'), 'sources.xml')
-        f = open(source_path, 'r')
-        content = f.read()
-        f.close()
-        path = str(path).replace('\\', '\\\\')
-        if re.search(path, content):
-            return True
-    except:
-        xbmc.log("[What the Furk...XBMCHUB.COM] Could not find sources.xml!")   
-    return False
-
-def setup_sources():
-    xbmc.log("[What the Furk...XBMCHUB.COM] Trying to add source paths...")
-    source_path = os.path.join(xbmc.translatePath('special://profile/'), 'sources.xml')
-    
-    try:
-        f = open(source_path, 'r')
-        content = f.read()
-        f.close()
-        r = re.search("(?i)(<sources>[\S\s]+?<video>[\S\s]+?>)\s+?(</video>[\S\s]+?</sources>)", content)
-        new_content = r.group(1)
-        if not check_sources_xml(MOVIES_PATH):
-            new_content += '<source><name>Movies (What the Furk...XBMCHUB.COM)</name><path pathversion="1">'
-            new_content += MOVIES_PATH
-            new_content += '</path></source>'
-        if not check_sources_xml(TV_SHOWS_PATH):
-            new_content += '<source><name>TV Shows (What the Furk...XBMCHUB.COM)</name><path pathversion="1">'
-            new_content += TV_SHOWS_PATH
-            new_content += '</path></source>'
-        new_content += r.group(2)
-        
-        f = open(source_path, 'w')
-        f.write(new_content)
-        f.close()
-
-        dialog = xbmcgui.Dialog()
-        dialog.ok("Source folders added", "To complete the setup:", " 1) Restart XBMC.", " 2) Set the content type of added sources.")
-    except:
-        xbmc.log("[What the Furk...XBMCHUB.COM] Could not edit sources.xml")
 ############################### MAINTENANCE #############################################################################
 def deletecachefiles():
 	# Set path to What th Furk cache files
@@ -1196,33 +1115,6 @@ def exist_in_dir(name, path, isMovie=False):
     return False
 
 #Menu
-
-			
-def setup_FURK():
-    dialog = xbmcgui.Dialog()
-    dialog.ok("WTF BY Batch Kinkin","OFFICIAL FROM XBMCHUB","FOR ALL SUPPORT PLEASE JOIN US", "WWW.XBMCHUB.COM")
-        
-    if not FURK_ACCOUNT:
-        if dialog.yesno("Setup account", "This addon requires a Furk.net account.", "What do you want to do?", '', "Use existing account", "Create new account"):
-            if not register_account():
-                dialog.ok("Setup account", "Account registation aborted.")
-                dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-                ADDON.openSettings()
-        else:
-            dialog.ok("Missing information", "You need to write down your Furk.net", "login information in the addon-settings.")    
-            ADDON.openSettings()     
-    if dialog.yesno("Setup metadata", "This addon supports the use of metadata,", "this data can be pre-downloaded.", "Do you want to download a metadata package?"):
-        download_meta_zip()
-    if dialog.yesno("Setup metadata", "This addon can download metadata while you", "are browsing movie and TV show categories.", "Do you want to activate this feature?"):
-        ADDON.setSetting('download_meta', value='true')
-    else:
-        ADDON.setSetting('download_meta', value='false')  
-    if not check_sources_xml(MOVIES_PATH) or not check_sources_xml(TV_SHOWS_PATH):
-        if dialog.yesno("Setup folder", "The directories used are not listed as video sources.", "Do you want to add them to sources.xml now?"):
-            setup_sources()
-    ADDON.setSetting('first_time_startup', value='false')
-
-
 	
 def main_menu():
     items = []
@@ -1237,7 +1129,6 @@ def main_menu():
     items.append(create_directory_tuple('Account Info', 'account info'))
     items.append(create_directory_tuple('Maintenance', 'maintenance menu'))
     items.append(create_directory_tuple('Help', 'help menu'))
-    items.append(create_directory_tuple('Set-Up Wizard', 'setup wizard'))
     return items
 
 def imdb_similar_menu(name, data, imdb_id):
@@ -1348,7 +1239,7 @@ def threed_releases(url):
             iconimage=infoLabels['cover_url']
         if not name.lower() in dupname:
             dupname.append(name.lower())
-            addDir(clean_file_name(name),url,'movie dialog menu',iconimage,infoLabels=infoLabels)
+            addDir(clean_file_name(name),url,'movie result menu',iconimage,infoLabels=infoLabels)
     addDir('>>> Next page',npurl,'3d result menu','')
    
     return create_movie_items(movies,"","") 
@@ -4467,9 +4358,9 @@ def create_movie_tuple(name, imdb_id, rating, votes):
         start=str(int(rating)+250)
         movie_url = create_url(name, mode, start, imdb_id)
     elif votes == 'D':
-        movie_url = create_url(name.replace('IMDB USERS WHO LIKE ','').replace(' ALSO LIKE:',''), "movie dialog menu", "", imdb_id)
+        movie_url = create_url(name.replace('IMDB USERS WHO LIKE ','').replace(' ALSO LIKE:',''), "movie result menu", "", imdb_id)
     else:
-        movie_url = create_url(name, "movie dialog menu", "", imdb_id)
+        movie_url = create_url(name, "movie result menu", "", imdb_id)
     movie_list_item = create_movie_list_item(name, imdb_id, rating, votes);
     movie_tuple = (movie_url, movie_list_item, True)
     return movie_tuple
@@ -4510,7 +4401,7 @@ def create_season_tuple(name, data, imdb_id, poster, fanart):
     return season_tuple
 
 def create_episode_tuple(name, data, imdb_id, poster, title, year, overview, rating, premiered, genre, fanart, easyname):
-    episode_url = create_url(name, "episode dialog menu", data, imdb_id)
+    episode_url = create_url(name, "episode result menu", data, imdb_id)
     episode_list_item = create_episode_list_item(name, data, imdb_id, poster, title, year, overview, rating, premiered, genre, fanart, easyname);
     episode_tuple = (episode_url, episode_list_item, True)
     return episode_tuple
@@ -5301,10 +5192,10 @@ def get_menu_items(name, mode, data, imdb_id):
         items = myfiles_audio(unlinked='0')
     elif mode == "my files deleted menu":
         items = myfiles(unlinked='1')
-    elif mode == "movie dialog menu":
+    elif mode == "movie result menu":
         if len(imdb_id)>0:
             items = movie_dialog(name, imdb_id)
-    elif mode == "episode dialog menu":
+    elif mode == "episode result menu":
         if len(imdb_id)>0:
             items = episode_dialog(data, imdb_id)
     elif mode == "t files menu":

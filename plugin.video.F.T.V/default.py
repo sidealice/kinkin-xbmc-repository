@@ -30,6 +30,8 @@ MY_VIDEOS = settings.my_videos()
 MY_AUDIO = settings.my_audio()
 OTHER_MENU = settings.other_menu()
 HIDDEN_FILE = settings.hidden_file()
+FAV_CHAN = settings.favourite_channels()
+FAV_MOV = settings.favourite_movies()
 SORT_ALPHA = settings.sort_alpha()
 DOWNLOAD_PATH = settings.download_path()
 MOVIE_DIR = settings.movie_directory()
@@ -102,6 +104,8 @@ def CATEGORIES():
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
+    addDir('Favourite Channels','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
+    addDir('Favourite Movies','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     net.set_cookies(cookie_jar)
     url = 'http://www.filmon.com/groups'
     link = net.http_GET(url).content.encode("utf-8").rstrip()
@@ -869,6 +873,71 @@ def write_to_file(path, content, append=False, silent=False):
             print("Could not write to " + path)
         return False
 		
+def list_favourites(name, url, iconimage):
+    if  'Movies' in name:
+        dir = FAV_MOV
+    else:
+        dir = FAV_CHAN
+    if os.path.isfile(dir):
+        s = read_from_file(dir)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                title = list1[0]
+                url1 = list1[2]
+                thumb = urllib.unquote(list1[1])
+                url = urllib.unquote(regex_from_to(url1, 'url=', 'mode').replace('&', ''))
+                mode = regex_from_to(url1, 'mode=', 'iconimage').replace('&', '')
+                try:
+                    start = regex_from_to(url1, 'channel/', 'mode').replace('&', '')
+                except:
+                    start = ''
+                if dir == FAV_CHAN:
+                    ch_id = url1[url1.find('ch_fanart='):]
+                    ch_id = ch_id.replace('ch_fanart=','')#channel/
+                else:
+                    ch_id = ''
+                addDirPlayable(title,url,mode,thumb,ch_id,'', start, 'favlist')
+                #addLink(title,url,thumb,list,'','', '', '', '')
+
+def add_favourite(name, url, iconimage, ch_id, dir,text):
+    ch_name = name
+    name = urllib.quote(str(name))
+    url = urllib.quote(str(url))
+    iconimage = urllib.quote(str(iconimage))
+    ch_id = urllib.quote(str(ch_id))
+    url = sys.argv[0] + '?name=%s&url=%s&mode=125&iconimage=%s&ch_fanart=%s' % (name, url, iconimage,ch_id)
+    data = "%s<>%s<>%s" % (ch_name, iconimage, url)
+    add_to_list(data, dir)
+    notification(ch_name, "[COLOR lime]" + text + "[/COLOR]", '5000', iconimage)
+	
+def add_favourite_movie(name, url, iconimage, ch_id, dir,text):#play_ng(name,url,iconimage)
+    ch_name = name
+    name = urllib.quote(str(name))
+    url = urllib.quote(str(url))
+    iconimage = urllib.quote(str(iconimage))
+    url = sys.argv[0] + '?name=%s&url=%s&mode=111&iconimage=%s' % (name, url, iconimage)
+    data = "%s<>%s<>%s" % (ch_name, iconimage, url)
+    add_to_list(data, dir)
+    notification(ch_name, "[COLOR lime]" + text + "[/COLOR]", '5000', iconimage)
+	
+def remove_favourite(name, url, iconimage, ch_fanart,text):
+    ch_name = name
+    name = urllib.quote(str(name))
+    url = urllib.quote(str(url))
+    iconimage = urllib.quote(str(iconimage))
+    ch_id = urllib.quote(str(ch_fanart))
+    if ch_fanart == '':
+        dir = FAV_MOV
+        url = sys.argv[0] + '?name=%s&url=%s&mode=111&iconimage=%s' % (name, url, iconimage)
+    else:
+        dir = FAV_CHAN
+        url = sys.argv[0] + '?name=%s&url=%s&mode=125&iconimage=%s&ch_fanart=%s' % (name, url, iconimage,ch_id)
+    data = "%s<>%s<>%s" % (ch_name, iconimage, url)
+    remove_from_list(data, dir)
+    notification(ch_name, "[COLOR lime]" + text + "[/COLOR]", '5000', urllib.unquote(iconimage))
+	
 def add_to_file(path, content, append=True, silent=False):
     try:
         if append:
@@ -919,6 +988,19 @@ def add_to_list(list, file):
         if len(line) > 0:
             s = s + line + '\n'
     write_to_file(file, s)
+	
+def remove_from_list(list, file):
+    index = find_list(list, file)
+    if index >= 0:
+        content = read_from_file(file)
+        lines = content.split('\n')
+        lines.pop(index)
+        s = ''
+        for line in lines:
+            if len(line) > 0:
+                s = s + line + '\n'
+        write_to_file(file, s)
+        xbmc.executebuiltin("Container.Refresh")
 
 def wait_dl_only(time_to_wait, title):
     print 'Waiting ' + str(time_to_wait) + ' secs'    
@@ -1066,9 +1148,10 @@ def addLink(name,url,iconimage,description,status,download_link, p_id, start, p_
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
         liz.setProperty("IsPlayable","true")
-        contextMenuItems.append(("Delete Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=133&iconimage=%s)'%(sys.argv[0],p_name,str(p_id),iconimage)))
-        if status == "Recorded" and download_link != "error":
-            contextMenuItems.append(("Download Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=139&iconimage=%s)'%(sys.argv[0],p_name,str(download_link),iconimage)))
+        if p_id != "":
+            contextMenuItems.append(("Delete Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=133&iconimage=%s)'%(sys.argv[0],p_name,str(p_id),iconimage)))
+            if status == "Recorded" and download_link != "error":
+                contextMenuItems.append(("Download Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=139&iconimage=%s)'%(sys.argv[0],p_name,str(download_link),iconimage)))
         liz.addContextMenuItems(contextMenuItems, replaceItems=True)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz,isFolder=False)
         return ok
@@ -1095,16 +1178,21 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
-        if function != 'od' and function != 'gb'and function != 'djr' and function != 'ng'  and function != '':
+        if function != 'od' and function != 'gb'and function != 'djr' and function != 'ng' and function != '' and function != 'favlist':
             contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],ch_fanart, start,iconimage)))
             contextMenuItems.append(("Toggle My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,ch_fanart,iconimage)))
+            contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=410&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
+        if function == 'favlist':
+            contextMenuItems.append(("Remove from FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=416&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
         if function == 'djr':
             contextMenuItems.append(("Play All Videos",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=303&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),iconimage)))
         if function == 'ng':
             contextMenuItems.append(("Add Channel to Group",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=112&iconimage=%s)'%(sys.argv[0],urllib.quote(start), str(ch_fanart),str(description))))
+            contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=410&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
         if ch_fanart == 'picasa_topmovie' or ch_fanart == 'picasa_topcartoon' or ch_fanart == 'picasa_disneycollection':
             contextMenuItems.append(("Add to XBMC Library",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=401&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))
-            contextMenuItems.append(("Download",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=403&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))			
+            contextMenuItems.append(("Download",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=403&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))
+            contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=411&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))			
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
@@ -1262,6 +1350,21 @@ elif mode==402:
         create_all_strm_file(name, url, '396', MOVIE_DIR, iconimage)
 
 elif mode==403:
-        download_only(name, url, iconimage,MOVIE_DIR)		
+        download_only(name, url, iconimage,MOVIE_DIR)
+
+elif mode == 410:
+    add_favourite(name, url, iconimage, ch_fanart, FAV_CHAN,"Added to Favourites")
+
+elif mode == 411:
+    add_favourite_movie(name, url, iconimage, "", FAV_MOV,"Added to Favourites")
+	
+elif mode == 416:
+    remove_favourite(name, url, iconimage, ch_fanart,"Removed from Favourites")
+
+elif mode == 415:
+    list_favourites(name, url, iconimage)
+
+elif mode == 417:
+    play_favourites(name, url, iconimage)	
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

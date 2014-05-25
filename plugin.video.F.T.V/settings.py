@@ -23,6 +23,12 @@ def filmon_account():
 def hidden_file():
     return create_file(DATA_PATH, "hidden_links.list")
 	
+def favourite_channels():
+    return create_file(DATA_PATH, "favourite_channels.list")
+	
+def favourite_movies():
+    return create_file(DATA_PATH, "favourite_movies.list")
+	
 def filmon_user():
     return ADDON.getSetting('filmon_user') 
 

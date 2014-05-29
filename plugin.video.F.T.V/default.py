@@ -160,7 +160,7 @@ def group_channels(url, title):
             par = "%s<>%s" % (st_id, st_url)
             thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
             if st_grp == gt  and st_name not in name_lst:#
-                addDirPlayable(st_name,gt,125,thumb,par,"", "", "")
+                addDirPlayable(st_name,gt,125,thumb,par,"", "", "lst")
 
     if gt == 'UK LIVE TV':
         addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
@@ -907,7 +907,10 @@ def add_favourite(name, url, iconimage, ch_id, dir,text):
     url = urllib.quote(str(url))
     iconimage = urllib.quote(str(iconimage))
     ch_id = urllib.quote(str(ch_id))
-    url = sys.argv[0] + '?name=%s&url=%s&mode=125&iconimage=%s&ch_fanart=%s' % (name, url, iconimage,ch_id)
+    if 'rtmp' in url:
+        url = sys.argv[0] + '?name=%s&url=%s&mode=111&iconimage=%s' % (name, url, iconimage)
+    else:
+        url = sys.argv[0] + '?name=%s&url=%s&mode=125&iconimage=%s&ch_fanart=%s' % (name, url, iconimage,ch_id)
     data = "%s<>%s<>%s" % (ch_name, iconimage, url)
     add_to_list(data, dir)
     notification(ch_name, "[COLOR lime]" + text + "[/COLOR]", '5000', iconimage)

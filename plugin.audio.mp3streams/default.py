@@ -231,7 +231,8 @@ def search_songs(query):
     match = re.compile('<tr class="song"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name song__name--search"><a class="song__link" href="(.+?)">(.+?)</a>(.+?)song__link" href="(.+?)">(.+?)</a>(.+?)<a class="song__link" href="(.+?)">(.+?)</a>').findall(link)
     for id,songurl,song,d1,artisturl,artist,d2,albumurl,album in match:
         iconimage = ""
-        url = 'http://listen.musicmp3.ru/2f99f4bf4ce7b171/' + id
+        url = 'http://files.musicmp3.ru/lofi/' + id
+        #url = 'http://listen.musicmp3.ru/2f99f4bf4ce7b171/' + id
         title = "%s - %s - %s" % (artist.replace('&amp;','and'), song.replace('&amp;','&'), album.replace('&amp;','&'))
         addDirAudio(title,url,10,iconimage,song,artist,album,'','')
         liz=xbmcgui.ListItem(song, iconImage=iconimage, thumbnailImage=iconimage)
@@ -310,7 +311,8 @@ def play_album(name, url, iconimage,mix,clear):
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
             trn = track.replace('track','')
-            url = find_url(trn).strip() + id
+            #url = find_url(trn).strip() + id
+            url = 'http://files.musicmp3.ru/lofi/' + id
             title = "%s. %s" % (track.replace('track',''), songname)
             addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
@@ -340,7 +342,9 @@ def play_album(name, url, iconimage,mix,clear):
             if os.path.exists(stored_path):
                 url = stored_path
             else:
-                url = find_url(trn).strip() + id
+                #url = find_url(trn).strip() + id
+                url = 'http://files.musicmp3.ru/lofi/' + id
+            print url
             addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
@@ -365,7 +369,7 @@ def play_album(name, url, iconimage,mix,clear):
                 pass
         if clear or (not xbmc.Player().isPlayingAudio()):
             if XBMCPLAYER == 'paplayer':
-                xbmc.Player().play(pl)
+                xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)
             else:
                 xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
 			
@@ -394,7 +398,7 @@ def play_song(url,name,songname,artist,album,iconimage,dur,clear):
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
         if XBMCPLAYER == 'paplayer':
-            xbmc.Player().play(pl)
+            xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)
         else:
             xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
 		
@@ -405,14 +409,38 @@ def download_song(url,name,songname,artist,album,iconimage):
     list_data = "%s<>%s<>%s<>%s<>%s%s" % (album_path,artist,album,track,songname,'.mp3')	
     local_filename = album_path + '/' + songname + '.mp3'
     headers = {'Host': 'listen.musicmp3.ru','Range': 'bytes=0-','User-Agent': 'AppleWebKit/<WebKit Rev>', 'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'}
-    r = requests.get(url, headers=headers, stream=True)
-    with open(local_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024): 
-            if chunk:
-                f.write(chunk)
-                f.flush()
+    #r = requests.get(url, headers=headers, stream=True)
+    #with open(local_filename, 'wb') as f:
+        #for chunk in r.iter_content(chunk_size=1024): 
+            #if chunk:
+                #f.write(chunk)
+                #f.flush()
+    urllib.urlretrieve(url, local_filename)
     add_to_list(list_data, DOWNLOAD_LIST, False)
-	
+'''	
+class DownloadMusicThread(Thread):
+    def __init__(self, name, url, data_path, album_path):
+        self.data = url
+        self.path = data_path
+        self.extpath = album_path
+        Thread.__init__(self)
+
+    def run(self):
+        path = str(self.path)
+        data = self.data
+        extract = str(self.extpath)
+        urllib.urlretrieve(data, path)
+        notify = "%s,%s,%s" % ('XBMC.Notification(Download finished',clean_file_name(name, use_blanks=False),'4000)')
+        xbmc.executebuiltin(notify)
+        if mode!="download song":
+            notify = "%s,%s,%s" % ('XBMC.Notification(Extracting songs',clean_file_name(name, use_blanks=False),'4000)')
+            xbmc.executebuiltin(notify)
+            time.sleep(1)
+            extractfiles(path,extract)
+            os.remove(path)
+            notify = "%s,%s,%s" % ('XBMC.Notification(Finished',clean_file_name(name, use_blanks=False),'4000)')
+            xbmc.executebuiltin(notify)
+'''	
 def download_album(url,name,iconimage):
     dialog = xbmcgui.Dialog()
     check_downloads = os.path.join(MUSIC_DIR,  'downloading.txt')
@@ -429,7 +457,8 @@ def download_album(url,name,iconimage):
         artist = artist.replace('&amp;', 'and')
         album = album.replace('&amp;', 'and')
         trn = track.replace('track','')
-        url = find_url(trn).strip() + id
+        #url = find_url(trn).strip() + id
+        url = 'http://files.musicmp3.ru/lofi/' + id
         playlist.append(songname)
         title = "%s. %s" % (track.replace('track',''), songname)
         artist_path = create_directory(MUSIC_DIR, artist)
@@ -439,11 +468,12 @@ def download_album(url,name,iconimage):
         local_filename = album_path + '/' + title + '.mp3'
         headers = {'Host': 'listen.musicmp3.ru','Range': 'bytes=0-','User-Agent': 'AppleWebKit/<WebKit Rev>', 'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'}
         r = requests.get(url, headers=headers, stream=True)
-        with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024): 
-                if chunk:
-                    f.write(chunk)
-                    f.flush()
+        #with open(local_filename, 'wb') as f:
+            #for chunk in r.iter_content(chunk_size=1024): 
+                #if chunk:
+                    #f.write(chunk)
+                    #f.flush()
+        urllib.urlretrieve(url, local_filename)
         text = "%s of %s tracks downloaded" % (trn, nSong)
         notification(artist + ' ' + album, text, '3000', iconimage)
         add_to_list(list_data, DOWNLOAD_LIST, False)
@@ -528,7 +558,7 @@ def instant_mix():
                 artist = splitdata[0]
                 album = splitdata[1]
                 songname = splitdata[2]
-                url1 = splitdata[3]
+                url1 = splitdata[3].replace('listen.musicmp3.ru', 'files.musicmp3.ru/lofi')
                 iconimage = splitdata[4]
                 try:
                     plname = splitdata[5]
@@ -689,7 +719,7 @@ def favourite_songs():
                 artist = list1[0]
                 album = list1[1]
                 title = list1[2]
-                url = list1[3]
+                url = list1[3].replace('listen.musicmp3.ru', 'files.musicmp3.ru/lofi')
                 iconimage = list1[4]
                 try:
                     plname = list1[5]
@@ -1143,6 +1173,9 @@ elif mode == 25:
 elif mode == 26:
     search_songs(name)
 	
+elif mode == 27:
+    search_artists(name)
+	
 elif mode == 61:
     add_favourite(name, url,  FAV_ARTIST, "Added to Favourites")
 		
@@ -1196,6 +1229,7 @@ elif mode == 300:
 	
 elif mode == 333:
     clear_lock()
+	
 		
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

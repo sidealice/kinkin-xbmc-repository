@@ -1,6 +1,26 @@
 <?xml version="1.0"?>
 <streams>
   <stream>
+    <title>BBC One World Cup</title>
+    <info resolution="" bitrate="" />
+    <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54</swfUrl>
+    <link>"rtmp://fml.BC83.systemcdn.net/"</link>
+    <pageUrl>http://www.filmon.com/tv/bbc-one</pageUrl>
+    <playpath>mp4:14.high.stream.mp4?6fb0914a89a1db80524b1cf2e7eec54a4c7f98e27ddff5c9fa319c2bfa4a88d58774a9a5ed517c96dd0f86579d71a23e5d87d2b500a57f9b73c25ba13cdf578c16a26947d1a2d9fea4</playpath>
+    <language />
+    <advanced>-a 20BC83/tv/ -o- -b 96000000</advanced>
+  </stream>
+  <stream>
+    <title>ITV One World Cup</title>
+    <info resolution="" bitrate="" />
+    <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54</swfUrl>
+    <link>"rtmp://fml.BC83.systemcdn.net/"</link>
+    <pageUrl>http://www.filmon.com/tv/itv1</pageUrl>
+    <playpath>mp4:11.high.stream.mp4?6fb0914a89a1db80524b1cf2e7eec54a4c7f98e27ddff5c9fa319c2bfa4a88d58774a9a5ed517c96dd0f86579d71a23e5d87d2b500a57f9b73c25ba13cdf578c16a26947d1a2d9fea4</playpath>
+    <language />
+    <advanced>-a 20BC83/tv/ -o- -b 96000000</advanced>
+  </stream>
+  <stream>
     <title>30a TV [Borg TV Update]</title>
     <info resolution="" bitrate="" />
     <swfUrl>https://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=28</swfUrl>

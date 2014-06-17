@@ -329,12 +329,13 @@ def play_filmon(name,url,iconimage,ch_id):
         timeout = '86500'
     if FILMON_QUALITY == "480p":
         name = name.replace('low', 'high')
+    print name
     if name.endswith('m4v'):
         app = 'vodlast'
     else:
         appfind = url[7:].split('/')
         app = 'live/' + appfind[2]
-		
+    #rtmp://fml.BC83.systemcdn.net/20BC83/tv/ playpath=mp4:14.high.stream.mp4?6fb0914a89a1db80524b1cf2e1eec54a5a71fbf5f1464dbdaa5d5d5aeee843676ee44d9f97681c594d8e05d1247311dff53f14c29696306adc6e01a9d1952696f45e04f02e2d9d62522623 swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 pageUrl=http://www.filmon.com/tv/bbc-one live=1 timeout=10 swfVfy=1		
     if url.endswith('/'):
         STurl = str(url) + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
         STurl2 = str(url)  + name + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1' 
@@ -401,9 +402,9 @@ def non_geo():
     url4_ch5 = urls_ch5[4]
     url4 = url4_ch5
     url4_ch5 = url4_ch5.replace('id=', '')
-
     name_ch5 = regex_from_to(link, "streamName': u'", "',")
     name_ch5 = name_ch5.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
+    print link
 
     try:
         timeout = regex_from_to(link, "expire_timeout': u'", "',")
@@ -434,7 +435,10 @@ def non_geo():
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(ch_id)#+ '.mp4' + advpp
         name = name_ch5.replace('1676', ch_id)
         url = url_ch5.replace(url2_ch5, link)
-        if url.endswith('/'):
+
+        if "World Cup" in title:
+            STurl = 'rtmp://' + link + advanced +' playpath=' + playpath + ' swfUrl=' + swfUrl + ' pageUrl=' + pageUrl + ' live=1 timeout=10 swfVfy=1'#
+        elif url.endswith('/'):
             STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
         else:
             STurl = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
@@ -556,31 +560,57 @@ class DownloadThread(Thread):
         xbmc.executebuiltin(notify)	
 		
 def on_demand()	:
-    url = "http://www.filmon.com/vod/"#"http://demand.filmon.com"
+    url = "http://www.filmon.com/vod/documentary"#"http://demand.filmon.com"
     net.set_cookies(cookie_jar)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
-    all_cat = regex_from_to(link, 'var Genres = function', 'Genres.prototype')
+    all_cat = regex_from_to(link, 'angular.module', 'window.angular')
     categories = regex_get_all(all_cat, '"id"', 'logo-retina')
     for c in categories:
         title = regex_from_to(c, 'name":"', '"').strip()
         slug = regex_from_to(c, 'slug":"', '"')
         url = slug + '<>0'
-        addDir(title,url,201,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '','')
+        #'http://www.filmon.com/api/vod/search?genre=animation&max_results=16&noepisode=1&start_index=0'
+        thumb = regex_from_to(c, '"url":"', '"').replace('\/','/')#.replace('image.png','image_retina.png')
+        addDir(title,url,201,thumb, '','')#'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png'
         setView('episodes', 'episodes-view')
 
 def on_demand_list(url):
     urlsplit=url.split('<>')
     genre = urlsplit[0]
     startindex=urlsplit[1]
-    nextindex=int(startindex) + 25
-    link = open_url(session_url)
-    match= re.compile('"session_key":"(.+?)"').findall(link)
-    session_id=match[0]
-    net.set_cookies(cookie_jar)
-    url = 'http://www.filmon.com/api/vod/search?session_key=%s&term=&genre=%s&start_index=%s' % (session_id, genre, startindex)
+    nextindex=int(startindex) + 16
+    if startindex == '0':
+        featuredurl = 'http://www.filmon.com/api/vod/search?genre=%s&is_featured=1&max_results=8&start_index=0' % genre
+        link = net.http_GET(featuredurl).content.encode("utf-8").rstrip()
+        all_videos = regex_get_all(link, '"id":', 'is_synchronized')
+        for a in all_videos:
+            title = regex_from_to(a, 'title":"', '"')
+            id = regex_from_to(a, 'id":', ',"')
+            thumb = 'http://static.filmon.com/couch/vod_content/%s/thumb_220px.png' % id
+            plot = regex_from_to(a, 'description":"', '"')
+            slug = regex_from_to(a, 'slug":"', '"')
+            url = "%s<>%s" % (id,slug)
+            print url
+            addDirPlayable(title,url,203,thumb,"",plot, "", "od")
+	
+    url = 'http://www.filmon.com/api/vod/search?genre=%s&max_results=16&noepisode=1&start_index=%s' % (genre,startindex)
     np_url = "%s<>%s" % (genre, nextindex)
     link = net.http_GET(url).content.encode("utf-8").rstrip()
+    all_videos = regex_get_all(link, '"id":', 'is_synchronized')
+    for a in all_videos:
+        title = regex_from_to(a, 'title":"', '"')
+        id = regex_from_to(a, 'id":', ',"')
+        thumb = 'http://static.filmon.com/couch/vod_content/%s/thumb_220px.png' % id
+        plot = regex_from_to(a, 'description":"', '"')
+        slug = regex_from_to(a, 'slug":"', '"')
+        url = "%s<>%s" % (id,slug)
+        print url
+        addDirPlayable(title,url,203,thumb,"",plot, "", "od")
+    addDir("[COLOR gold]>> Next Page[/COLOR]",np_url,201,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'next.png')), '','')
+    setView('episodes', 'episodes-view')
+		
+'''
 	#rtmp://flash-cloud.filmon.com/demand/storage/226/109999/377916<playpath>mp4:377916.mp4 <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 <pageUrl>http://www.filmon.com/vod/view/2273-1-the-legend-of-bruce-lee-series
     #rtmp://flash-cloud.filmon.com/demand/storage/25/1583/115122<playpath>mp4:115122.mp4 <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 <pageUrl>http://www.filmon.com/vod/view/6854-0-nitti-the-enforcer
     #rtmp://flash-cloud.filmon.com/demand/storage/25/1583/115122 playpath=mp4:115122.mp4  swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54  pageUrl=http://www.filmon.com/vod/view/6854-0-nitti-the-enforcer
@@ -603,17 +633,75 @@ def on_demand_list(url):
         #addDirPlayable(title,url,203,thumb,"",description, "", "od")
     addDir("[COLOR gold]>> Next Page[/COLOR]",np_url,201,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'next.png')), '','')
     setView('episodes', 'episodes-view')
+'''
 	
 def play_od(name, url, iconimage):
-    #dp = xbmcgui.DialogProgress()
-    #dp.create('Opening ' + name.upper())
+
+    playlist = []
+    id = url.split('<>')[0]
+    slug = url.split('<>')[1]
+    url = 'http://www.filmon.com/api/vod/movie/?id=%s' % url
+    #rtmp://flash-cloud.filmon.com/demand/storage/189/29138/138308<playpath>mp4:138308.mp4 <swfUrl>http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=55 <pageUrl>http://www.filmon.com/vod/view/1184-1-oswald-rabbit-series
+    dp = xbmcgui.DialogProgress()
+    dp.create('Opening ' + name.upper())
     #net.set_cookies(cookie_jar)
-    #link = net.http_GET(url).content.encode("utf-8").rstrip()
+    link = net.http_GET(url).content.encode("utf-8").rstrip()
+    episodes = regex_from_to(link,'"episodes":', ',"type"')
+    #http://www.filmon.com/api/vod/movies/?ids=51950,51947,51944,51941
+    match = re.compile('"(.+?)"').findall(episodes)
+    nItem = len(match)
+    pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+    pl.clear()
+    for a in match:
+        url = 'http://www.filmon.com/api/vod/movie/?id=%s' % a
+        link = net.http_GET(url).content.encode("utf-8").rstrip()
+        title = regex_from_to(link, 'title":"', '"')
+        slug = regex_from_to(link, 'slug":"', '"')
+        pageurl='http://www.filmon.com/vod/view/%s' % slug
+
+        low = regex_from_to(link, '"low"', 'watch-timeout')
+        lowurl = regex_from_to(low, '"url":"', '"').replace('\/', '/')
+        lowname = regex_from_to(low, 'name":"', '"')
+        high = regex_from_to(link, '"high"', 'watch-timeout')
+        highurl = regex_from_to(high, '"url":"', '"').replace('\/', '/')
+        highname = regex_from_to(high, 'name":"', '"').replace('\/', '/')
+        if FILMON_QUALITY == "480p":
+            url = '%s playpath=mp4:%s swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=55 pageUrl=%s live=1 timeout=10 swfVfy=1' % (highurl,highname,pageurl)
+        else:
+            url = '%s playpath=mp4:%s swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=55 pageUrl=%s live=1 timeout=10 swfVfy=1' % (lowurl,lowname,pageurl)
+
+
+        liz=xbmcgui.ListItem(title, iconImage=iconimage, thumbnailImage=iconimage)
+        liz.setInfo( type="Video", infoLabels={ "Title": name} )
+        liz.setProperty("IsPlayable","true")
+        
+        playlist.append((url, liz))
+        progress = len(playlist) / float(nItem) * 100  
+        dp.update(int(progress), 'Adding to Your Playlist',title)
+
+        if dp.iscanceled():
+            return
+    dp.close()
+    for blob ,liz in playlist:
+        try:
+            if blob:
+                pl.add(blob,liz)
+        except:
+            pass
+    handle = str(sys.argv[1])
+    if not xbmc.Player().isPlayingVideo():
+        if handle != "-1":	
+            listitem.setProperty("IsPlayable", "true")
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+        else:
+            xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(pl)	
+		
     #swf = "%s%s" % ('http://demand.filmon.com/sites/all/modules/demand/flash/FilmonPlayer.swf?', 'mvfu3k')
     #stream = re.compile('livehttp":{(.+?),"url":"(.+?)","name":"(.+?)"}').findall(link)
     #for vast, stUrl, playpath in stream:
         #RTurl = stUrl.replace("\\/", "/").replace("\/", "/")
     #STurl = RTurl
+'''
     handle = str(sys.argv[1])
     listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)
     if handle != "-1":	
@@ -623,7 +711,7 @@ def play_od(name, url, iconimage):
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(url,listitem)
     #dp.close()
-
+'''
 
 def my_addons():
     addons = os.listdir(addon_path)

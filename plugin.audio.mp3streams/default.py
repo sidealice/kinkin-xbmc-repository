@@ -9,6 +9,7 @@ from mutagen.mp3 import MP3
 cookie_jar = settings.cookie_jar()
 net = Net()
 ADDON = settings.addon()
+GOTHAM_FIX = settings.gotham_fix()
 ARTIST_ART = settings.artist_icons()
 FAV_ARTIST = settings.favourites_file_artist()
 FAV_ALBUM = settings.favourites_file_album()
@@ -59,6 +60,7 @@ def get_cookie():
 
 	
 def CATEGORIES():
+    addDirAudio('[COLOR cyan]Using Gotham? Enable alternate source in settings (beta)[/COLOR]','url',500,'','','','','','')
     addDir('Artists','http://musicmp3.ru/artists.html',21,art + 'artists.jpg','')
     addDir('Top Albums','http://musicmp3.ru/genres.html',12,art + 'topalbums.jpg','')
     addDir('New Albums','http://musicmp3.ru/new_albums.html',12,art + 'newalbums.jpg','')
@@ -307,12 +309,22 @@ def play_album(name, url, iconimage,mix,clear):
         link = GET_url(url)
         match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
+            if GOTHAM_FIX:
+                try:
+                    alturl = 'http://www.myfreemp3.eu/music/%s %s' % (artist, songname)
+                    link = open_url(alturl)
+                    data = regex_from_to(link, 'data-aid=', '"').replace('"','').replace('\\','')
+                    url = 'http://myfreemp3.eu/play/%s_24662006e9/' % data
+                    response = requests.get(url,allow_redirects=False)
+                    url = response.headers['location']
+                except:
+                    url = 'http://files.musicmp3.ru/lofi/' + id
+            else:
+                url = 'http://files.musicmp3.ru/lofi/' + id
             songname = songname.replace('&amp;', 'and')
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
             trn = track.replace('track','')
-            #url = find_url(trn).strip() + id
-            url = 'http://files.musicmp3.ru/lofi/' + id
             title = "%s. %s" % (track.replace('track',''), songname)
             addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
@@ -333,6 +345,18 @@ def play_album(name, url, iconimage,mix,clear):
         match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
         nItem=len(match)
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
+            if GOTHAM_FIX:
+                try:
+                    alturl = 'http://www.myfreemp3.eu/music/%s %s' % (artist, songname)
+                    link = open_url(alturl)
+                    data = regex_from_to(link, 'data-aid=', '"').replace('"','').replace('\\','')
+                    url = 'http://myfreemp3.eu/play/%s_24662006e9/' % data
+                    response = requests.get(url,allow_redirects=False)
+                    url = response.headers['location']
+                except:
+                    url = 'http://files.musicmp3.ru/lofi/' + id
+            else:
+                url = 'http://files.musicmp3.ru/lofi/' + id
             songname = songname.replace('&amp;', 'and')
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
@@ -341,10 +365,9 @@ def play_album(name, url, iconimage,mix,clear):
             stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
             if os.path.exists(stored_path):
                 url = stored_path
-            else:
+            #else:
                 #url = find_url(trn).strip() + id
-                url = 'http://files.musicmp3.ru/lofi/' + id
-            print url
+                #url = 'http://files.musicmp3.ru/lofi/' + id
             addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
@@ -409,13 +432,13 @@ def download_song(url,name,songname,artist,album,iconimage):
     list_data = "%s<>%s<>%s<>%s<>%s%s" % (album_path,artist,album,track,songname,'.mp3')	
     local_filename = album_path + '/' + songname + '.mp3'
     headers = {'Host': 'listen.musicmp3.ru','Range': 'bytes=0-','User-Agent': 'AppleWebKit/<WebKit Rev>', 'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'}
-    #r = requests.get(url, headers=headers, stream=True)
-    #with open(local_filename, 'wb') as f:
-        #for chunk in r.iter_content(chunk_size=1024): 
-            #if chunk:
-                #f.write(chunk)
-                #f.flush()
-    urllib.urlretrieve(url, local_filename)
+    r = requests.get(url, headers=headers, stream=True)
+    with open(local_filename, 'wb') as f:
+        for chunk in r.iter_content(): #chunk_size=1024
+            if chunk:
+                f.write(chunk)
+                f.flush()
+    #urllib.urlretrieve(url, local_filename)
     add_to_list(list_data, DOWNLOAD_LIST, False)
 '''	
 class DownloadMusicThread(Thread):
@@ -1229,6 +1252,9 @@ elif mode == 300:
 	
 elif mode == 333:
     clear_lock()
+	
+elif mode == 500:
+    ADDON.openSettings()
 	
 		
 

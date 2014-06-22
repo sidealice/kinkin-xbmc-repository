@@ -5,4 +5,5 @@
     <string id="10002">Queue songs on selection</string>
     <string id="10003">Queue albums on selection</string>
     <string id="10004">Select XBMC Player</string>
+    <string id="10005">Use alternate source (fix for Gotham)</string>
 </strings>

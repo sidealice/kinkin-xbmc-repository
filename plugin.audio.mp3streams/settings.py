@@ -41,6 +41,12 @@ def custom_directory():
     else:
         return False
 		
+def gotham_fix():
+    if ADDON.getSetting('gotham_fix') == "true":
+        return True
+    else:
+        return False
+		
 def default_queue():
     if ADDON.getSetting('default_queue') == "true":
         return True

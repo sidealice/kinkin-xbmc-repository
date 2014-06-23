@@ -208,6 +208,7 @@ def tvshow_genre_menu(url):
 
 	
 def Main(name,url,page):
+    nm = name
     dp = xbmcgui.DialogProgress()
     dp.create("FliXanity",'Searching')
     dp.update(0)
@@ -267,7 +268,7 @@ def Main(name,url,page):
                 iconimage=thumb
             addDir(name, url,103,iconimage, url1,'sh',infoLabels=infoLabels)
             setView('episodes', 'episodes-view')
-    if 'Box Office' not in name and 'New Movies' not in name and 'New Episodes' not in name and not 'shows' in url1 and not 'tv-tags' in url1:
+    if 'Box Office' not in nm and 'New Movies' not in nm and 'New Episodes' not in nm and not 'shows' in url1 and not 'tv-tags' in url1:
         addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'')
 		
 def tvseries_seasons(name,url,thumb,referer):

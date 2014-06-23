@@ -560,24 +560,18 @@ def stream_links(name,url,iconimage,showname):
 
 		
 def play(name, url, iconimage, showname):
-    try:
-        if 'googlevideo' in url:
-            playlink = url
-        else:
-           playlink = resolve_url(url)
-        listitem = xbmcgui.ListItem(showname, iconImage=iconimage, thumbnailImage=iconimage, path=playlink)
-        xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-        handle = str(sys.argv[1])    
-        if handle != "-1":
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer.play(playlink, listitem)
-    except:
-        if AUTOPLAY:
-            pass
-        else:
-            notification('Unable to resolve link', name, '3000', iconimage)
+    if 'googlevideo' in url:
+        playlink = url
+    else:
+       playlink = resolve_url(url)
+    listitem = xbmcgui.ListItem(showname, iconImage=iconimage, thumbnailImage=iconimage, path=playlink)
+    xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
+    handle = str(sys.argv[1])    
+    if handle != "-1":
+        listitem.setProperty("IsPlayable", "true")
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+    else:
+        xbmcPlayer.play(playlink, listitem)
 	
 def resolve_url(url): 
     if 'docs.google.com' in url:

@@ -311,7 +311,8 @@ def play_album(name, url, iconimage,mix,clear):
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
             if GOTHAM_FIX:
                 try:
-                    alturl = 'http://www.myfreemp3.eu/music/%s %s' % (artist, songname)
+                    alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
+                    alturl = alturl.replace(' ', '+').lower()
                     link = open_url(alturl)
                     data = regex_from_to(link, 'data-aid=', '"').replace('"','').replace('\\','')
                     url = 'http://myfreemp3.eu/play/%s_24662006e9/' % data
@@ -347,7 +348,8 @@ def play_album(name, url, iconimage,mix,clear):
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
             if GOTHAM_FIX:
                 try:
-                    alturl = 'http://www.myfreemp3.eu/music/%s %s' % (artist, songname)
+                    alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
+                    alturl = alturl.replace(' ', '+').lower()
                     link = open_url(alturl)
                     data = regex_from_to(link, 'data-aid=', '"').replace('"','').replace('\\','')
                     url = 'http://myfreemp3.eu/play/%s_24662006e9/' % data

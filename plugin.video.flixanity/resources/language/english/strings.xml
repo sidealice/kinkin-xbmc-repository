@@ -1,0 +1,11 @@
+<strings>
+	<!-- Settings -->
+    <string id="10001">FliXanity account</string>
+    <string id="10002">  User Name</string>
+    <string id="10003">  Password</string>
+    <string id="10005">Enable Subscriptions</string>
+    <string id="10006">TV Show Directory</string>
+    <string id="10007">Movie Directory</string>
+    <string id="10008">Autoplay</string>
+    <string id="10009">Enable Meta</string>
+</strings>

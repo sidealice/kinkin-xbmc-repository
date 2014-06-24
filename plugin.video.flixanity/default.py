@@ -228,6 +228,7 @@ def Main(name,url,page):
     nItem = len(match)
     count = 0
     for url,d1,d4,thumb,d2,d3,title in match:
+        name = title
         count = count + 1
         id = regex_from_to(thumb, 'thumbs/', '.jpg')
         thumb = 'http://www.flixanity.com/templates/trakt/timthumb.php?src=http://www.flixanity.com/thumbs/%s.jpg&w=200&h=300&zc=1' % id

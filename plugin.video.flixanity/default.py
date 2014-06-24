@@ -24,6 +24,9 @@ net = Net()
 
 
 ADDON = settings.addon()
+TRAILER_RESTRICT = settings.restrict_trailer()
+TRAILER_QUALITY = settings.trailer_quality()
+TRAILER_ONECLICK = settings.trailer_one_click()
 MS_ACCOUNT = settings.ms_account()
 MS_USER = settings.ms_user()
 MS_PASSWORD = settings.ms_pass()
@@ -267,7 +270,7 @@ def Main(name,url,page):
                 infoLabels =None
                 iconimage=thumb
             addDir(name, url,103,iconimage, url1,'sh',infoLabels=infoLabels)
-            setView('episodes', 'episodes-view')
+            setView('tvshows', 'tvshows-view')
     if 'Box Office' not in nm and 'New Movies' not in nm and 'New Episodes' not in nm and not 'shows' in url1 and not 'tv-tags' in url1:
         addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'')
 		
@@ -295,6 +298,7 @@ def tvseries_seasons(name,url,thumb,referer):
             infoLabels =None
             iconimage=thumb
         addDir(title, url,104,iconimage, showname,'sh',infoLabels=infoLabels)
+    setView('seasons', 'seasons-view')
 		
 def tvseries_episodes(name, url, thumb, showname):
     thumb = thumb + '&w=200&h=300&zc=1'
@@ -326,6 +330,7 @@ def tvseries_episodes(name, url, thumb, showname):
             addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
         else:
             addDir(name, url,2,iconimage, showname,'sh',infoLabels=infoLabels)
+    setView('episodes', 'episodes-view')
     if ENABLE_META:
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_EPISODE)
     else:
@@ -367,6 +372,7 @@ def new_episodes(name, url, thumb):
                     addDir(name, url,2,iconimage, showname,'sh',infoLabels=infoLabels)
             except:
                 pass
+    setView('episodes', 'episodes-view')
     
 
 def search(name):
@@ -460,7 +466,7 @@ def search_show(name,query):
                 iconimage=thumb
                 name = title
             addDir(name, url,103,iconimage, '','sh',infoLabels=infoLabels)
-            setView('episodes', 'episodes-view')
+    setView('tvshows', 'tvshows-view')
 		
 def links(name,url,iconimage,showname):
     urllist = []
@@ -693,6 +699,75 @@ def resolve_url(url):
             except:
                 pass
     return playlink
+	
+def view_trailer(name, url, iconimage):
+    menu_texts = []
+    menu_data = []
+    menu_res = []
+    menu_list_item = []
+    pDialog = xbmcgui.DialogProgress()
+    pDialog.create('Searching for trailer')
+    dialog = xbmcgui.Dialog()
+    try:
+        url = "http://www.hd-trailers.net/movie/" + name.lower().replace(' ','-').replace(':','-')
+        response = open_gurl(url)
+        match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
+        if len(match)==0:
+            url = "http://www.hd-trailers.net/movie/" + name.lower().replace(' ','-').replace(':','-').replace('and','-')
+            response = open_gurl(url)
+            match=re.compile('href="http://(.+?)" rel=(.+?)title="(.+?)">(.+?)</a></td>').findall(response) 
+            if len(match)==0:
+                dialog.ok("Trailer Search", 'No trailers found for:', name) 
+                return
+        for url, info, title, res in match:
+            print url
+            if url.find('apple')>0:
+                url = '%s|User-Agent=QuickTime' % ("http://" + url)
+            elif url.find('youtube')>0:
+                video_id = url.replace('www.youtube.com/watch?v=','')
+                url = (
+                    'plugin://plugin.video.youtube/'
+                    '?action=play_video&videoid=%s' % video_id
+                )
+            else:
+                url = "http://" + url
+            if TRAILER_RESTRICT:
+                if url.find('yahoo')<0 and res==TRAILER_QUALITY:
+                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
+                    menu_list_item.append(clean_file_name(title, use_blanks=False))
+                    menu_data.append(url)
+                    menu_res.append(res)
+            else:
+                if url.find('yahoo')<0:
+                    menu_texts.append("[%s] %s" % (res, clean_file_name(title, use_blanks=False)))
+                    menu_list_item.append(clean_file_name(title, use_blanks=False))
+                    menu_data.append(url)
+                    menu_res.append(res)
+					
+        if TRAILER_ONECLICK:
+            menu_id =0
+        else:
+            menu_id = dialog.select('Select Trailer', menu_texts)
+        if(menu_id < 0):
+            return (None, None)
+            dialog.close()
+        else:	
+            url = menu_data[menu_id]
+            name = menu_texts[menu_id]
+            list_item = menu_list_item[menu_id]
+			
+        pDialog.close()
+    
+        listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)
+        xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
+        handle = str(sys.argv[1])    
+        if handle != "-1":
+            listitem.setProperty("IsPlayable", "true")
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+        else:
+            xbmcPlayer.play(url, listitem)
+    except:
+        dialog.ok("Trailer Search", 'No trailers found for:', name)
 	
 def download(name, url, iconimage, dir):
     if 'googlevideo' in url:
@@ -1119,6 +1194,8 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         ok=True
         contextMenuItems = []
         if description == "mov":
+            contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
+            contextMenuItems.append(("[COLOR cyan]View Trailer[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=27&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=20&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             if find_list(list1, FAV_MOVIE) < 0:
                 suffix = ""
@@ -1129,6 +1206,7 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         if name == "TV Subscriptions":
             contextMenuItems.append(("[COLOR cyan]Refresh Subscriptions[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=17&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, urllib.quote(iconimage))))
         if description == "sh":
+            contextMenuItems.append(('TV Show Information', 'XBMC.Action(Info)'))
             if find_list(list1, FAV) < 0:
                 suffix = ""
                 contextMenuItems.append(("[COLOR lime]Add to Favourite TV Shows[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=11&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, urllib.quote(iconimage))))
@@ -1159,6 +1237,8 @@ def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
         contextMenuItems = []
         #contextMenuItems.append(("[COLOR lime]Download[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=25&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, urllib.quote(iconimage))))
         if showname == "mov":
+            contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
+            contextMenuItems.append(("[COLOR cyan]View Trailer[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=27&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=20&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             if find_list(list1, FAV_MOVIE) < 0:
                 suffix = ""
@@ -1167,6 +1247,7 @@ def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Favourite Movies[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=9&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, str(list1))))
         if showname == "sh":
+            contextMenuItems.append(('TV Show Information', 'XBMC.Action(Info)'))
             if find_list(list1, FAV) < 0:
                 suffix = ""
                 contextMenuItems.append(("[COLOR lime]Add to Favourite TV Shows[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=11&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, urllib.quote(iconimage))))
@@ -1326,6 +1407,9 @@ elif mode == 25:
 		
 elif mode == 26:
         clear_cache()
+		
+elif mode == 27:
+        view_trailer(name, url, iconimage)
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

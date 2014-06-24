@@ -43,6 +43,27 @@ def autoplay():
         return True
     else:
         return False
+		
+def restrict_trailer():
+    if ADDON.getSetting('restrict_trailer') == "true":
+        return True
+    else:
+        return False
+		
+def trailer_quality():
+    quality = ADDON.getSetting('trailer_quality')
+    if quality == '0':
+        return '480p'
+    elif quality == '1':
+        return '720p'
+    else:
+        return '1080p'
+		
+def trailer_one_click():
+    if ADDON.getSetting('trailer_one_click') == "true":
+        return True
+    else:
+        return False
 	
 def tv_directory():
     if ADDON.getSetting('tv_directory')=='set':

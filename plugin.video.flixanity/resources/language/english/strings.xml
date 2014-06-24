@@ -8,4 +8,8 @@
     <string id="10007">Movie Directory</string>
     <string id="10008">Autoplay</string>
     <string id="10009">Enable Meta</string>
+    <!-- Trailers -->
+    <string id="20000">Restrict trailer quality</string>
+    <string id="20001">    Trailer quality</string>
+	<string id="20002">    One-click play</string>
 </strings>

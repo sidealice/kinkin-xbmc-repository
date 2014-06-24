@@ -9,6 +9,10 @@
         <setting id="autoplay" type="bool" label="10008" default="false" />
         <setting id="enable_meta" type="bool" label="10009" default="true" />
         <setting id="service_time" type="text" label="Service Time" default="2000-01-01 00:00:00" visible="false"/>
-
+	</category>
+    <category label="Trailers">
+        <setting id="restrict_trailer" type="bool" label="20000" default="false"/>
+	    <setting id="trailer_quality" type="enum" values="480p|720p|1080p" label="20001" default="1" enable="!eq(-1,false)"/>
+        <setting id="trailer_one_click" type="bool" label="20002" default="false"/>
 	</category>
 </settings>

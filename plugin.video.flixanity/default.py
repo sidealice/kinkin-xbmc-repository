@@ -302,6 +302,7 @@ def tvseries_seasons(name,url,thumb,referer):
     setView('seasons', 'seasons-view')
 		
 def tvseries_episodes(name, url, thumb, showname):
+    nm = name
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
     link = open_gurl(url)
@@ -311,10 +312,12 @@ def tvseries_episodes(name, url, thumb, showname):
         titleurl = regex_from_to(a, '<a class="link"', '</a>')
         title = regex_from_to(titleurl, 'title="', '"').replace('Season ', '').replace(', Episode ', 'x')
         url = regex_from_to(titleurl, 'href="', '"')
+        spliturl = url.split('/')
+        episode = spliturl[8]
+        season = spliturl[6]
+        name = title
         if ENABLE_META:
-            spliturl = url.split('/')
-            episode = spliturl[8]
-            season = spliturl[6]
+            
             infoLabels=get_meta(showname,'episode',year=None,season=season,episode=episode)
             if infoLabels['title']=='':
                 name=title
@@ -349,10 +352,11 @@ def new_episodes(name, url, thumb):
             showname = regex_get_all(a,'title="', '"')[1]
             showname = showname.replace('title=','').replace('"','')
             title = regex_from_to(a, 'p class="name">', '</p>').replace('Season ', '').replace(', Episode ', 'x')
+            spliturl = url.split('/')
+            episode = spliturl[8]
+            season = spliturl[6]
+            name = title
             if ENABLE_META:
-                spliturl = url.split('/')
-                episode = spliturl[8]
-                season = spliturl[6]
                 infoLabels=get_meta(showname,'episode',year=None,season=season,episode=episode)
                 if infoLabels['title']=='':
                     name=title
@@ -778,7 +782,7 @@ def download(name, url, iconimage, dir):
     filename = name + '.mp4'
     WAITING_TIME = 5
     data_path = os.path.join(dir, filename)
-    dlThread = DownloadFileThread(name, url, data_path, WAITING_TIME)
+    dlThread = DownloadFileThread(name, playlink, data_path, WAITING_TIME)
     dlThread.start()
     wait_dl_only(WAITING_TIME, "Starting Download")
     if os.path.exists(data_path):
@@ -799,27 +803,13 @@ class DownloadFileThread(Thread):
         path = self.path
         data = self.data
         name = self.name
-        try:
-            urllib.urlretrieve(data, path, lambda nb, bs, fs: self._dlhook(nb, bs, fs, self, start_time, path, waiting))#, lambda nb, bs, fs: self._dlhook(nb, bs, fs, self, start_time, path, waiting)
-        except:
-            if sys.exc_info()[0] in (urllib.ContentTooShortError, StopDownloading, OSError):
-                time.sleep(2)
-                os.remove(path)
-                return False 
-            else: 
-                raise
-            return False
+        urllib.urlretrieve(data, path)
         notification('Download finished', name, '5000', iconart)
+
 		
-    def _dlhook(self, numblocks, blocksize, filesize, dt, start_time, path, waiting):
-        raise StopDownloading('Stopped Downloading')
-        callEndOfDirectory = False
-		
-class StopDownloading(Exception): 
-    def __init__(self, value): 
-        self.value = value 
-    def __str__(self): 
-        return repr(self.value)
+def scan_library():
+    if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
+        xbmc.executebuiltin('UpdateLibrary(video)')
 
 def favourites():
     if os.path.isfile(FAV):
@@ -1144,18 +1134,21 @@ def wait_dl_only(time_to_wait, title):
 		
 def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episode_title=None):
     if 'movie' in types:
-        meta = metainfo.get_meta('movie',name,year)
-        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
+        meta = metainfo.get_meta('movie',clean_file_name(name, use_blanks=False),year)
+        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'].encode("ascii", "ignore"),'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
     else:
         if 'tvshow' in types:
-            meta = metainfo.get_meta('tvshow',name,'','','')
+            meta = metainfo.get_meta('tvshow',clean_file_name(name, use_blanks=False),'','','')
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
             #infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
         if 'episode' in types:
-            meta = metainfo.get_episode_meta(name, '', season, episode)
+            meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season, episode)
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'].encode("ascii", "ignore"),'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
         if 'season' in types:
-            meta = metainfo.get_episode_meta(name, '', season,None)
+            meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season,None)
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
     #infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
-        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
+
         
     return infoLabels
 		
@@ -1236,7 +1229,7 @@ def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
         list2 = "%s<>%s<>%s" % (name,url,iconimage)
         ok=True
         contextMenuItems = []
-        #contextMenuItems.append(("[COLOR lime]Download[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=25&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, urllib.quote(iconimage))))
+        contextMenuItems.append(("[COLOR lime]Download[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=25&iconimage=%s)'%(sys.argv[0], urllib.quote(showname), urllib.quote(url), urllib.quote(iconimage))))
         if showname == "mov":
             contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
             contextMenuItems.append(("[COLOR cyan]View Trailer[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=27&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
@@ -1404,14 +1397,17 @@ elif mode==21:
         stream_links(name,url,iconimage,list)
 		
 elif mode == 25:
-        download(name, url, iconimage, MOVIE_PATH)
+        if name[1:2] == 'x' and (name[3:4] == ' ' or name[4:5] == ' '):
+            download(name, url, iconimage, TV_PATH)
+        else:
+            download(name, url, iconimage, MOVIE_PATH)
 		
 elif mode == 26:
         clear_cache()
 		
 elif mode == 27:
         view_trailer(name, url, iconimage)
-		
+	
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 
 

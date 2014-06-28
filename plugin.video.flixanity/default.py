@@ -211,6 +211,7 @@ def tvshow_genre_menu(url):
 
 	
 def Main(name,url,page):
+    trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
     nm = name
     dp = xbmcgui.DialogProgress()
     dp.create("FliXanity",'Searching')
@@ -219,7 +220,7 @@ def Main(name,url,page):
     url = "%s/%s" % (url,page)
     nextpage = int(page) + 1
     referer = 'http://www.flixanity.com/'
-    link = open_gurl(url).replace('\n', '').replace('\t', '')
+    link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
     if 'tv-shows' in url or 'tv-tags' in url:
         data = regex_from_to(link, 'MAIN WRAPPER', 'div id="footer')
     else:
@@ -248,13 +249,19 @@ def Main(name,url,page):
                     iconimage=thumb
                 else:
                     iconimage=infoLabels['cover_url']
+                if infoLabels['year']=='':
+                    year=''
+                else:
+                    year=" (%s)" % infoLabels['year']
             else:
                 infoLabels =None
                 iconimage=thumb
+                year = ''
+            name2 = "%s%s" % (name.replace('\u00e0', 'a'), year)
             if AUTOPLAY:
-                addDirPlayable(name, url,2,iconimage, 'mov',infoLabels=infoLabels)
+                addDirPlayable(name2, url,2,iconimage, 'mov',infoLabels=infoLabels)
             else:
-                addDir(name, url,2,iconimage, url1,'mov',infoLabels=infoLabels)
+                addDir(name2, url,2,iconimage, name,'mov',infoLabels=infoLabels)
             setView('movies', 'movies-view')
         else:
             if ENABLE_META:
@@ -267,16 +274,21 @@ def Main(name,url,page):
                     iconimage=thumb
                 else:
                     iconimage=infoLabels['cover_url']
+                if infoLabels['year']=='':
+                    year=''
+                else:
+                    year=" (%s)" % infoLabels['year']
             else:
                 infoLabels =None
                 iconimage=thumb
-            addDir(name, url,103,iconimage, url1,'sh',infoLabels=infoLabels)
+                year = ''
+            name2 = "%s%s" % (name.replace('\u00e0', 'a'), year)
+            addDir(name2, url,103,iconimage, name,'sh',infoLabels=infoLabels)
             setView('tvshows', 'tvshows-view')
     if 'Box Office' not in nm and 'New Movies' not in nm and 'New Episodes' not in nm and not 'shows' in url1 and not 'tv-tags' in url1:
         addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'')
 		
-def tvseries_seasons(name,url,thumb,referer):
-    showname = name
+def tvseries_seasons(name,url,thumb,showname):
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
     link = open_gurl(url)
@@ -285,7 +297,6 @@ def tvseries_seasons(name,url,thumb,referer):
     for url, title in match:
         if ENABLE_META:
             season = title.replace('Season ', '')
-            print season
             infoLabels=get_meta(showname,'tvshow',year=None,season=season,episode=None)
             if infoLabels['title']=='':
                 name=title
@@ -302,6 +313,7 @@ def tvseries_seasons(name,url,thumb,referer):
     setView('seasons', 'seasons-view')
 		
 def tvseries_episodes(name, url, thumb, showname):
+    trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
     nm = name
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
@@ -330,6 +342,7 @@ def tvseries_episodes(name, url, thumb, showname):
         else:
             infoLabels =None
             iconimage=thumb
+        #name = name.translate(trans_table)
         if AUTOPLAY:
             addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
         else:
@@ -423,10 +436,16 @@ def search_movie(name,query):
                     iconimage=thumb
                 else:
                     iconimage=infoLabels['cover_url']
+                if infoLabels['year']=='':
+                    year=''
+                else:
+                    year=" (%s)" % infoLabels['year']
             else:
                 infoLabels =None
                 iconimage=thumb
+                year = ''
                 name = title
+            name = "%s%s" % (name.replace('\u00e0', 'a'), year)
             if AUTOPLAY:
                 addDirPlayable(name, url,2,iconimage, 'mov',infoLabels=infoLabels)
             else:
@@ -452,7 +471,7 @@ def search_show(name,query):
     form_dict['timestamp'] = str(timestamp)
     form_dict['verifiedCheck'] = ''
 
-    link = net.http_POST(url, form_data=form_dict, headers=header_dict).content.encode("utf-8").replace('\/','/').rstrip()
+    link = net.http_POST(url, form_data=form_dict, headers=header_dict).content.encode("utf-8").replace('\t', '').replace('\u00e0', 'a').replace('\/','/').rstrip()
     match=re.compile('"permalink":"(.+?)","image":"(.+?)","title":"(.+?)","meta":"(.+?)"').findall(link)
     for url,thumb,title,type in match:
         if 'TV show' in type:
@@ -466,11 +485,17 @@ def search_show(name,query):
                     iconimage=thumb
                 else:
                     iconimage=infoLabels['cover_url']
+                if infoLabels['year']=='':
+                    year=''
+                else:
+                    year=" (%s)" % infoLabels['year']
             else:
                 infoLabels =None
                 iconimage=thumb
                 name = title
-            addDir(name, url,103,iconimage, '','sh',infoLabels=infoLabels)
+                year = ''
+            name = "%s%s" % (name.replace('\u00e0', 'a'), year)
+            addDir(name.encode('utf-8'), url,103,iconimage, '','sh',infoLabels=infoLabels)
     setView('tvshows', 'tvshows-view')
 		
 def links(name,url,iconimage,showname):
@@ -1135,15 +1160,15 @@ def wait_dl_only(time_to_wait, title):
 def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episode_title=None):
     if 'movie' in types:
         meta = metainfo.get_meta('movie',clean_file_name(name, use_blanks=False),year)
-        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'].encode("ascii", "ignore"),'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
+        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered'],'year': meta['year']}
     else:
         if 'tvshow' in types:
             meta = metainfo.get_meta('tvshow',clean_file_name(name, use_blanks=False),'','','')
-            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay'],'year': meta['year']}
             #infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
         if 'episode' in types:
             meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season, episode)
-            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'].encode("ascii", "ignore"),'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
         if 'season' in types:
             meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season,None)
             infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}

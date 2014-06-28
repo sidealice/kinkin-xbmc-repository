@@ -261,7 +261,7 @@ def Main(name,url,page):
             if AUTOPLAY:
                 addDirPlayable(name2, url,2,iconimage, 'mov',infoLabels=infoLabels)
             else:
-                addDir(name2, url,2,iconimage, name,'mov',infoLabels=infoLabels)
+                addDir(name2, url,2,iconimage, title,'mov',infoLabels=infoLabels)
             setView('movies', 'movies-view')
         else:
             if ENABLE_META:
@@ -283,12 +283,13 @@ def Main(name,url,page):
                 iconimage=thumb
                 year = ''
             name2 = "%s%s" % (name.replace('\u00e0', 'a'), year)
-            addDir(name2, url,103,iconimage, name,'sh',infoLabels=infoLabels)
+            addDir(name2, url,103,iconimage, title,'sh',infoLabels=infoLabels)
             setView('tvshows', 'tvshows-view')
     if 'Box Office' not in nm and 'New Movies' not in nm and 'New Episodes' not in nm and not 'shows' in url1 and not 'tv-tags' in url1:
         addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'')
 		
 def tvseries_seasons(name,url,thumb,showname):
+    showname = name[:name.find('(')]
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
     link = open_gurl(url)

@@ -773,42 +773,10 @@ def play(name, url, iconimage):
         xbmcPlayer.play(playlist)
 
 def cartoons(name,url):
-    addDir('Top Movies','picasa_topmovie',398,'https://lh4.googleusercontent.com/-xwlVx-Rv1qw/UrQN_iy5w0I/AAAAAAAABnY/l_wjhLjykuY/s630/marvel-rankings.jpg', '', '')
-    addDir('Disney','picasa_disneycollection',398,'https://lh6.googleusercontent.com/-srGy1JeuoxU/UmpVe7gEGBI/AAAAAAAABbA/m0LgdL3mAwQ/s640/WaltDisneyPicturesSpecialPoster.jpeg', '', '')
     addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
-    addDir('IMDB','picasa_imdb',398,'https://lh5.googleusercontent.com/-U-eB6iRwwns/UxxNvZrXHFI/AAAAAAAACmA/8HAwCVDzuSg/s800/imdb_top_250_bg.jpg', '', '')
     addDir('Disney Classic','http://gdata.youtube.com/feeds/api/users/UCa0h983kQj5OYa06gYhxgiw/uploads?start-index=1&max-results=50',395,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'mickey.gif')),'','')
-    addDir('Top Cartoons','picasa_topcartoon',398,'https://lh5.googleusercontent.com/-l6lQqrU7BW0/UrQqqA4AlqI/AAAAAAAAIyE/LqwNMn_RBHo/s800/Disney-Pixar-Wallpaper-for-Desktop1.jpg', '', '')
-    addDir('Other Cartoons','url',397,'https://lh6.googleusercontent.com/-jcF96PO3xPA/UpaegauaWNI/AAAAAAAABgY/FnNZ5kRj3fI/s800/the_simpsons.jpg', '', '')
 	
-def other_cartoons(name,url):
-    list = read_from_file(ct_list)
-    match = re.compile('"Name":"(.+?)","Action":"(.+?)","Type":"(.+?)","ImageVideo":(.+?),"Image":"(.+?)"').findall(list)
-    for name,action,type,iv,iconimage in match:
-        if action != 'picasa_topmovie' and action != 'picasa_disneycollection' and action != 'picasa_topimdb' and action != 'picasa_topcartoon':
-            url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % action
-            addDir(name,action,398,iconimage, '', '')
-    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 
-def cartoon_list(name,url):
-    listname=url
-    try:
-        url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
-        link = open_url(url)
-        if not 'Link' in link:
-            list = read_from_file(cartoonlinks)
-            link = regex_from_to(list, name + '<<', '>>')
-    except:
-        list = read_from_file(cartoonlinks)
-        link = regex_from_to(list, name + '<<', '>>')
-    match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
-    for title,type,url,iconimage in match:
-        if listname=='picasa_disneycollection':
-            title=title[5:]
-        url=url.replace('\/', '/')
-        iconimage=iconimage.replace('\/', '/')
-        addDirPlayable(title,url,396,iconimage,listname, '', '', '')
-    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 
 def play_cartoons(name,url,iconimage):
     if 'auengine.com' in url:
@@ -1410,12 +1378,7 @@ elif mode == 203:
 elif mode == 399:
         cartoons(name,url)
 		
-elif mode == 398:
-        cartoon_list(name,url)
-		
-elif mode == 397:
-        other_cartoons(name,url)
-		
+	
 elif mode == 396:
         play_cartoons(name,url,iconimage)
 		

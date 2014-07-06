@@ -7,6 +7,8 @@ fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pea
 pjbootleg_logo = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'pjbootleglogo.gif'))
 pjbootleg_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart2.jpg'))
 audio_fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'fanart1.jpg'))
+radiothumb = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'pjradio.jpg'))
+radiofanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.pearljamlive/art', 'radiofanart.jpg'))
 
 def open_url(url):
     req = urllib2.Request(url)
@@ -20,7 +22,7 @@ def CATEGORIES():
         addDir('Pearl Jam Live',pearljam_url,1,'http://www.pearljamlive.com/images/polaroid_home.jpg')
         addDir( 'Pearl Jam Bootlegs','url',4,pjbootleg_logo)
         addDir( 'Pearl Jam Official YouTube','http://gdata.youtube.com/feeds/api/users/PearlJamOfficial/uploads?start-index=1&max-results=20',12,pjbootleg_logo)
-        #addDirAudio('Pearl Jam Radio','http://tunein.com/radio/Pearl-Jam-Radio-s124658/',13,pjbootleg_logo)
+        addDirAudio('Pearl Jam Radio','http://radio.nugs.net:8080/',13,radiothumb)#http://tunein.com/radio/Pearl-Jam-Radio-s124658/
 
 #########################  PEARL JAM	#################################################	
 def LISTEN_YEAR(url):
@@ -289,9 +291,24 @@ def YOUTUBE_CHANNELS(url):
     addDir(">> Next page",next_page_url,12,"")
 
 def pj_radio(url):
+    iconimage = radiothumb
+    playlist = []
+    pl = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
+    pl.clear()
     link = open_url(url)
-    print link
-    xbmc.Player().play(url)	
+    liz=xbmcgui.ListItem('Pearl Jam Radio', iconImage=iconimage, thumbnailImage=iconimage)
+    liz.setInfo('music', {'Title':'Pearl Jam Radio', 'Artist':'Pearl Jam', 'Album':'Continuous stream'})
+    liz.setProperty('mimetype', 'audio/mpeg')
+    liz.setThumbnailImage(iconimage)
+    liz.setProperty('fanart_image', radiofanart)
+    playlist.append((url, liz))
+    for blob ,liz in playlist:
+        try:
+            if blob:
+                pl.add(blob,liz)
+        except:
+            pass
+    xbmc.Player().play(pl)	
 
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
@@ -365,7 +382,10 @@ def addDirAudio(name,url,mode,iconimage):
         ok=True
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
-        liz.setProperty('fanart_image', audio_fanart)
+        if mode==13:
+            liz.setProperty('fanart_image', radiofanart)
+        else:
+            liz.setProperty('fanart_image', audio_fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz)
         return ok
         

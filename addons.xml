@@ -24,7 +24,7 @@
 
 <addon id="plugin.audio.pearljamlive"
        name="Pearl Jam Live"
-       version="1.0.4"
+       version="1.0.5"
        provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

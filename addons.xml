@@ -310,12 +310,12 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 </addon>
 
 <addon id="plugin.video.tvonline.cc"
-       name="TVonline"
-       version="2.2.3c"
+       name="TVonline 3.0"
+       version="3.0.0"
        provider-name="kinkin, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
-        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+        <import addon="script.module.urlresolver" version="1.0.0"/>
         <import addon="script.module.metahandler" version="2.4.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
@@ -327,8 +327,8 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 	</extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
-        <summary>Stream your favourite TV shows from tvonline.cc</summary>
-        <description>Stream your favourite TV shows from tvonline.cc</description>
+        <summary>Stream your favourite TV shows</summary>
+        <description>Stream from thousands of TV shows with one click</description>
     </extension>
 
 </addon>

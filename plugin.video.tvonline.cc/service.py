@@ -18,6 +18,8 @@ class AutoUpdater:
                     next_run  = datetime.datetime.fromtimestamp(time.mktime(time.strptime(ADDON.getSetting('service_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
                     now = datetime.datetime.now()
                     if now > next_run:
+                        xbmc.log('[TVonline] Clearing aged cache files')
+                        xbmc.executebuiltin('RunPlugin(plugin://plugin.video.tvonline.cc/?name=service&url=service&mode=26&list=service)')
                         if xbmc.Player().isPlaying() == False:
                             if xbmc.getCondVisibility('Library.IsScanningVideo') == False:      
                                 xbmc.log('[TVonline] Refreshing subscriptions')

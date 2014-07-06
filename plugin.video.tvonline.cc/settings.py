@@ -34,15 +34,16 @@ def tv_directory():
         return create_directory(DATA_PATH, "tvshows")
     else:
         return ADDON.getSetting('tv_directory')
+		
+def cache_path():
+    return create_directory(DATA_PATH, "cache")
 	
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")
 	
 def subscription_file():
     return create_file(DATA_PATH, "subscriptions.list")
-		
-def cookie_jar():
-    return create_file(TVO_PATH, "cookiejar.lwp")
+
 	
 def create_directory(dir_path, dir_name=None):
     if dir_name:

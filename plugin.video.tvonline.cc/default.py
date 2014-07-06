@@ -4,22 +4,20 @@ kinkin
 
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
 import settings
-import time,datetime
-from datetime import date
+import time
+from datetime import date, datetime
 from threading import Timer
 from hashlib import md5
 from helpers import clean_file_name
-import json
-import glob
 import shutil
+from hashlib import md5
+import hashlib
 from threading import Thread
-import cookielib
-from t0mm0.common.net import Net
+import requests
+import urlresolver
 from helpers import clean_file_name
-import random
 from metahandler import metahandlers
 metainfo = metahandlers.MetaData()
-net = Net()
 
 
 ADDON = settings.addon()
@@ -29,177 +27,138 @@ TVO_EMAIL = settings.tvo_email()
 ENABLE_SUBS = settings.enable_subscriptions()
 ENABLE_META = settings.enable_meta()
 TV_PATH = settings.tv_directory()
+CACHE_PATH = settings.cache_path()
 FAV = settings.favourites_file()
 SUB = settings.subscription_file()
-cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Fanart2.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'icon.png'))
-base_url = 'http://www.tvonline.cc/'
 
 
-def open_url(url):
+def open_url(url, cache_time=3600):
+    trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
     req = urllib2.Request(url)
-    req.add_header('User-Agent','Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>')
-    response = urllib2.urlopen(req)
-    link=response.read()
-    response.close()
-    return link
+    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:30.0) Gecko/20100101 Firefox/30.0')
+    h = hashlib.md5(url).hexdigest()
+    print url,h
+    cache_file = os.path.join(CACHE_PATH, h)
+    age = get_file_age(cache_file)
+    print "TVonline.........FILE AGE IS " + str(age)
+    if age > 0 and age < cache_time:
+        r = read_from_file(cache_file, silent=True).translate(trans_table)
+        print "TVonline.........use CACHE"
+        if r:
+            return r
+    else:
+        response = urllib2.urlopen(req)
+        link=response.read().translate(trans_table)
+        write_to_file(cache_file, link)
+        print "TVonline.........NO CACHE"
+        response.close()
+        return link
 	
-def POST_URL(url, form_data):
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.tvonline.cc'
-    header_dict['Referer'] = 'http://www.tvonline.cc/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    net.set_cookies(cookie_jar)
-    req = net.http_POST(url, form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
-    return req
-
-def startup():
-    dialog = xbmcgui.Dialog()
-    if dialog.yesno("Setup account", "This addon requires a tvonline.cc account.", "What do you want to do?", '', "Use existing account", "Create new account"):
-        register()
-    else:
-        keyboard = xbmc.Keyboard('', 'Username', False)
-        keyboard.doModal()
-        username = None
-        if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
-            username = keyboard.getText()
-            password = None
-            keyboard = xbmc.Keyboard('', 'Password')
-            keyboard.doModal()
-            if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
-                password = keyboard.getText()
-                ADDON.setSetting('tvo_user', value=username)
-                ADDON.setSetting('tvo_pass', value=password)
-                time.sleep(1)
-                xbmc.executebuiltin("XBMC.Container.Update(plugin://plugin.video.tvonline.cc)")
-            else:
-                return
-        else:
-            return
-        
-def register():    
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    header_dict['Accept-Encoding'] = 'gzip, deflate'
-    header_dict['Host'] = 'www.tvonline.cc'
-    header_dict['Referer'] = 'http://www.tvonline.cc/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
-    header_dict['Connection'] = 'keep-alive'#
-    #### Get token ###
-    net.set_cookies(cookie_jar)
-    url = 'http://www.tvonline.cc/reg.php'
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    net.save_cookies(cookie_jar)
-
-    tokenparam = re.compile('value="POST"><input type="hidden" name="(.+?)" value="(.+?)" id').findall(link)
-    tokenfields = re.compile('name="(.+?)" value="(.+?)" id="(.+?)"></div></form>').findall(link)
-    for a, b, c in tokenfields:
-        field = a
-        fieldvalue = b
-    for a, b in tokenparam:
-        param1 = a
-        param1value = b
-    header_dict['Referer'] = 'http://www.tvonline.cc/reg.php'
-    ### Register ###
-    keyboard = xbmc.Keyboard('', 'Username', False)
-    keyboard.doModal()
-    username = None
-    if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
-        username = keyboard.getText()
-
-        password = None
-        keyboard = xbmc.Keyboard('', 'Password')
-        keyboard.doModal()
-        if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
-            password = keyboard.getText()
-			
-            email = None
-            keyboard = xbmc.Keyboard('', 'E-mail')
-            keyboard.doModal()
-            if keyboard.isConfirmed() and len(keyboard.getText()) > 1:
-                email = keyboard.getText()
-            else:
-                return
-        else:
-            return
-    else:
-        return
-
-    ### Save settings ###
-    ADDON.setSetting('tvo_user', value=username)
-    ADDON.setSetting('tvo_pass', value=password)
+def get_file_age(file_path):
+    try:    
+        stat = os.stat(file_path)
+        fileage = datetime.fromtimestamp(stat.st_mtime)
+        now = datetime.now()
+        delta = now - fileage
+        return delta.seconds
+    except:
+        return -1
 	
-    form_data = ({param1: param1value, 'UserUsername': username, '_method': 'POST', field: fieldvalue, 'email': email, 'subscriptionsPass': password, 'subscriptionsPassword2': password})	
-    net.set_cookies(cookie_jar)
-    reglink = net.http_POST('http://www.tvonline.cc/reg.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
-    net.save_cookies(cookie_jar)
-    if 'Invalid Username/Email or password' in reglink:
-        notification('[COLOR red]Not logged in at tvonline.cc[/COLOR]', 'Check settings', '5000', iconart)
-    else:
-        notification('Logged in at tvonline.cc', '', '5000', iconart)
-		
-def login():
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    header_dict['Accept-Encoding'] = 'gzip, deflate'
-    header_dict['Host'] = 'www.tvonline.cc'
-    header_dict['Referer'] = 'http://www.tvonline.cc/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
-    header_dict['Connection'] = 'keep-alive'#
-    #### Get token ###
-    net.set_cookies(cookie_jar)
-    url = 'http://www.tvonline.cc/login.php'
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    net.save_cookies(cookie_jar)
 
-    tokenparam = re.compile('value="POST"><input type="hidden" name="(.+?)"').findall(link)
-    tokenfields = re.compile('name="(.+?)" value="(.+?)" id="(.+?)"></div></form>').findall(link)
-    for a, b, c in tokenfields:
-        field = a
-        fieldvalue = b
-    param1 = tokenparam[0]
-    header_dict['Referer'] = 'http://www.tvonline.cc/login.php'
-    ### Login ###	
-    form_data = ({param1: 'login', 'UserUsername': TVO_USER, '_method': 'POST', field: fieldvalue, 'subscriptionsPass': TVO_PASSWORD})	
-    net.set_cookies(cookie_jar)
-    loginlink = net.http_POST('http://www.tvonline.cc/reg.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
-    net.save_cookies(cookie_jar)
-    if 'Invalid Username/Email or password' in loginlink:
-        notification('[COLOR red]Not logged in at tvonline.cc[/COLOR]', 'Check settings', '5000', iconart)
-        startup()
-    else:
-        notification('Logged in at tvonline.cc', '', '5000', iconart)
-	
 def CATEGORIES(name):
-    addDir("Hit TV Shows", 'Hit TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
-    addDir("Latest Updates", 'Latest Updates TV Shows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Latestupdates.png')), '','')
-    addDir("Shows with New Episodes", 'New TV Episodes',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
+    addDir("Popular Shows", 'http://tvshows.ec/new',2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), 'no','')
+    addDir("Top Shows", 'url',27,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Genres", 'url',30,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
     addDir("A-Z", 'url',8,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'A-Z.png')), '','')
+    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
+    addDir("New Episodes Added", 'http://tvshows.ec/latest',41,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'NewEpisodes.png')), '','')
+    addDir("TV Schedule", 'http://tvshows.ec/tvschedule/-1',40,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'schedule.png')), '','')
     addDir("My Favourites", 'url',12,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Favourites.png')), '','')
     if ENABLE_SUBS:
         addDir("My Subscriptions", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Subscriptions.png')), '','')
     else:
         addDir("[COLOR orange] My Subscriptions (ENABLE IN SETTINGS)[/COLOR]", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Subscriptions.png')), '','')
-    addDir("My Watched List", 'http://www.tvonline.cc/wl.php?page=1',9,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Watchedlist.png')), '','')	
-    addDir("Search", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'search2.png')), '','')
+    
 
+def topshows():
+    addDir("Top TV Shows", 'Top TVShows',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Top Animation", 'Top Animation',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Top Documentary", 'Top Documentary',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Top Reality", 'Top Reality',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+    addDir("Top Sport", 'Top Sport',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'HitTVShows.png')), '','')
+def genres():
+    url1 = 'http://tvshows.ec/'
+    link = open_url(url1).rstrip()
+    match = re.compile('href="(.+?)" title="Search for(.+?)">(.+?)</a>').findall(link)
+    for url,d1,title in match:
+        url = url1 + url
+        if title != 'ADULT':
+            addDir(title, url,2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', title.lower() + '.png')), '1','')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+	
 def search():
     keyboard = xbmc.Keyboard('', 'Search TV Show', False)
     keyboard.doModal()
     if keyboard.isConfirmed():
         query = keyboard.getText()
         if len(query) > 0:
-            search_show(query)
+            shows(query,'1')
 			
+def tvschedule(url):
+    link = open_url(url).rstrip()
+    match=re.compile('<li><a title="Watch Episodes Released(.+?)" href="(.+?)">(.+?)</a></li>').findall(link)
+    for t1,url,title in match:
+        url = 'http://tvshows.ec' + url
+        addDir(title, url,41,"", "",'menu')
+		
+def schedule_episodes(name,url,iconimage):
+    link = open_url(url).rstrip()#
+    match = re.compile('<li><a title="Watch (.+?)Online For Free" href="(.+?)">(.+?)</a></li>').findall(link)
+    for title,url,title1 in match:
+        url = 'http://tvshows.ec' + url
+        showname = title[:title.find(' Season')]
+        en = regex_from_to(title,'Episode ', ' ')
+        sn = regex_from_to(title,'Season ', ' ')
+        if len(en) == 1:
+            enum = "%s%s" % ('E0', en)
+        else:
+            enum = "%s%s" % ('E', en)
+        if len(sn) == 1:
+            snum = "%s%s" % ('S0', sn)
+        else:
+            snum = "%s%s" % ('S', sn)
+        seasonepi = "%s%s" % (snum, enum)
+        title = title.rstrip()
+        if ENABLE_META:
+            try:
+                infoLabels=get_meta(showname,'episode',year=None,season=sn,episode=en)
+                if infoLabels['title']=='':
+                    name = title
+                else:
+                    name = "%s %s %s" % (showname, seasonepi, infoLabels['title'])
+                if infoLabels['cover_url']=='':
+                    iconimage=""
+                else:
+                    iconimage=infoLabels['cover_url']
+            except:
+                pass
+        else:
+            infoLabels =None
+            iconimage=""
+            name = title
+        try:
+            addDirPlayable(name.replace(u'\u2019',"'"),url,5,iconimage, showname,infoLabels=infoLabels)
+        except:
+            addDirPlayable(title,url,5,iconimage, showname,infoLabels=infoLabels)
+    setView('episodes', 'episodes-view')
+
 def a_to_z(url):
-    alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
+    alphabet =  ['09', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
     for a in alphabet:
-        addDir(a, 'http://www.tvonline.cc/tv/%s.htm' % (a.lower().replace('#', 'num')),2,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('#','HASH') + '.png')), '','menu')
+        addDir(a, 'http://tvshows.ec/letters/%s' % (a.lower().replace('#', 'num')),25,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', a.replace('09','HASH') + '.png')), '0<>50','menu')
 		
 def favourites():
     if os.path.isfile(FAV):
@@ -252,62 +211,32 @@ def subscriptions():
                     infoLabels =None
                     iconimage=thumb
                 addDir(title, url,3,thumb, list,'sh',infoLabels=infoLabels)
-			
-def search_show(query):
-    url = 'http://www.tvonline.cc/searchlist.php'
-    form_data = ({'keyword': query})
-    req = POST_URL(url, form_data)
-    all_shows = regex_from_to(req,'<br /> <br />', '</div>')
-    all_shows = regex_get_all(all_shows, '<li>', '</li>')
-    for a in all_shows:
-        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
-        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','').replace('and','&')
-        thumb = regex_from_to(a, '<img src="', '" ')
-        if ENABLE_META:
-            infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
-            if infoLabels['title']=='':
-                name=title
-            else:
-                name=infoLabels['title']
-            if infoLabels['cover_url']=='':
-                iconimage=thumb
-            else:
-                iconimage=infoLabels['cover_url']
+
+		
+def shows(url,page):
+    baseurl = url
+    if page != 'no':
+        np = int(page) + 1
+        if 'http' not in url:
+            url = 'http://tvshows.ec/TVshows/%s-page-%s' % (url,page)
         else:
-            infoLabels =None
-            iconimage=thumb
-        list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, thumb)
-        addDir(title, url,3,iconimage, list_data,'sh',infoLabels=infoLabels)
-		
-def watched_list(url):
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    match = re.compile('<td><a href="(.+?)">(.+?)</a></td>  <td>(.+?)</td>').findall(link.replace("'", "<>"))
-    matchpg = re.compile('<a class="p_num" href="(.+?)">(.+?)</a>').findall(link)
-    addDir('[COLOR cyan] << Return to Main Menu [/COLOR]', '','','', '','')
-    for url, episode, wtime in match:
-        url = 'http://www.tvonline.cc' + url.replace("<>", "'")
-        name = "%s -%s" % (episode.replace("<>", "'"), wtime)
-        showname = episode[:len(episode)-7]
-        iconimage = "http://pic.newtvshows.org/" + showname.replace(' ', '-') + ".jpg"
-        addDirPlayable(name,url,5,iconimage, showname)
-    for url, page in matchpg:
-        url = 'http://www.tvonline.cc/wl.php' + url
-        title = '[COLOR lime]' + 'Page ' + str(page) + '[/COLOR]'
-        addDir(title, url,9,'', '','')
-    setView('episodes', 'episodes-view')
-		
-def shows(url):
-    header_dict = {}
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
-    all_shows = regex_from_to(link,'<br /> <br />', '</div>')
-    all_shows = regex_get_all(all_shows, '<li>', '</li>')
-    for a in all_shows:
-        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title')
-        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','').replace('and','&')
-        thumb = regex_from_to(a, '<img src="', '" ')
+            url = url + '/' + str(page)
+        
+    dp = xbmcgui.DialogProgress()
+    dp.create("TVonline",'Searching')
+    dp.update(0)
+    link = open_url(url).rstrip()
+    match = re.compile('</div><div class="results"><a href="(.+/?)" title="(.+/?)"><img class="results-poster" alt="(.+/?)" src="(.+/?)" /></a><div class="results-heading">(.+/?)href="(.+/?)" title="(.+/?)<div id="desc">(.+/?)</div><div').findall(link)
+    nItem = len(match)
+    count = 0
+    for url,t,title,thumb,d1,url1,d2,plot in match:
+        count = count + 1
+        url = 'http://tvshows.ec' + url
+        titlelist = str(count) + ' of ' + str(nItem) + ': ' + title
+        progress = count / float(nItem) * 100               
+        dp.update(int(progress), 'Adding title',titlelist)
+        if dp.iscanceled():
+            return
         if ENABLE_META:
             infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
             if infoLabels['title']=='':
@@ -323,26 +252,66 @@ def shows(url):
             iconimage=thumb
         list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, iconimage)
         addDir(str(title), str(url),3,iconimage, list_data,'sh',infoLabels=infoLabels)
+    if page != 'no':
+        addDir('Next page >>', baseurl,2,'', str(np),'')
+    setView('episodes', 'episodes-view')
+	
+def shows_az(url,page):
+    nexturl=url
+    minpage = page.split('<>')[0]
+    maxpage = page.split('<>')[1]
+    nextmin = int(maxpage) + 1
+    nextmax = int(maxpage) + 50
+    nextlist = "%s<>%s" % (nextmin,nextmax)
+    dp = xbmcgui.DialogProgress()
+    dp.create("TVonline",'Searching')
+    dp.update(0)
+    link = open_url(url).rstrip()
+    match = re.compile('<li><a href="(.+?)" title="(.+?)" style="(.+?)">(.+?)</a></li>').findall(link)
+    nAllItem = len(match)
+    nItem = 50
+    count = 0
+    for url,t,d1,title in match:
+        count = count + 1
+        if count >= int(minpage) and count <= int(maxpage):
+            title = title.rstrip()
+            url = 'http://tvshows.ec' + url
+            titlelist = str(count - int(minpage)) + ' of ' + str(nItem) + ' (' + str(nAllItem) + ' total): ' + title
+            progress = count / float(nItem) * 100               
+            dp.update(int(progress), 'Adding title',titlelist)
+            if dp.iscanceled():
+                return
+            if ENABLE_META:
+                infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+                if infoLabels['title']=='':
+                    name=title
+                else:
+                    name=infoLabels['title']
+                if infoLabels['cover_url']=='':
+                    iconimage=iconart
+                else:
+                    iconimage=infoLabels['cover_url']
+            else:
+                infoLabels =None
+                iconimage=iconart
+            list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, iconimage)
+            addDir(str(title), str(url),3,iconimage, list_data,'sh',infoLabels=infoLabels)
+    if nextmin < nAllItem:
+        addDir('Next page (' + nextlist.replace('<>','-') + ')', nexturl,25,'', nextlist,'menu')
     setView('episodes', 'episodes-view')
 	
 def grouped_shows(header):
-    header_dict = {}
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    url = 'http://www.tvonline.cc'
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
-    all_shows = regex_from_to(link,str(header), '</ul>')
-    all_shows = regex_get_all(all_shows, '<li>', '</li>')
-    for a in all_shows:
-        url = 'http://www.tvonline.cc' + regex_from_to(a, '<a href="', '" title').replace('and','&')
-        title = regex_from_to(a, 'title="', ' "').replace('Watch free ','')
-        if header == "Hit TV Shows":
-            try:
-                thumb = "http://pic.newtvshows.org/" + title.replace(' ', '-') + ".jpg"
-            except:
-                thumb = "http://pic.newtvshows.org/" + title.replace(' ', '.') + ".jpg"
-        else:
-            thumb = regex_from_to(a, '<img src="', '" ')
+    years = ['1980', '1981', '1982', '1983', '1984', '1985', '1986', '1987', '1988', '1989', '1990', '1991', '1992', '1993', '1994', '1995', '1996', '1997', '1998', '1999', '2000', '2001','2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010','2011', '2012', '2013', '2014', '2015', '2016', '2017','2018', '2019', '2020', '2021', '2022', '...', '201']
+    url = 'http://tvshows.ec/'
+    link = open_url(url).replace('  ', ' ').rstrip()
+    all_shows = regex_from_to(link,str(header), '</div></div>')
+    match= re.compile('<li><span>(.+?)</span><a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(all_shows)
+	                  
+    for num,url,t1,title in match:
+        for y in years:
+            if y in title:
+                title = title.replace(str(y),'').rstrip()
+        url = 'http://tvshows.ec' + url
         if ENABLE_META:
             infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
             if infoLabels['title']=='':
@@ -350,78 +319,96 @@ def grouped_shows(header):
             else:
                 name=infoLabels['title']
             if infoLabels['cover_url']=='':
-                iconimage=thumb
+                iconimage=iconart
             else:
                 iconimage=infoLabels['cover_url']
         else:
             infoLabels =None
-            iconimage=thumb
+            iconimage=iconart
         list_data = "%sQQ%sQQ%s" % (title.replace(' & ', '->-').replace(':', ''), url, iconimage)
         addDir(str(title), url,3,iconimage, list_data,'sh',infoLabels=infoLabels)
         
     setView('episodes', 'episodes-view')
-		
+	
 def tv_show(name, url, iconimage):
+    showname = name.replace('&','and')
+    season = []
     episodes = []
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.rstrip().replace('&', 'and').encode("utf-8", 'ignore')
-    seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
-    for s in seasonlist:
-        sname = regex_from_to(s, '<strong>', '</strong>').replace(':', '')
-        if sname.startswith('Season 0'):
-            sn = sname.replace('Season 0', '')
-        else:
-            sn = sname.replace('Season ', '')
-        eplist = regex_get_all(str(s), '<li>', '</li>')
-        if ENABLE_META:
-            infoLabels=get_meta(name,'tvshow',year=None,season=sn,episode=None)
-            if infoLabels['title']=='':
-                name=name
+    link = open_url(url).rstrip()
+    data = regex_from_to(link, '<div id="recent">', 'div class="')
+    match = re.compile('<li>(.+?)href="(.+?)" title="(.+?)" > (.+?) </a>').findall(data)
+    for d1,url,t1,title in match:
+        sname = 'Season ' + regex_from_to(title, 'Season ', ' Episode')
+        if sname not in season:
+            season.append(sname)
+            sn = sname.replace('Season ','')
+            if ENABLE_META:
+                infoLabels=get_meta(name,'tvshow',year=None,season=sn,episode=None)
+                if infoLabels['title']=='':
+                    name=name
+                else:
+                    name=infoLabels['title']
+                if infoLabels['cover_url']=='':
+                    iconimage=iconimage
+                else:
+                    iconimage=infoLabels['cover_url']
             else:
-                name=infoLabels['title']
-            if infoLabels['cover_url']=='':
+                infoLabels =None
                 iconimage=iconimage
-            else:
-                iconimage=infoLabels['cover_url']
-        else:
-            infoLabels =None
-            iconimage=iconimage
-        showname = name.replace('&','and')
-        addDir(sname, 'url',4,iconimage, eplist,str(showname),infoLabels=infoLabels)
+            addDir(sname, 'url',4,iconimage, data,str(showname),infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
-		
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+	
 def tv_show_episodes(name, list, iconimage, showname):
+    dp = xbmcgui.DialogProgress()
+    dp.create("TVonline",'Grabbing episodes...')
+    dp.update(0)
+    list = list.encode('ascii', 'ignore')
     showname = showname.replace('and','&')
-    episodes = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a>').findall(list)
-    for epnum, url, epname in episodes:
-        epnum = epnum.replace(', ', '-').replace('Ep', 'E')
-        se = epnum.split('-')
-        sn = se[0].replace('S','')
-        if len(sn) == 1:
-            snum = "%s%s" % ('S0', sn)
+    episodes = re.compile('<li>(.+?)href="(.+?)" title="(.+?)" > (.+?)</a>').findall(list)
+    nItem = len(episodes)
+    count = 0
+    sn = name.replace('Season ', '')
+    for d1,url,t1,title in episodes:
+        count = count + 1
+        url = 'http://tvshows.ec' + url
+        sen = regex_from_to(title, 'Season ', ' Episode')
+        en = regex_from_to(title, 'Episode ', ' ')
+        if len(en) == 1:
+            enum = "%s%s" % ('E0', en)
         else:
-            snum = "%s%s" % ('S', sn)
-        seasonepi = "%s%s" % (snum, se[1])
-        if se[1].startswith('E0'):
-            en = se[1].replace('E0', '')
+            enum = "%s%s" % ('E', en)
+        if len(sen) == 1:
+            snum = "%s%s" % ('S0', sen)
         else:
-            en = se[1].replace('E', '')
-        url = 'http://www.tvonline.cc' + url.replace("<>", "'")
-        name = "%s - %s" % (seasonepi, clean_file_name(epname))
-        if ENABLE_META:
-            infoLabels=get_meta(showname,'episode',year=None,season=sn,episode=en)
-            if infoLabels['title']=='':
-                name = name
+            snum = "%s%s" % ('S', sen)
+        seasonepi = "%s%s" % (snum, enum)
+        title = title.rstrip()
+        titlelist = str(count) + ': ' + title
+        progress = count / float(nItem) * 100               
+        dp.update(int(progress), 'Adding title',titlelist)
+        if dp.iscanceled():
+            return
+        if sen == sn:
+            if ENABLE_META:
+                infoLabels=get_meta(showname,'episode',year=None,season=sen,episode=en)
+                if infoLabels['title']=='':
+                    name = title
+                else:
+                    name = "%s %s" % (seasonepi, infoLabels['title'])
+                if infoLabels['cover_url']=='':
+                    iconimage=iconimage
+                else:
+                    iconimage=infoLabels['cover_url']
             else:
-                name = "%s %s" % (seasonepi, infoLabels['title'])
-            if infoLabels['cover_url']=='':
+                infoLabels =None
                 iconimage=iconimage
-            else:
-                iconimage=infoLabels['cover_url']
-        else:
-            infoLabels =None
-            iconimage=iconimage
-        addDirPlayable(name.replace(u'\u2019',"'"),url,5,iconimage, showname,infoLabels=infoLabels)
+                name = title
+            if 'gray' not in d1:
+                try:
+                    addDirPlayable(name.replace(u'\u2019',"'"),url,5,iconimage, showname,infoLabels=infoLabels)
+                except:
+                    addDirPlayable(title,url,5,iconimage, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
     if ENABLE_META:
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_EPISODE)
@@ -429,57 +416,83 @@ def tv_show_episodes(name, list, iconimage, showname):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def play(name, url, iconimage, showname):
-    urlkey = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.video.tvonline.cc/urlkeys.txt'
+    origurl=url
+    urllist = []
     dp = xbmcgui.DialogProgress()
-    dp.create('Opening ' + name)
-    splitkey = url.replace('http://www.tvonline.cc/play.php?id=', '').split('-')
-	
-    key1 = splitkey[0]
-    key4 = splitkey[1]
-    keychar = "beklm"
-    key_length = 3
-    key2 = ""
-    for i in range(key_length):
-        next_index = random.randrange(len(keychar))
-        key2 = key2 + keychar[next_index]
-		
-    keychar = "ntwyz"
-    key_length = 3
-    key3 = ""
-    for i in range(key_length):
-        next_index = random.randrange(len(keychar))
-        key3 = key3 + keychar[next_index]# friday k saturday w sunday z
-    
-
+    dp.create("TVonline",'Resolving links')
+    dp.update(0)
+    handle = str(sys.argv[1])
     try:
-        a = open_url(urlkey	).replace('\n','')
-        data = a.split('<>')
-        key5 = data[0].rstrip()
-        dom = data[1].rstrip()
+        link = requests.get(url,allow_redirects=False)
+        url1 = link.headers['location']
+        link = open_url(url1)
+        all_links = regex_get_all(link, '<div id="video-content">', '</iframe>')
+        nItem = len(all_links)
     except:
-        key5 = 'lttte'
-        dom = 'ddd5'
-   
-    playlink = 'http://%s.tvonline.cc/ip.mp4?key=%s-%s%s%s-%s' % (dom,key1,key5, key2, key3, key4)
-    playlink1 = 'http://ddd5.tvonline.cc/ip.mp4?key=%s-ltylk%s%s-%s' % (key1, key2, key3, key4)
-    playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-    playlist.clear()
-    listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)
-    playlist.add(playlink,listitem)
-    xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
-	
-    handle = str(sys.argv[1])    
-    if handle != "-1":
-        listitem.setProperty("IsPlayable", "true")
-        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-    else:
+        link = open_url(url)
+        all_links = regex_get_all(link, 'hostButton', 'embed')
+        nItem = len(all_links)
+        if nItem == 0:
+            all_links = regex_get_all(link, '<td class="video-title">', '</td>')
+            nItem = len(all_links)
+    count = 0
+    for a in all_links:
+        count = count + 1
         try:
-            xbmcPlayer.play(playlist)
+            host = regex_from_to(a, 'value="', '"')
+            id = regex_from_to(a, 'id="link', '"')
+            url = 'http://tvshows.ec/Link/%s' % id
         except:
-            dialog = xbmcgui.Dialog()
-            dialog.ok("Playback failed", "Check your account settings")
-    dp.close()
+            try:
+                data = regex_from_to(a, '<a target="', 'a>')
+                host = regex_from_to(data, '">', '<')
+                id = regex_from_to(data, '/Link/', '"')
+                url = 'http://tvshows.ec/Link/%s' % id
+            except:
+                url=regex_from_to(a, 'src="', '"')
+                host = regex_from_to(url, 'http://', '/')
+                id = 'primary'
+        urllist.append(url)
+        titlelist = str(count) + ' of ' + str(nItem) + ': ' + host
+        progress = len(urllist) / float(nItem) * 100               
+        dp.update(int(progress), 'Adding link',host)
+        if dp.iscanceled():
+            return
+        try:
+            dp = xbmcgui.DialogProgress()
+            dp.create("TVonline: Trying Link",titlelist)
+            if id == 'primary':
+                url1 = url
+            else:
+                response = requests.get(url,allow_redirects=False)
+                url1 = response.headers['location']
+            playlink = resolve_url(url1)
+            playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+            playlist.clear()
+            listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)
+            playlist.add(playlink,listitem)
+            xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
 	
+            if handle != "-1":
+                listitem.setProperty("IsPlayable", "true")
+                xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+            else:
+                xbmcPlayer.play(playlist)
+            return
+        except:
+            pass
+    if 'Sorry we do not have any links' in link:
+        notification(name, "[COLOR red]No links available[/COLOR]", '4000', iconimage)
+
+def resolve_url(url):
+    validresolver = urlresolver.HostedMediaFile(url)
+    if validresolver:
+        try:
+            playlink = urlresolver.resolve(url)
+        except:
+            pass
+    return playlink    
+
 def add_favourite(name, url, iconimage, dir, text):
     list_data = iconimage.replace('hhhh', 'http:')
     splitdata = list_data.split('QQ')
@@ -509,27 +522,31 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
     name = name.replace('->-', ' & ')
     thumb = splitdata[2]
     tv_show_path = create_directory(TV_PATH, name)
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    seasonlist = regex_get_all(link.replace("'", "<>"), '<ul class="ju_list"', '</ul>')
-    for s in seasonlist:
-        sname = regex_from_to(s, '<strong>', '</strong>')
-        sname = sname[:len(sname)-3]
-        snum = sname.replace("Season ", "")
-        season_path = create_directory(tv_show_path, str(snum))
-        eplist = regex_get_all(str(s), '<li>', '</li>')
-        for e in eplist:
-            episode = re.compile('<li>(.+?):<a href="(.+?)">(.+?)</a>').findall(e)
-            for epnum, url, epname in episode:
-                epnum = epnum.replace(', ', 'x').replace('Ep', '').replace('S', '') 
-                url = 'http://www.tvonline.cc' + url.replace("<>", "'")
-                display = "%s %s" % (epnum, epname)
-                create_strm_file(display, url, "5", season_path, thumb, name)
+    link = open_url(url).rstrip()
+    data = regex_from_to(link, '<div id="recent">', 'div class="')
+    episodes = re.compile('<li>(.+?)href="(.+?)" title="(.+?)" > (.+?)</a>').findall(data)
+    for d1,url,t1,title in episodes:
+        url = 'http://tvshows.ec' + url
+        sen = regex_from_to(title, 'Season ', ' Episode')
+        en = regex_from_to(title, 'Episode ', ' ')
+        if len(en) == 1:
+            enum = "%s%s" % ('E0', en)
+        else:
+            enum = "%s%s" % ('E', en)
+        if len(sen) == 1:
+            snum = "%s%s" % ('S0', sen)
+        else:
+            snum = "%s%s" % ('S', sen)
+        seasonepi = "%s%s" % (snum, enum)
+        season_path = create_directory(tv_show_path, str(sen))
+        display = "%s %s" % (seasonepi, title)
+        create_strm_file(display, url, "5", season_path, thumb, name)
+
     if ntf == "true" and ENABLE_SUBS:
         if dialog.yesno("Subscribe?", 'Do you want TVonline to automatically add new', '[COLOR gold]' + name + '[/COLOR]' + ' episodes when available?'):
             add_favourite(n, u, l, SUB, "Added to Library/Subscribed")
         else:
-            notification(name, "[COLOR lime]Added to Library[/COLOR]", '5000', thumb)
+            notification(name, "[COLOR lime]Added to Library[/COLOR]", '4000', thumb)
     if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
         xbmc.executebuiltin('UpdateLibrary(video)')
 
@@ -549,37 +566,6 @@ def remove_tv_show_strm_files(name, url, iconimage, dir_path):
     except:
         xbmc.log("[TVonline] Was unable to remove TV show: %s" % (name)) 
    
-	
-def report_error(name, url, showname):
-    email = []
-    pd = []
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    uid = regex_from_to(link, '<input onclick="errorreport(', ')"')
-    if TVO_EMAIL == "":
-        keyboard = xbmc.Keyboard('', 'Enter your email address (only required once)', False)
-        keyboard.doModal()
-        if keyboard.isConfirmed():
-            email = keyboard.getText()
-            if len(email) > 0:
-                ADDON.setSetting('tvo_email', value=email)
-    email = TVO_EMAIL
-    keyboard = xbmc.Keyboard('', 'Error Description', False)
-    keyboard.doModal()
-    if keyboard.isConfirmed():
-        pd = keyboard.getText()
-		
-    pn = "%s %s" % (showname, name)
-
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.tvonline.cc'
-    header_dict['Referer'] = str(url)
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    form_data = ({'email': email, 'uid': uid, 'pd': pd, 'pn': pn, 'type': 'error'})
-    net.set_cookies(cookie_jar)
-    req = net.http_POST('http://www.tvonline.cc/post.php', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
-    if req == "1":
-        notification('Error reported', pn, '5000', iconart)
 		
 def create_directory(dir_path, dir_name=None):
     if dir_name:
@@ -675,7 +661,7 @@ def add_to_list(list, file):
         if len(line) > 0:
             s = s + line + '\n'
     write_to_file(file, s)
-    xbmc.executebuiltin("Container.Refresh")
+    #xbmc.executebuiltin("Container.Refresh")
     
 def remove_from_list(list, file):
     index = find_list(list, file)
@@ -747,9 +733,18 @@ def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episod
         meta = metainfo.get_meta('tvshow',name,'','','')
     if 'episode' in types:
         meta = metainfo.get_episode_meta(name, '', season, episode)
-    infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered']}
+    infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
         
-    return infoLabels 
+    return infoLabels
+	
+def clear_cache():
+    cache_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.tvonline.cc/cache'), '')
+		
+    for root, dirs, files in os.walk(cache_path):
+        for f in files:
+            age = get_file_age(os.path.join(root, f))
+            if age > 3600:
+    	        os.unlink(os.path.join(root, f))
 	
 		
 def notification(title, message, ms, nart):
@@ -874,7 +869,10 @@ if mode==None or url==None or len(url)<1:
         
        
 elif mode==2:
-        shows(url)
+        shows(url,list)
+		
+elif mode == 25:
+        shows_az(url,list)
 		
 elif mode==3:
         tv_show(name, url, iconimage)
@@ -891,9 +889,7 @@ elif mode==6:
 elif mode==7:
         grouped_shows(url)
 		
-elif mode == 17:
-        search_show(name)
-		
+	
 elif mode == 8:
         a_to_z(url)
 		
@@ -923,6 +919,21 @@ elif mode == 16:
 		
 elif mode == 18:
         get_subscriptions()
+		
+elif mode == 26:
+        clear_cache()
+		
+elif mode == 27:
+        topshows()
+		
+elif mode == 30:
+        genres()
+		
+elif mode == 40:
+        tvschedule(url)
+		
+elif mode == 41:
+        schedule_episodes(name,url,iconimage)
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

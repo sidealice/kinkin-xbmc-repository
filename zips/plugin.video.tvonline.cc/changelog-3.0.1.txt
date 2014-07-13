@@ -17,7 +17,7 @@ Fixed service.py error on start
 Fixed playback errors
 
 2.2.3a
-Fixed issues with service.py hanging on close
+Fixed issue with service.py hanging on close
 
 2.2.3
 Fixed playback issues (hopefully)

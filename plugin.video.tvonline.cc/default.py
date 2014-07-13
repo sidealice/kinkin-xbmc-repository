@@ -30,9 +30,11 @@ TV_PATH = settings.tv_directory()
 CACHE_PATH = settings.cache_path()
 FAV = settings.favourites_file()
 SUB = settings.subscription_file()
+cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'art', 'Fanart2.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tvonline.cc', 'icon.png'))
+base_url = 'http://www.tvonline.cc/'
 
 
 def open_url(url, cache_time=3600):
@@ -540,7 +542,8 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
         seasonepi = "%s%s" % (snum, enum)
         season_path = create_directory(tv_show_path, str(sen))
         display = "%s %s" % (seasonepi, title)
-        create_strm_file(display, url, "5", season_path, thumb, name)
+        if 'gray' not in d1:
+            create_strm_file(display, url, "5", season_path, thumb, name)
 
     if ntf == "true" and ENABLE_SUBS:
         if dialog.yesno("Subscribe?", 'Do you want TVonline to automatically add new', '[COLOR gold]' + name + '[/COLOR]' + ' episodes when available?'):
@@ -549,7 +552,6 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
             notification(name, "[COLOR lime]Added to Library[/COLOR]", '4000', thumb)
     if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
         xbmc.executebuiltin('UpdateLibrary(video)')
-
 
 def remove_tv_show_strm_files(name, url, iconimage, dir_path):
     dialog = xbmcgui.Dialog()

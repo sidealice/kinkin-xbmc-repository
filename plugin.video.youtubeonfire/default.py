@@ -3,6 +3,7 @@ kinkin
 '''
 #coding=UTF8
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
+import subprocess
 import settings
 import time,datetime
 from datetime import date
@@ -13,6 +14,7 @@ import json
 import glob
 import shutil
 import requests
+import urlresolver
 from threading import Thread
 import cookielib
 from t0mm0.common.net import Net
@@ -26,7 +28,10 @@ net = Net()
 ADDON = settings.addon()
 ENABLE_META = settings.enable_meta()
 MOVIE_PATH = settings.movie_directory()
+TV_PATH = settings.tv_directory()
+ENABLE_SUBS = settings.enable_subscriptions()
 FAV = settings.favourites_file()
+FAV_TV = settings.favourites_tv_file()
 FAV_MUSIC = settings.favourites_music_file()
 FAV_ARTISTS = settings.favourites_artists_file()
 SUB = settings.subscription_file()
@@ -78,6 +83,8 @@ def POST_URL(url,a,c,p):#, form_data
         header_dict['Host'] = 'mvtube.co'
     elif 'knowledge' in url:
         header_dict['Host'] = 'knowledgetube.co'
+    elif 'watch33' in url:
+        header_dict['Host'] = 'watch33.tv'
     else:
         header_dict['Host'] = 'www.movietube.co'
     header_dict['Connection'] = 'keep-alive'
@@ -85,8 +92,17 @@ def POST_URL(url,a,c,p):#, form_data
     if 'mvtube' in url:
         if a == 'retrieveplaylists':
             header_dict['Referer'] = 'http://mvtube.co/details.php'
+        elif c == 'result':
+            header_dict['Referer'] = 'http://mvtube.co/results.php'
         else:
             header_dict['Referer'] = 'http://mvtube.co/search.php'
+    elif 'watch33' in url:
+        if a == 'retrieveplaylists':
+            header_dict['Referer'] = 'http://watch33.tv/details.php'
+        elif c == 'result':
+            header_dict['Referer'] = 'http://watch33.tv/results.php'
+        else:
+            header_dict['Referer'] = 'http://watch33.tv/search.php'
     elif 'knowledge' in url:
         header_dict['Referer'] = 'http://knowledgetube.co/search.php'
     else:
@@ -186,6 +202,7 @@ def parental_control(name,mpaa):
 	
 def CATEGORIES(name):
     addDir("Movies", 'url',100,art + 'movies.png', '1<>""','qq')
+    addDir("TV Series", 'url',500,art + 'movies.png', '1<>""','qq')
     addDir("Music Videos", 'url',200,art + 'musicvideos.png', '1<>""','qq')
     addDir("Knowledge", 'url',300,art + 'knowledge.png', '1<>""','qq')
     addDirPlayable('Apply YouTube fix','url',999,art + 'youtubefix.png', '','')
@@ -332,7 +349,6 @@ def search_moviefile(query):
 
 def movies(name,url,page,token):
     origurl=url
-    print origurl,page
     token = token.replace(' ', '+')
     splitpage=page.split('<>')
     page = splitpage[0]
@@ -443,7 +459,7 @@ def movie_quality(name,url,iconimage,list):
             url = regex_from_to(req, 'src="', '"')
             try:
                 size = get_file_size(url)
-                size = "%.2fGB" % size
+                #size = "%.2fGB" % size
             except:
                 size = ""
             infoLabels =None
@@ -453,7 +469,7 @@ def movie_quality(name,url,iconimage,list):
             url = regex_from_to(req, 'src="', '"')
             try:
                 size = get_file_size(url)
-                size = "%.2fGB" % size
+                #size = "%.2fGB" % size
             except:
                 size = ""
             infoLabels =None
@@ -465,7 +481,7 @@ def movie_quality(name,url,iconimage,list):
                 quality = quality + 'p'
                 try:
                     size = get_file_size(url)
-                    size = "%.2fGB" % size
+                    #size = "%.2fGB" % size
                 except:
                     size = ""
                 infoLabels =None
@@ -475,12 +491,13 @@ def movie_quality(name,url,iconimage,list):
         dialog.ok("You cannot play this video","PIN incorrect")
         		
 def play_movie(name,url,iconimage,hosturl):
-    spliturl = hosturl.split('<>')
-    url = spliturl[1]
-    hosturl = spliturl[0]
-    name = spliturl[2]	
-    
-    if 'plugin://plugin.video.youtube' in url:
+    if '<>' in hosturl:
+        spliturl = hosturl.split('<>')
+        url = spliturl[1]
+        hosturl = spliturl[0]
+        name = spliturl[2]
+    validresolver = urlresolver.HostedMediaFile(url)
+    if 'plugin://plugin.video.youtube' in url or 'googlevideo' in url:
         url1 = url
     elif 'http://watch32.com' in url:
         header_dict = {}
@@ -506,6 +523,7 @@ def play_movie(name,url,iconimage,hosturl):
         header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
         #net.set_cookies(cookie_jar)
         req = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+        print req
         #net.save_cookies(cookie_jar)
         url1 = 'https://r' + regex_from_to(req, 'https://r','https://r').replace('|', '').replace('\u003d','=').replace('\u0026','&')
     elif 'streamin.to' in url:
@@ -521,6 +539,54 @@ def play_movie(name,url,iconimage,hosturl):
         swfurl = 'http://streamin.to/player/player.swf'
         pageurl = hosturl
         url1 = "%s playpath=%s swfUrl=%s pageUrl=%s" % (streamer, playpath, swfurl, pageurl)
+    elif 'movshare' in url:
+        req = net.http_GET(url).content.encode("utf-8").rstrip()
+        file = regex_from_to(req, 'flashvars.file="', '"')
+        key = regex_from_to(req, 'var fkzd="', '"')
+        url = 'http://www.movshare.net//api/player.api.php?numOfErrors=0&user=undefined&file=%s&key=%s&pass=undefined&cid=undefined&cid2=undefined&cid3=undefined' % (file,key)
+        req = net.http_GET(url).content.encode("utf-8").rstrip()
+        url1=regex_from_to(req,'url=','&title')
+    elif 'vidto' in url:
+        header_dict = {}
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header_dict['Accept-Encoding'] = 'gzip, deflate'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Host'] = 'vidto.me'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+        header_dict['Connection'] = 'keep-alive'
+        net.set_cookies(cookie_jar)
+        link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+        net.save_cookies(cookie_jar)
+        try:
+            url1 = regex_from_to(link, 'file: "', '"')
+        except:
+            xbmc.sleep(1000)
+            form_dict = {}
+            form_dict['fname'] = regex_from_to(link, 'name="fname" value="', '"')
+            form_dict['hash'] = regex_from_to(link, 'name="hash" value="', '"')
+            form_dict['id'] = regex_from_to(link, 'name="id" value="', '"')
+            form_dict['imhuman'] = regex_from_to(link, 'name="imhuman" value="', '"')
+            form_dict['op'] = regex_from_to(link, 'name="op" value="', '"')
+            form_dict['referer'] = ""
+            form_dict['usr_login'] = ""
+            header_dict = {}
+            header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            header_dict['Accept-Encoding'] = 'gzip, deflate'
+            header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+            header_dict['Host'] = 'vidto.me'
+            header_dict['Referer'] = url
+            header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+            header_dict['Connection'] = 'keep-alive'
+            net.set_cookies(cookie_jar)
+            link = net.http_POST(url, form_data=form_dict, headers=header_dict).content.encode("utf-8").replace("'", '"').rstrip()
+            
+            net.save_cookies(cookie_jar)
+            try:
+                url1 = regex_from_to(link, 'file: "', '"')#file_link = 
+            except:
+                url1 = regex_from_to(link, 'file_link = "', '"')
+    elif validresolver:
+        url1 = urlresolver.resolve(url)
     else:
         header_dict = {}
         header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
@@ -698,6 +764,364 @@ def strm_movie(name,url,iconimage,hosturl):
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
     else:
         xbmcPlayer.play(url1, listitem)
+		
+def tv_directory(name):
+    addDir("Featured", 'http://watch33.tv/index.php',505,art + 'movies/' + 'featured.png', '1<><><>Score','qq')
+    addDir("Newly Released", 'http://watch33.tv/index.php',505,art + 'movies/' + 'newlyadded.png', '1<><><>addTime','qq')
+    addDir("Newly Updated", 'http://watch33.tv/index.php',505,art + 'movies/' + 'newlyreleased.png', '1<><><>ReleaseDate','qq')
+    addDir("TV Genres", 'url',501,art + 'movies/' + 'moviesbygenre.png', '1<>','qq')
+    addDir("Search", 'url',509,art + 'movies/' + 'search.png', '','')
+    addDir("Favourites", 'url',510,art + 'movies/' + 'favourites.png', '','')
+		
+def tv_directory_1(name):
+    addDir("All Shows", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'allmovies.png', '1<><><>','qq')
+    addDir("Action", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'action.png', '1<>Action<><>','qq')
+    addDir("Adventure", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'adventure.png', '1<>Adventure<><>','qq')
+    addDir("Animation", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'animation.png', '1<>Animation<><>','qq')
+    addDir("Biography", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'biography.png', '1<>Biography<><>','qq')
+    addDir("Comedy", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'comedy.png', '1<>Comedy<><>','qq')
+    addDir("Crime", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'crime.png', '1<>Crime<><>','qq')
+    addDir("Drama", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'drama.png', '1<>Drama<><>','qq')
+    addDir("Family", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'family.png', '1<>Family<><>','qq')
+    addDir("Fantasy", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'fantasy.png', '1<>Fantasy<><>','qq')
+    addDir("History", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'history.png', '1<>History<><>','qq')
+    addDir("Horror", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'horror.png', '1<>Horror<><>','qq')
+    addDir("Mystery", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'mystery.png', '1<>Mystery<><>','qq')
+    addDir("Romance", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'romance.png', '1<>Romance<><>','qq')
+    addDir("Sci-Fi", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'sci-fi.png', '1<>Sci-Fi<><>','qq')
+    addDir("Thriller", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'thriller.png', '1<>thriller<><>','qq')
+    addDir("War", 'http://watch33.tv/index.php',505,art + 'moviesbygenre/' + 'war.png', '1<>War<><>','qq')
+
+def favourites_tv():
+    if os.path.isfile(FAV_TV):
+        s = read_from_file(FAV_TV)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                title = list1[0]
+                title = title.replace('->-', ' & ').replace('qq', ',')
+                url = list1[1]
+                vurl = regex_from_to(url,'KeyWord":"', '"')
+                hosturl = 'http://www.watch33.tv/watch.php?v=' + vurl
+                thumb = list1[2]
+                metatitle = title.split(' [COLOR ')[0].replace(' (', '<>')
+                metatitle = metatitle.replace(')','').split('<>')
+                try:
+                    metayear = metatitle[1]
+                except:
+                    metayear = ""
+                if ENABLE_META:
+                    infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+                    if infoLabels['title']=='':
+                        name=title
+                    else:
+                        name=infoLabels['title']
+                    if infoLabels['cover_url']=='':
+                        iconimage=thumb
+                    else:
+                        iconimage=infoLabels['cover_url']
+                else:
+                    infoLabels =None
+                    iconimage=thumb
+                addDir(title, url,506,iconimage, hosturl,'tvfav',infoLabels=infoLabels)
+        setView('episodes', 'episodes-view')
+		
+def tvshows(name,url,page,token):
+    origurl=url
+    token = token.replace(' ', '+')
+    splitpage=page.split('<>')
+    page = splitpage[0]
+    genre = splitpage[1]
+    year = splitpage[2]
+    if splitpage[3] =='':
+        sort = SORT
+    else:
+        sort = splitpage[3]
+    
+    if token == 'qq':
+        token = ''
+        p = '{"Page":"%s","NextToken":"%s","Genere":"%s","Year":"%s","Sortby":"%s"}' % (page,token,genre,SUBTITLE,sort)
+    else:
+        line = token.split('\n')
+        p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","Genere":"%s","Year":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],genre,year,sort)
+    a = 'retrieve'
+    c = 'song'
+
+    req = POST_URL(url,a,c,p).decode("string-escape").replace('&nbsp', '')
+    token = str(req).split('|')[0]
+    all = regex_get_all(req, '<div class="idx">', '<div class="ytlk">')
+    titlelist = []
+    for a in all:
+        all_td = regex_get_all(a,  '<td', '</td>')
+        vurl = regex_from_to(all_td[0], 'v=', '"')
+        url = '{"KeyWord":"' + vurl + '"}'
+        hosturl = 'http://www.watch33.tv/watch.php?v=' + vurl
+        thumb = regex_from_to(all_td[0], 'img src="', '"')
+        title = regex_from_to(all_td[1], 'target="_blank">', '<').replace('&nbsp', '').replace('<img', '').lstrip()
+        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
+        tomato = regex_from_to(all_td[1], '/>', '</h3_light')
+        quality = regex_from_to(all_td[2], 'height="20" />', '</h3>')
+        metatitle = title.split(' [COLOR ')[0].replace(' (', '<>')
+        metatitle = metatitle.replace(')','').split('<>')
+        if "Season" in title:
+            title = title[:title.find('Season')].strip()
+        if "season" in title:
+            title = title[:title.find('season')].strip()
+        if "(" in title:
+            title = title[:title.find('(')].strip()
+        title = title.replace(' the', ' The').replace(' to', ' To')
+        if not title in titlelist:
+            titlelist.append(title)
+            try:
+                metayear = metatitle[1]
+            except:
+                metayear = ""
+            if ENABLE_META:
+                infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+                if infoLabels['title']=='':
+                    name=title
+                else:
+                    name=infoLabels['title']
+                if infoLabels['cover_url']=='':
+                    iconimage=thumb
+                else:
+                    iconimage=infoLabels['cover_url']
+            else:
+                infoLabels =None
+                iconimage=thumb
+            addDir(str(title) + ' [COLOR lime][' + quality + '][/COLOR]' + ' ' + mpaa, url,506,iconimage, hosturl,'tv',infoLabels=infoLabels)
+    nextpage=int(page)+1
+    nextpage = "%s<>%s<>%s<>%s" % (nextpage,genre,year,sort)
+    addDir("Next Page", 'http://www.watch33.tv/index.php',505,art +  'nextpage.png', nextpage,token)
+    setView('episodes', 'episodes-view')
+
+def tv_seasons(query):
+    seasonlist = []
+    query = query[:query.find(' [COLOR')]
+    showname = query
+    query = query.lower()
+    url = 'http://watch33.tv/index.php'
+    form_dict = {}
+    form_dict['a'] = 'retrieve'
+    form_dict['c'] = 'result'
+    form_dict['p'] = '{"KeyWord":"%s","Page":"1","NextToken":""}' % query
+    header_dict = {}
+    header_dict['Accept'] = 'text/html, */*; q=0.01'
+    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    header_dict['Host'] = 'watch33.tv'
+    header_dict['Connection'] = 'keep-alive'
+    header_dict['Referer'] = 'http://watch33.tv/results.php'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+    net.set_cookies(cookie_jar)
+    req = net.http_POST(url, form_data=form_dict, headers=header_dict).content.rstrip()
+    net.save_cookies(cookie_jar)
+    all = regex_get_all(req, '<div class="idx">', '<div class="ytlk">')
+    for a in all:
+        all_td = regex_get_all(a,  '<td', '</td>')
+        vurl = regex_from_to(all_td[0], 'v=', '"')
+        url = '{"KeyWord":"' + vurl + '"}'
+        hosturl = 'http://www.watch33.tv/watch.php?v=' + vurl
+        thumb = regex_from_to(all_td[0], 'img src="', '"')
+        title = regex_from_to(all_td[1], 'target="_blank">', '<').replace('&nbsp', '').replace('<img', '').replace('/   ', '').replace('the ', 'The ').lstrip()
+        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
+        tomato = regex_from_to(all_td[1], '/>', '</h3_light')
+        quality = regex_from_to(all_td[2], 'height="20" />', '</h3>')
+        metatitle = title.split(' [COLOR ')[0].replace(' (', '<>')
+        metatitle = metatitle.replace(')','').split('<>')
+        if "(" in title:
+            title = title[:title.find('(')].strip()
+        if "/" in title:
+            title = title[:title.find('/')].strip()
+        title = title.replace(str(showname),'').replace('season','Season').lstrip()
+        if 'Season ' not in title:
+            title = "Season 1 %s" % title
+        if not title in seasonlist:
+            seasonlist.append(title)
+            sn = title.replace('Season ','')
+            try:
+                metayear = metatitle[1]
+            except:
+                metayear = ""
+            if ENABLE_META:
+                infoLabels=get_meta(showname,'tvshow',year=None,season=sn,episode=None)
+                if infoLabels['title']=='':
+                    name=title
+                else:
+                    name=title
+                if infoLabels['cover_url']=='':
+                    iconimage=thumb
+                else:
+                    iconimage=thumb#infoLabels['cover_url']
+            else:
+                infoLabels =None
+                iconimage=thumb
+                name=title
+            addDir(name + ' [COLOR lime][' + quality + '][/COLOR]', vurl,507,iconimage, hosturl,showname,infoLabels=infoLabels)
+    setView('movies', 'movies-view')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+	
+def episodes(name,url,list,description):
+    name = name[:name.find(' [COLOR')]
+    url1 = 'http://watch33.tv/index.php'
+    sn = name.replace('Season ','')
+    form_dict = {}
+    form_dict['a'] = 'getplaylistinfo'
+    form_dict['c'] = 'result'
+    form_dict['p'] = '{"KeyWord":"%s","Episode":"01","Part":"01"}' % url
+    header_dict = {}
+    header_dict['Accept'] = 'text/html, */*; q=0.01'
+    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    header_dict['Host'] = 'watch33.tv'
+    header_dict['Connection'] = 'keep-alive'
+    header_dict['Referer'] = list
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+    net.set_cookies(cookie_jar)
+    req = net.http_POST(url1, form_data=form_dict, headers=header_dict).content.rstrip()
+    net.save_cookies(cookie_jar)
+    match = re.compile('data="(.+?)"').findall(req)
+    for en in match:
+        en1 = int(en)
+        se = "%sx%s" % (sn,en1)
+        if ENABLE_META:
+            infoLabels=get_meta(description,'episode',year=None,season=sn,episode=str(en1))
+            if infoLabels['title']=='':
+                name=description
+            else:
+                name=infoLabels['title']
+            if infoLabels['cover_url']=='':
+                iconimage=""
+            else:
+                iconimage=infoLabels['cover_url']
+        else:
+            infoLabels =None
+            iconimage=""
+            name=description
+        
+        addDirVideo(se + ' ' + name,url,508,iconimage,list,url + "<>" + en + '<>' + se + ' ' + name)
+    setView('episodes', 'episodes-view')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+	
+def tv_quality(name,url,iconimage,vurl):
+    urllist = []
+    dp = xbmcgui.DialogProgress()
+    dp.create("YouTube on Fire",'Searching for links')
+    dp.update(0)
+    splitlist = str(vurl).split('<>')
+    url = splitlist[0]
+    en = splitlist[1]
+    name = splitlist[2]
+    
+    '{"KeyWord":"%s","Episode":"%s","Part":"01"}' % (url,en)
+    if '[color' in name:
+        splitname = name.split('[color ')
+        name = splitname[0].rstrip()
+    else:
+        splitname = name.split('[COLOR lime][max ')
+        name = splitname[0].rstrip()
+ 
+    a = 'getpartlistinfo'
+    c = 'result'
+    p = '{"KeyWord":"%s","Episode":"%s","Part":"01"}' % (url,en) 
+    req = POST_URL('http://watch33.tv/index.php',a,c,p)
+    #PARENTAL CONTROL
+    now = time.strftime("%H")
+    all_url = re.compile('data="--(.+?)--(.+?)"').findall(req)
+    nItem = len(all_url)
+    count = 0
+    for source,url in all_url:
+        count = count + 1
+        if not 'http' in url:
+            url = "https://docs.google.com/file/d/%s/preview" % url
+            sourcename = 'Google'
+        else:
+            url = url.replace('embed-','')
+            sourcename = regex_from_to(url, 'http://', '/').replace('embed.','').replace('www.','')
+        urllist.append(url)
+        titlelist = str(count) + ' of ' + str(nItem) + ': ' + sourcename
+        progress = len(urllist) / float(nItem) * 100               
+        dp.update(int(progress), 'Adding link',sourcename)
+        if dp.iscanceled():
+            return
+        try:
+            dp = xbmcgui.DialogProgress()
+            dp.create("YouTube on Fire: Trying Link",sourcename)
+            play_movie(name,url,iconimage,name)
+            return
+        except:
+            pass
+ 
+def search_tv():
+    keyboard = xbmc.Keyboard('', 'Search TV Shows', False)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if len(query) > 0:
+            search_tvfile(query)
+			
+def search_tvfile(query):
+    url = 'http://watch33.tv/index.php'
+    form_dict = {}
+    form_dict['a'] = 'retrieve'
+    form_dict['c'] = 'result'
+    form_dict['p'] = '{"KeyWord":"%s","Page":"1","NextToken":""}' % query
+    header_dict = {}
+    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Host'] = 'watch33.tv'
+    header_dict['Connection'] = 'keep-alive'
+    header_dict['Referer'] = 'http://watch33.tv/results.php'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+    net.set_cookies(cookie_jar)
+    req = net.http_POST(url, form_data=form_dict, headers=header_dict).content.rstrip()
+    net.save_cookies(cookie_jar)
+    all = regex_get_all(req, '<div class="idx">', '<div class="ytlk">')
+    titlelist = []
+    for a in all:
+        all_td = regex_get_all(a,  '<td', '</td>')
+        vurl = regex_from_to(all_td[0], 'v=', '"')
+        url = '{"KeyWord":"' + vurl + '"}'
+        hosturl = 'http://www.watch33.tv/watch.php?v=' + vurl
+        thumb = regex_from_to(all_td[0], 'img src="', '"')
+        title = regex_from_to(all_td[1], 'target="_blank">', '<').replace('&nbsp', '').replace('<img', '').lstrip()
+        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
+        tomato = regex_from_to(all_td[1], '/>', '</h3_light')
+        quality = regex_from_to(all_td[2], 'height="20" />', '</h3>')
+        metatitle = title.split(' [COLOR ')[0].replace(' (', '<>')
+        metatitle = metatitle.replace(')','').split('<>')
+        if "Season" in title:
+            title = title[:title.find('Season')].strip()
+        if "season" in title:
+            title = title[:title.find('season')].strip()
+        if "(" in title:
+            title = title[:title.find('(')].strip()
+        title = title.replace(' the', ' The').replace(' to', ' To')
+        if not title in titlelist:
+            titlelist.append(title)
+            try:
+                metayear = metatitle[1]
+            except:
+                metayear = ""
+            if ENABLE_META:
+                infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
+                if infoLabels['title']=='':
+                    name=title
+                else:
+                    name=infoLabels['title']
+                if infoLabels['cover_url']=='':
+                    iconimage=thumb
+                else:
+                    iconimage=infoLabels['cover_url']
+            else:
+                infoLabels =None
+                iconimage=thumb
+            addDir(str(title) + ' [COLOR lime][' + quality + '][/COLOR]' + ' ' + mpaa, url,506,iconimage, hosturl,'tv',infoLabels=infoLabels)
+    setView('episodes', 'episodes-view')
 
 def download_only(name,url):
     splitname=name.split(' | ')
@@ -747,7 +1171,7 @@ class StopDownloading(Exception):
         self.value = value 
     def __str__(self): 
         return repr(self.value)
-		
+'''		
 def get_file_size(url):
     usock = urllib2.urlopen(url)
     size = usock.info().get('Content-Length')
@@ -759,6 +1183,23 @@ def get_file_size(url):
     size = size / 1024.0# in GB
 
     return size
+'''	
+
+
+
+def get_file_size(pathtovideo):
+    pattern = re.compile(r'Stream.*Video.*, ([0-9]{3,})x([0-9]{3,})')
+    p = subprocess.Popen(['ffmpeg', '-i', pathtovideo], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print "XXXXXXXXX " + p
+    stdout, stderr = p.communicate()
+    match = pattern.search(stderr)
+    if match:
+        x, y = map(int, match.groups()[0:1])
+    else:
+        x = y = 0
+    dmn = "%sx%s" % (x,y)
+    print dmn
+    return dmn
 
 #KNOWLEDGE
 def knowledge_menu(name):
@@ -844,7 +1285,7 @@ def music(name,url,page,token):
         token = ''
         if 'billboard' in mood.lower():
             p = '{"Page":"%s","NextToken":"%s","BillBoard":"%s"}' % (page, token,mood)
-        elif 'artist_pl' in sort or sort == 'playlists':
+        elif 'artist_pl' in sort or sort == 'playlists' or sort=='search':
             p = '{"Keyword":"%s","Page":"%s","NextToken":"%s"}' % (language, page, token)
         elif 'knowledge' in url:
             p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Sortby":"%s"}' % (page,token,mood,sort)
@@ -854,15 +1295,18 @@ def music(name,url,page,token):
     else:
         if mood == 'BillBoard':
             p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","BillBoard":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8], mood)
-        elif sort == 'artist_pl' or sort == 'playlists':
+        elif sort == 'artist_pl' or sort == 'playlists' or sort=='search':
             p = '{"Keyword":"%s","Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s"}' % (language,page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8])
         elif 'knowledge' in url:
             p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],mood,sort)
         else:
             p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Color":"%s","SingerSex":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],LANGUAGE,mood,mf,sort)
     a = 'retrieve'
-    if 'billboard' in mood.lower():
+    if 'billboard' in mood.lower() and sort != 'search':
         c = 'chart'
+    elif sort == 'search':
+        c = 'result'
+        a = 'retrieve'
     elif 'artist_pl' in sort:
         c = 'detail'
         a = 'retrievesingers'
@@ -872,7 +1316,7 @@ def music(name,url,page,token):
     else:
         c = 'song'
         a = 'retrieve'
-		
+
     req = POST_URL(url,a,c,p).replace('&nbsp', '').replace("'", '"')
     token = str(req).split('|')[0]
     #token = token.replace('%0a', '\n')
@@ -891,7 +1335,6 @@ def music(name,url,page,token):
             addDirVideo(title,'useicon',210,thumb,'',str(vurl))
     if len(token)>50:		
         nextpage=int(page)+1
-        print language
         nextpage = "%s<>%s<>%s<>%s<>%s" % (nextpage,language,mood,mf,sort)
         addDir("Next Page", origurl,205,art +  'nextpage.png', nextpage,token)
 		
@@ -944,7 +1387,7 @@ def queue_all(name,url,page,token):
     for d1,d2,pos,d3,thumb,d4,title,d5,d6,vurl in match2:
         title = title.decode("utf8").encode("utf8").replace('"',"'")
         url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + vurl
-        play_music_video(title, url, thumb,False)
+        play_music_video(title, url, thumb,True)
 	
 def music_artists(name,url,page,token):
     splitpage=page.split('<>')
@@ -1147,6 +1590,103 @@ def create_file(dir_path, file_name=None):
         f.close()
     return file_path
 	
+def create_tv_show_strm_files(query, iconimage, ntf):
+    dialog = xbmcgui.Dialog()
+    u = "url"    
+    query = query[:query.find(' [COLOR')]
+    showname = query
+    n = query
+    l = iconimage
+    tv_show_path = create_directory(TV_PATH, showname)
+    query = query.lower()
+    url = 'http://watch33.tv/index.php'
+    form_dict = {}
+    form_dict['a'] = 'retrieve'
+    form_dict['c'] = 'result'
+    form_dict['p'] = '{"KeyWord":"%s","Page":"1","NextToken":""}' % query
+    header_dict = {}
+    header_dict['Accept'] = 'text/html, */*; q=0.01'
+    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+    header_dict['Accept-Encoding'] = 'gzip, deflate'
+    header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    header_dict['Host'] = 'watch33.tv'
+    header_dict['Connection'] = 'keep-alive'
+    header_dict['Referer'] = 'http://watch33.tv/results.php'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+    net.set_cookies(cookie_jar)
+    req = net.http_POST(url, form_data=form_dict, headers=header_dict).content.rstrip()
+    net.save_cookies(cookie_jar)
+    all = regex_get_all(req, '<div class="idx">', '<div class="ytlk">')
+    for a in all:
+        all_td = regex_get_all(a,  '<td', '</td>')
+        vurl = regex_from_to(all_td[0], 'v=', '"')
+        url = '{"KeyWord":"' + vurl + '"}'
+        hosturl = 'http://www.watch33.tv/watch.php?v=' + vurl
+        thumb = regex_from_to(all_td[0], 'img src="', '"')
+        title = regex_from_to(all_td[1], 'target="_blank">', '<').replace('&nbsp', '').replace('<img', '').replace('/   ', '').replace('the ', 'The ').lstrip()
+        mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
+        tomato = regex_from_to(all_td[1], '/>', '</h3_light')
+        quality = regex_from_to(all_td[2], 'height="20" />', '</h3>')
+        metatitle = title.split(' [COLOR ')[0].replace(' (', '<>')
+        metatitle = metatitle.replace(')','').split('<>')
+        if "(" in title:
+            title = title[:title.find('(')].strip()
+        if "/" in title:
+            title = title[:title.find('/')].strip()
+        title = title.replace(str(showname),'').replace('season','Season').lstrip()
+        if 'Season ' not in title:
+            title = "Season 1"
+        season_path = create_directory(tv_show_path, title)
+
+        url1 = 'http://watch33.tv/index.php'
+        sn = name.replace('Season ','')
+        form_dict = {}
+        form_dict['a'] = 'getplaylistinfo'
+        form_dict['c'] = 'result'
+        form_dict['p'] = '{"KeyWord":"%s","Episode":"01","Part":"01"}' % vurl
+        header_dict = {}
+        header_dict['Accept'] = 'text/html, */*; q=0.01'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Accept-Encoding'] = 'gzip, deflate'
+        header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+        header_dict['Host'] = 'watch33.tv'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Referer'] = list
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
+        net.set_cookies(cookie_jar)
+        req = net.http_POST(url1, form_data=form_dict, headers=header_dict).content.rstrip()
+        net.save_cookies(cookie_jar)
+        match = re.compile('data="(.+?)"').findall(req)
+        for en in match:
+            en1 = int(en)
+            se = "%sx%s" % (sn,en1)
+            url = url + "<>" + str(en1) + '<>' + se + ' ' + showname
+            display = se + ' ' + showname
+            create_strm_file(display, url, "508", season_path, iconimage, showname)
+
+    if ntf == "true" and ENABLE_SUBS:
+        if dialog.yesno("Subscribe?", 'Do you want to automatically add new', '[COLOR gold]' + showname + '[/COLOR]' + ' episodes when available?'):
+            add_favourite(n, u, l, SUB, "Added to Library/Subscribed")
+        else:
+            notification(showname, "[COLOR lime]Added to Library[/COLOR]", '4000', iconimage)
+    if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
+        xbmc.executebuiltin('UpdateLibrary(video)')
+
+def remove_tv_show_strm_files(name, url, iconimage, dir_path):
+    dialog = xbmcgui.Dialog()
+    splitname = iconimage.split('QQ')
+    rname = splitname[0]
+    rname = rname.replace('->-', ' & ')
+    try:
+        path = os.path.join(dir_path, str(rname))
+        shutil.rmtree(path)
+        remove_from_favourites(name, url, iconimage, SUB, "Removed from Library/Unsubscribed")
+        if xbmc.getCondVisibility('Library.IsScanningVideo') == False:
+            if dialog.yesno("Clean Library?", '', 'Do you want clean the library now?'):		
+                xbmc.executebuiltin('CleanLibrary(video)')		
+    except:
+        xbmc.log("[TVonline] Was unable to remove TV show: %s" % (name)) 
+	
 def create_strm_file(name, url, mode, dir_path, iconimage,list):
     splitlist = list.split('<>')
     list = splitlist[0]
@@ -1310,13 +1850,21 @@ def wait_dl_only(time_to_wait, title):
         print 'Done waiting'
         return True
 		
-def get_meta(name,types=None,year=None):
+def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episode_title=None):
     if 'movie' in types:
-        meta = metainfo.get_meta('movie',name,year)
-    infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
-        
-    return infoLabels
-	
+        meta = metainfo.get_meta('movie',clean_file_name(name, use_blanks=False),year)
+        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered'],'year': meta['year']}
+    else:
+        if 'tvshow' in types:
+            meta = metainfo.get_meta('tvshow',clean_file_name(name, use_blanks=False),'','','')
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay'],'year': meta['year']}
+        if 'episode' in types:
+            meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season, episode)
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
+        if 'season' in types:
+            meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season,None)
+            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
+    return infoLabels	
 def youtubefix():
     shutil.copy2(ytplayerorig, ytplayerbak)
     shutil.copy2(ytplayerfixed, ytplayercopyto)    
@@ -1354,7 +1902,7 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         suffix2 = ""
         favlist="%s<>%s<>%s" % (name.replace(',', 'qq'),url,iconimage)
         favlist2="%s<>%s<>%s<>%s" % (name,url,iconimage,list)
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&description="+str(description)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&description="+str(description)
         ok=True
         contextMenuItems = []
         if "mov" in description:
@@ -1366,6 +1914,14 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Addon Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=13&list=%s)'%(sys.argv[0], name.replace(',', ' '), url, str(favlist).replace('http:','hhhh'))))
+        if "tv" in description:
+            #contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&mode=511&list=%s)'%(sys.argv[0], name, favlist)))
+            if description != 'tvfav':
+                suffix = ""
+                contextMenuItems.append(("[COLOR lime]Add to Addon Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=512&list=%s)'%(sys.argv[0], name.replace(',', ' '), url, str(favlist).replace('http:','hhhh'))))
+            else:
+                suffix = ' [COLOR lime]+[/COLOR]'
+                contextMenuItems.append(("[COLOR orange]Remove from Addon Favourites[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=513&list=%s)'%(sys.argv[0], name.replace(',', ' '), url, str(favlist).replace('http:','hhhh'))))
         if 'mvtube' in url or 'azvideo'in url:
             if 'favartist_pl' in list:
                 contextMenuItems.append(('Remove from Favourites', 'XBMC.RunPlugin(%s?mode=215&name=%s&url=%s&iconimage=%s)'% (sys.argv[0], name, iconimage, favlist2)))
@@ -1399,6 +1955,10 @@ def addDirVideo(name,url,mode,iconimage,list,vurl):
         contextMenuItems = []
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&vurl="+str(vurl)
         ok=True
+        try:
+            artist = name.lower().split(' - ')[0]
+        except:
+            artist = name.lower()
         text = "%s<>%s<>%s" % (name, vurl,iconimage)
         text1 = "%s<>%s<>%s" % (name, url,iconimage)
         if list == 'mus':
@@ -1412,6 +1972,10 @@ def addDirVideo(name,url,mode,iconimage,list,vurl):
             contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&iconimage=%s&url=%s)'% (sys.argv[0], name,iconimage,url)))
         else:
             contextMenuItems.append(('Queue video', 'XBMC.RunPlugin(%s?mode=211&name=%s&iconimage=%s&url=%s)'% (sys.argv[0], name,vurl,iconimage)))
+        if mode == 210:#'1<><>Sexy<><>YouTubeView'
+            a_url = 'http://mvtube.co/search.php'
+            head = '1<>%s<><><>search' % artist
+            contextMenuItems.append(('View artist videos', 'XBMC.Container.Update(%s?mode=220&name=%s&iconimage=%s&url=%s&list=%s)'% (sys.argv[0], name,iconimage,a_url,head)))
         
         liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, False)
@@ -1494,6 +2058,36 @@ elif mode==105:
 elif mode==106:
         create_strm_file(name, url, '109', MOVIE_PATH, iconimage,list)
 		
+elif mode==500:
+        tv_directory(name)
+		
+elif mode == 501:
+        tv_directory_1(name)
+		
+elif mode==505:
+        tvshows(name,url,list,description)
+		
+elif mode==506:
+        tv_seasons(name)
+		
+elif mode==507:
+        episodes(name,url,list,description)
+		
+elif mode == 508:
+        tv_quality(name,url,iconimage,vurl)
+		
+elif mode == 509:
+        search_tv()
+		
+elif mode == 512:
+        add_favourite(name, url, list, FAV_TV, "Added to Favourites")
+		
+elif mode == 510:
+        favourites_tv()
+		
+elif mode == 513:
+        remove_from_favourites(name, url, list, FAV_TV, "Removed from Favourites")
+		
 elif mode==3:
         movie_quality(name,url,iconimage,list)
 		
@@ -1536,8 +2130,8 @@ elif mode == 12:
 elif mode == 13:
         remove_from_favourites(name, url, list, FAV, "Removed from Favourites")
 		
-elif mode == 14:
-        create_tv_show_strm_files(name, url, list, "true")
+elif mode == 511:
+        create_tv_show_strm_files(name, list, "true")
 		
 elif mode == 15:
         remove_tv_show_strm_files(name, url, list, TV_PATH)
@@ -1565,6 +2159,9 @@ elif mode == 204:
 		
 elif mode == 205:
         music(name,url,list,description)
+		
+elif mode == 220:
+        music(name,url,list,"qq")
 		
 elif mode==206:
         favourites_music()

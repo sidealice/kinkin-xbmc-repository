@@ -91,13 +91,29 @@ def default_subtitle():
         return ''
 	
 def movie_directory():
-    if ADDON.getSetting('movie_directory').startswith('special'):
+    if ADDON.getSetting('movie_directory')=='userdata':
         return create_directory(DATA_PATH, "movies")
     else:
         return ADDON.getSetting('movie_directory')
+		
+		
+def tv_directory():
+    if ADDON.getSetting('tv_directory')=='userdata':
+        return create_directory(DATA_PATH, "tvshows")
+    else:
+        return ADDON.getSetting('tv_directory')
+		
+def enable_subscriptions():
+    if ADDON.getSetting('enable_subscriptions') == "true":
+        return True
+    else:
+        return False
 	
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")
+	
+def favourites_tv_file():
+    return create_file(DATA_PATH, "favourites_tv.list")
 	
 def favourites_music_file():
     return create_file(DATA_PATH, "favourites_music.list")

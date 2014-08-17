@@ -244,7 +244,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.plutotv"
        name="Pluto.TV"
-       version="0.5.1"
+       version="0.5.2"
        provider-name="kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

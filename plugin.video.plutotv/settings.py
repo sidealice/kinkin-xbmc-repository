@@ -12,6 +12,12 @@ def hide_pluto_vid():
         return True
     else:
         return False
+		
+def username():
+    return ADDON.getSetting('username') 
+
+def password():
+    return ADDON.getSetting('password') 
 	
 def favourites_file():
     return create_file(DATA_PATH, "favourites.list")

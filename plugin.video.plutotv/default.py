@@ -21,6 +21,8 @@ net = Net()
 ADDON = settings.addon()
 FAV = settings.favourites_file()
 HIDE_PLUTO = settings.hide_pluto_vid()
+USER = settings.username()
+PASS = settings.password()
 cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.plutotv', 'fanart.jpg'))
@@ -36,6 +38,23 @@ def open_url(url):
     response.close()
     return link
 	
+def LOGIN():
+    header_dict = {}
+    header_dict['Accept'] = 'application/json, text/javascript, */*; q=0.01'
+    header_dict['Host'] = 'api.prod.pluto.tv'
+    header_dict['Connection'] = 'keep-alive'
+    header_dict['Referer'] = 'http://pluto.tv/'
+    header_dict['Origin'] = 'http://pluto.tv'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
+	
+    ### Login ###
+    if USER != '':
+        form_data = ({'optIn': 'true', 'password': PASS,'synced': 'false', 'userIdentity': USER})	
+        net.set_cookies(cookie_jar)
+        loginlink = net.http_POST('http://api.prod.pluto.tv/v1/auth/local', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+        if 'displayName": "%s' % USER in loginlink or 'email": "%s' % USER in loginlink:
+            notification('Pluto.TV', 'Welcome Back %s' % USER, '4000', iconart)
+        net.save_cookies(cookie_jar)
 	
 def GET_URL(url):
     header_dict = {}
@@ -47,11 +66,19 @@ def GET_URL(url):
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
     net.set_cookies(cookie_jar)
     trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
-    req = net.http_GET(url, headers=header_dict).content.translate(trans_table).rstrip()
+    if not 'timelines' in url:
+        req = net.http_GET(url, headers=header_dict).content.translate(trans_table).rstrip()
+    else:
+        req = net.http_GET(url, headers=header_dict).content.encode("utf-8", 'ignore').rstrip()
     net.save_cookies(cookie_jar)
     return req
 	
 def CATEGORIES(name):
+    if USER != "":
+        try:
+            LOGIN()
+        except:
+            pass
     addDir("All Channels", 'http://cdn-api.prod.pluto.tv/v1/channels.json',1,iconart, '','')
     addDir("Music", 'http://cdn-api.prod.pluto.tv/v1/channels.json',1,iconart, '','')
     addDir("News & Info", 'http://cdn-api.prod.pluto.tv/v1/channels.json',1,iconart, '','')
@@ -67,16 +94,16 @@ def CATEGORIES(name):
 
 def all_channels(chname,url):
     link = GET_URL(url)
-    match = re.compile('{"_id":"(.+?)","category":"(.+?)","description":"(.+?)","hash":"(.+?)","name":"(.+?)","number":(.+?)}').findall(link)
-    for id,cat,plot,hash,name,number in match:
+    match = re.compile('{"_id":"(.+?)","category":"(.+?)","description":"(.+?)","featuredImage":{"path":"(.+?)","title":""},"hash":"(.+?)","name":"(.+?)","number":(.+?)}').findall(link)
+    for id,cat,plot,thumb,hash,name,number in match:
         if chname == "All Channels":
             title = "%s - %s: %s" % (cat,number,name)
             addDirPlayable(title,id,2,iconart,plot)
         elif chname == cat:
             title = "%s: %s" % (number,name)
-            addDirPlayable(title,id,2,iconart,plot)
+            addDirPlayable(title,id,2,thumb,plot)
     setView('episodes', 'episodes-view')
-	
+
 def channel_schedule(name,url,iconimage):
     i = datetime.datetime.now()
     i2 = datetime.datetime.now() + timedelta(hours=8)
@@ -84,20 +111,22 @@ def channel_schedule(name,url,iconimage):
     t2 = i2.strftime('%Y-%m-%dT%H:00:00')
     url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
     link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
-    ch_start = "%s%s" % ( url,'":<<')
+    ch_start = "%s%s" % ( url,'": <<')
     channel_info = regex_from_to(link,ch_start, ">>")
-    id2 = regex_get_all(channel_info, '"_id":"', '}}')
+    id2 = regex_get_all(channel_info, '"_id"', '}')
     for i in id2:
-        start=regex_from_to(regex_from_to(i,'start":"','"'),'T', ':00.000Z')
-        stop=regex_from_to(regex_from_to(i,'stop":"','"'),'T', ':00.000Z')
-        id='sched' + regex_from_to(i,'episode":{"_id":"','"')
-        plot=regex_from_to(i,'description":"','"')
-        name=regex_from_to(i,'name":"','"')
-        title = "%s-%s  %s" % (start,stop,name)
+        start=regex_from_to(regex_from_to(i,'start": "','"'),'T', 'Z')
+        stop=regex_from_to(regex_from_to(i,'stop": "','"'),'T', 'Z')
+        idstring = regex_from_to(channel_info, '"episode":', '"description"') 
+        id = 'sched' + regex_from_to(idstring, '_id": "', '"')
+        plot=regex_from_to(i,'description": "','"')
+        name=regex_from_to(i,'name": "',' "').replace('",','')
+        title = "%s-%s  %s" % (start[:5],stop[:5],name)
         addDirPlayable(title,id,2,iconart,plot)
     setView('episodes', 'episodes-view')
         
 def play_channel(name,url,iconimage,clear):
+
     if not 'sched' in url:
         i = datetime.datetime.now()
         i2 = datetime.datetime.now() + timedelta(hours=8)
@@ -105,16 +134,17 @@ def play_channel(name,url,iconimage,clear):
         t2 = i2.strftime('%Y-%m-%dT%H:00:00')
         url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
         link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
-        ch_start = "%s%s" % ( url,'":<<')
-        channel_info = regex_from_to(link,ch_start, ">>")
-        id = regex_from_to(channel_info, 'episode":{"_id":"', '"')
+        channel_info = regex_from_to(link,url, "premiere")
+        idstring = regex_from_to(channel_info, '"episode":', '"description"') 
+        id = regex_from_to(idstring, '_id": "', '"')
     else:
         id = url.replace('sched','')
     dp = xbmcgui.DialogProgress()
     dp.create("Pluto.TV",'Creating Your Channel')
     dp.update(0)
     playlist=[]
-    url = 'http://cdn-api.prod.pluto.tv/v1/episodes/%s/clips.json' % id
+    url = 'http://cdn-api.prod.pluto.tv/v2/episodes/%s/clips.json' % id
+    print url
     link = GET_URL(url)
     data = json.loads(link)
     nItem=len(data)
@@ -189,9 +219,10 @@ def browse_channel(name,url,iconimage,clear):
         t2 = i2.strftime('%Y-%m-%dT%H:00:00')
         url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
         link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
-        ch_start = "%s%s" % ( url,'":<<')
+        ch_start = "%s%s" % ( url,'": <<')
         channel_info = regex_from_to(link,ch_start, ">>")
-        id = regex_from_to(channel_info, 'episode":{"_id":"', '"')
+        idstring = regex_from_to(channel_info, '"episode":', '"description"') 
+        id = regex_from_to(idstring, '_id": "', '"')
     else:
         id = url.replace('sched','')
     dp = xbmcgui.DialogProgress()

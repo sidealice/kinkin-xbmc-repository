@@ -1,4 +1,6 @@
 <strings>
 	<!-- Settings -->
     <string id="10001">Skip Pluto.TV Videos</string>
+    <string id="10002">Pluto.TV User Name or Email</string>
+    <string id="10003">Pluto.TV Password</string>
 </strings>

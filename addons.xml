@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
+<addon id="plugin.audio.binaural"
+       name="Bin@ural"
+       version="0.8.0"
+       provider-name="Kinkin, art by Christara">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.requests" version="1.1.0"/>
+        <import addon="script.module.t0mm0.common" version="1.1.0"/>
+        <import addon="plugin.video.youtube"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource"
+               	library="default.py">
+        <provides>audio video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <summary>Audio and Video Music Streaming</summary>
+        <description>Browse and stream your favourite songs and albums and videos</description>
+    </extension>
+
+</addon>
+
 <addon id="plugin.audio.mp3streams"
        name="MP3 Streams"
        version="1.0.8a"

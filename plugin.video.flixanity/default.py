@@ -428,7 +428,6 @@ def tvseries_episodes(name, url, thumb, showname):
         season = spliturl[6]
         name = title
         if ENABLE_META:
-            
             infoLabels=get_meta(showname,'episode',year=None,season=season,episode=episode)
             if infoLabels['title']=='':
                 name=title
@@ -1292,18 +1291,12 @@ def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episod
     if 'movie' in types:
         meta = metainfo.get_meta('movie',clean_file_name(name, use_blanks=False),year)
         infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered'],'year': meta['year']}
-    else:
-        if 'tvshow' in types:
-            meta = metainfo.get_meta('tvshow',clean_file_name(name, use_blanks=False),'','','')
-            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay'],'year': meta['year']}
-            #infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
-        elif 'episode' in types:
-            meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season, episode)
-            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
-        elif 'season' in types:
-            meta = metainfo.get_episode_meta(clean_file_name(name, use_blanks=False), '', season,None)
-            infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'Playcount': meta['playcount'],'Overlay': meta['overlay']}
-    #infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Aired': meta['premiered']}
+    if 'tvshow' in types:
+        meta = metainfo.get_meta('tvshow',name,'','','')
+        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered'],'year': meta['year']}
+    if 'episode' in types:
+        meta = metainfo.get_episode_meta(name, '', season, episode)
+        infoLabels = {'rating': meta['rating'],'genre': meta['genre'],'mpaa':"rated %s"%meta['mpaa'],'plot': meta['plot'],'title': meta['title'],'cover_url': meta['cover_url'],'fanart': meta['backdrop_url'],'Episode': meta['episode'],'Aired': meta['premiered']}
 
         
     return infoLabels
@@ -1471,10 +1464,10 @@ elif mode == 102:
         tvseries_menu()
 		
 elif mode == 103:
-        tvseries_seasons(name,url,iconimage,list)
+        tvseries_seasons(name,url,iconimage,showname)
 		
 elif mode==104:
-        tvseries_episodes(name, url, iconimage, list)
+        tvseries_episodes(name, url, iconimage, showname)
 		
 elif mode == 7:
         tvshow_genre_menu(url)

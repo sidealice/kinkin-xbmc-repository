@@ -396,7 +396,7 @@ def years(name,url,iconimage):
 def weeks(name,url,iconimage):
     y = int(name)
     cyear = date.today().year
-    weeknow = date.today().isocalendar()[1]
+    weeknow = date.today().isocalendar()[1] - 1
     weeks = ['52','51','50','49','48','47','46','45','44','43','42','41','40','39','38','37','36','35','34','33','32','31','30','29','28','27','26','25','24','23','22','21','20','19','18','17','16','15','14','13','12','11','10','9','8','7','6','5','4','3','2','1']
     for w in weeks:
         namewk = "Week-%s" % w
@@ -597,7 +597,6 @@ def play_album(name, url, iconimage,mix,clear, artist):
                 dur = ""
             album = name.replace(stripartist, '')
             title = "%s. %s" % (trn, songname)
-            print album
             stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
             stored_path1 = os.path.join(MUSIC_DIR,  artist, album, title + '.wma')
             if os.path.exists(stored_path):
@@ -606,7 +605,6 @@ def play_album(name, url, iconimage,mix,clear, artist):
                 url = stored_path1
             else:
                 url = get_song_url(session,url,songid)
-            print url
             addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
@@ -889,7 +887,6 @@ def search_albums(query):
 		
 def search_songs(query,page):
     form_dict = {}
-    print query
     if '>>' in query:
         query=query.split(' >> ')[1]
     url1 = 'http://www.itemvn.com/listsong/?keyword=%s&page=%s' % (urllib.quote_plus(query),page)

@@ -5,9 +5,6 @@ Fixed TV Episode meta
 Added HD and NEW flags
 Added sub menu to genres and HD Movies to sort by ABC, year etc.
 
-0.8.4
-Added parental controls
-
 0.8.3
 Fixed empty lists
 Fixed allmyvideos links

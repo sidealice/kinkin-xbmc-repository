@@ -1473,60 +1473,60 @@ def watchlist_tv_menu(start, name):
     return create_tv_show_items(tv_shows, nstart, name)
 
 					
-def list1_menu(start, name):
+def list1_menu():
     list = IMDB_LIST1
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list2_menu(start, name):
+def list2_menu():
     list = {}
     list = IMDB_LIST2
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list3_menu(start, name):
+def list3_menu():
     list = {}
     list = IMDB_LIST3
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list4_menu(start, name):
+def list4_menu():
     list = {}
     list = IMDB_LIST4
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list5_menu(start, name):
+def list5_menu():
     list = {}
     list = IMDB_LIST5
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list6_menu(start, name):
+def list6_menu():
     list = {}
     list = IMDB_LIST6
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list7_menu(start, name):
+def list7_menu():
     list = {}
     list = IMDB_LIST7
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list8_menu(start, name):
+def list8_menu():
     list = {}
     list = IMDB_LIST8
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list9_menu(start, name):
+def list9_menu():
     list = {}
     list = IMDB_LIST9
     movies = customlist_imdb(list)
     return create_movie_items(movies,"","")
 	
-def list10_menu(start, name):
+def list10_menu():
     list = {}
     list = IMDB_LIST10
     movies = customlist_imdb(list)
@@ -1540,7 +1540,7 @@ def movies_mpaas_menu():
     return items
 
 def movies_mpaa_menu(start, mpaa):
-    mpaa1 = "%s%s" % ("us%7C",mpaa.replace('-','_'))
+    mpaa1 = "%s%s" % ("us:",mpaa.lower().replace('-','_'))
     nstart = str(int(start) + IMDB_RESULTS)
     params = {}
     params["release_date"] = RELEASE_DATE

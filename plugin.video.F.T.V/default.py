@@ -70,18 +70,19 @@ def POST_URL(url, form_data):
     return req.content
 
 def login():
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.filmon.com'
-    header_dict['Referer'] = 'http://www.filmon.com/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>'
-    header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
-    header_dict['Connection'] = 'keep-alive'
-    form_data = ({'login': FILMON_USER, 'password': FILMON_PASSWORD,'remember': '1'})	
-    net.set_cookies(cookie_jar)
-    login = net.http_POST('http://www.filmon.com/user/login', form_data=form_data, headers=header_dict)
-    net.save_cookies(cookie_jar)
-    keep_alive()
+    if FILMON_ACCOUNT:
+        header_dict = {}
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+        header_dict['Host'] = 'www.filmon.com'
+        header_dict['Referer'] = 'http://www.filmon.com/'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>'
+        header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
+        header_dict['Connection'] = 'keep-alive'
+        form_data = ({'login': FILMON_USER, 'password': FILMON_PASSWORD,'remember': '1'})	
+        net.set_cookies(cookie_jar)
+        login = net.http_POST('http://www.filmon.com/user/login', form_data=form_data, headers=header_dict)
+        net.save_cookies(cookie_jar)
+        keep_alive()
 
 
 def keep_alive():
@@ -115,7 +116,7 @@ def CATEGORIES():
     all_groups = regex_get_all(link, '<li class="group-item">', '</li>')
     for groups in all_groups:
         group_id = regex_from_to(groups, 'http://static.filmon.com/couch/groups/','/big_logo.png')
-        title = regex_from_to(groups, 'title="', '"')
+        title = regex_from_to(groups, 'title="', '"').replace('&amp;', '&')
         thumb = 'http://static.filmon.com/couch/groups/%s/big_logo.png'	% group_id
         url = base_url + regex_from_to(groups, '<a href="/', '">')
         if not title in hidden_links:
@@ -255,6 +256,7 @@ def play_filmon(name,url,iconimage,ch_id):
         ch_id = '22'
 
     pp = url.replace('/channel/', '/tv/')
+    net.set_cookies(cookie_jar)
     streamerlink = net.http_GET(url).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
     swfplay = 'http://www.filmon.com' + regex_from_to(streamerlink, '"streamer":"', '",').replace("\/", "/")
@@ -313,8 +315,10 @@ def play_filmon(name,url,iconimage,ch_id):
 	
     url = regex_from_to(link, "serverURL': u'", "',")
     url2 = url.split('/')
+    url = "rtmp://%s/live/%s" % (url2[2],url2[5].replace('playlist.m3u8',''))
+    name = url2[4]
     url2 = url2[2]
-    name = regex_from_to(link, "streamName': u'", "',")
+    
     name = name.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
     if grpurl == "UK LIVE TV":
         name = name.replace('22', swap_ch)
@@ -329,7 +333,6 @@ def play_filmon(name,url,iconimage,ch_id):
         timeout = '86500'
     if FILMON_QUALITY == "480p":
         name = name.replace('low', 'high')
-    print name
     if name.endswith('m4v'):
         app = 'vodlast'
     else:

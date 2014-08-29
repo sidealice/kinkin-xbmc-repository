@@ -24,6 +24,7 @@ FILMON_ACCOUNT = settings.filmon_account()
 FILMON_USER = settings.filmon_user()
 FILMON_QUALITY = settings.filmon_quality()
 AUTO_SWITCH = settings.auto_switch()
+STRM_TYPE = settings.stream_type()
 FILMON_PASS = md5(settings.filmon_pass()).hexdigest()
 FILMON_PASSWORD = settings.filmon_pass()
 MY_VIDEOS = settings.my_videos()
@@ -49,6 +50,7 @@ disneyjrurl = 'http://www.disney.co.uk/disney-junior/content/video.jsp?b='
 session_url = 'http://www.filmon.com/api/init/'
 
 
+
 def open_url(url):
     req = urllib2.Request(url)
     req.add_header('User-Agent','Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>')
@@ -56,6 +58,7 @@ def open_url(url):
     link=response.read()
     response.close()
     return link
+	
 	
 def POST_URL(url, form_data):
     header_dict = {}
@@ -86,7 +89,8 @@ def login():
 
 
 def keep_alive():
-    url = "http://www.filmon.com/ajax/keepAlive"
+    url = "http://www.filmon.com/api/keep-alive?session_key=%s" % session_key
+    #url = "http://www.filmon.com/ajax/keepAlive"
     net.set_cookies(cookie_jar)
     net.http_GET(url)
     net.save_cookies(cookie_jar)
@@ -239,6 +243,7 @@ def tv_guide(name, url, iconimage):
 
 		
 def play_filmon(name,url,iconimage,ch_id):
+    #timestamp = long((time.time() + 0.5) * 1000)
     grpurl = url
     if url == "LOCAL TV" or url == "UK LIVE TV":
         parsplit = ch_id.split('<>')
@@ -285,6 +290,11 @@ def play_filmon(name,url,iconimage,ch_id):
     link = net.http_POST(churl, form_data=form_data, headers=header_dict).content
     link = json.loads(link)
     link = str(link)
+    #pl_url = regex_from_to(link, "u'name': u'SD', u'url': u'", "',")
+    #pl_data = net.http_GET(pl_url).content
+    #timestamp = regex_get_all(pl_data, 'stream-', '.ts')
+    #c_ts = len(timestamp)-1
+    #timestamp = timestamp[c_ts].replace('stream-','').replace('.ts','')
 
     next_p = regex_from_to(link, "next_playing'", "u'title")
     try:
@@ -312,39 +322,41 @@ def play_filmon(name,url,iconimage,ch_id):
             p_name = programme_name
         except:
             p_name = name
-	
-    url = regex_from_to(link, "serverURL': u'", "',")
-    url2 = url.split('/')
-    url = "rtmp://%s/live/%s" % (url2[2],url2[5].replace('playlist.m3u8',''))
+    if FILMON_QUALITY == '480p':
+        urlhls = regex_from_to(link, "name': u'HD', u'url': u'", "',")
+    else:
+        urlhls = regex_from_to(link, "name': u'SD', u'url': u'", "',")
+		
+    url2 = urlhls.split('/')
+    urlrtmp = "rtmp://%s/live/%s" % (url2[2],url2[5].replace('playlist.m3u8',''))
     name = url2[4]
-    url2 = url2[2]
+    url3 = url2[2]
     
     name = name.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
     if grpurl == "UK LIVE TV":
         name = name.replace('22', swap_ch)
-        url = url.replace(url2, swap_url)
+        urlrtmp = urlrtmp.replace(url3, swap_url)
     if grpurl == "LOCAL TV":
         name = name.replace('1676', swap_ch)
-        url = url.replace(url2, swap_url)
+        urlrtmp = urlrtmp.replace(url3, swap_url)
 
     try:
         timeout = regex_from_to(link, "expire_timeout': u'", "',")
     except:
         timeout = '86500'
-    if FILMON_QUALITY == "480p":
-        name = name.replace('low', 'high')
     if name.endswith('m4v'):
         app = 'vodlast'
     else:
         appfind = url[7:].split('/')
         app = 'live/' + appfind[2]
-    #rtmp://fml.BC83.systemcdn.net/20BC83/tv/ playpath=mp4:14.high.stream.mp4?6fb0914a89a1db80524b1cf2e1eec54a5a71fbf5f1464dbdaa5d5d5aeee843676ee44d9f97681c594d8e05d1247311dff53f14c29696306adc6e01a9d1952696f45e04f02e2d9d62522623 swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf?v=54 pageUrl=http://www.filmon.com/tv/bbc-one live=1 timeout=10 swfVfy=1		
-    if url.endswith('/'):
-        STurl = str(url) + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
-        STurl2 = str(url)  + name + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1' 
+
+    if STRM_TYPE == 'RTMP':		
+        if url.endswith('/'):
+            STurl = str(urlrtmp) + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
+        else:
+            STurl = str(urlrtmp) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
     else:
-        STurl = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
-        STurl2 = str(url) + '/' + name + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'	
+        STurl = urlhls
 		
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
@@ -1183,6 +1195,9 @@ def setView(content, viewType):
 def scan_library():
     if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
         xbmc.executebuiltin('UpdateLibrary(video)')
+		
+link = open_url(session_url)
+session_key = regex_from_to(link, 'session_key":"', '"')
    
 
 def get_params():

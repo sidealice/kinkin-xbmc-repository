@@ -1,6 +1,6 @@
 import xbmc, xbmcaddon, xbmcgui, xbmcplugin
 import os
-
+#testing HLS setting
 ADDON = xbmcaddon.Addon(id='plugin.video.F.T.V')
 DATA_PATH = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.F.T.V'), '')
 FTV_PATH = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', ''))
@@ -19,6 +19,13 @@ def filmon_account():
         return True
     else:
         return False
+		
+def stream_type():
+    quality = ADDON.getSetting('stream_type')
+    if quality == '0':
+        return 'HLS'
+    else:
+        return 'RTMP'
 		
 def hidden_file():
     return create_file(DATA_PATH, "hidden_links.list")

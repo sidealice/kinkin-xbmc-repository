@@ -181,10 +181,10 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.gachecker"
        name="GA Checker"
-       version="1.1.6"
+       version="1.1.6a"
        provider-name="Kinkin">
     <requires>
-        <import addon="xbmc.python" version="2.0"/>
+        <import addon="xbmc.python" version="2.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
@@ -422,10 +422,10 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 
 <addon id="plugin.video.XMLbackup"
        name="XML Backup"
-       version="1.0.2"
+       version="1.0.2a"
        provider-name="Kinkin">
     <requires>
-        <import addon="xbmc.python" version="2.0"/>
+        <import addon="xbmc.python" version="2.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">

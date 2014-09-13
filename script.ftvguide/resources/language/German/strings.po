@@ -156,6 +156,36 @@ msgctxt "#30125"
 msgid "URL"
 msgstr "URL"
 
+msgctxt "#30126"
+msgid "FTV (All)"
+msgstr "FTV (Alle)"
+
+msgctxt "#30127"
+msgid "FTV (Basic)"
+msgstr "FTV (Reduziert)"
+
+msgctxt "#30128"
+msgid "File download interval"
+msgstr "Herunterladen in diesem Intervall"
+
+msgctxt "#30129"
+msgid "every start"
+msgstr "jeder Start"
+
+msgctxt "#30130"
+msgid "every 12 hrs"
+msgstr "alle 12 Std."
+
+msgctxt "#30131"
+msgid "alle 24 Std."
+msgstr ""
+
+msgctxt "#30132"
+msgid "alle 48 Std."
+msgstr ""
+
+#empty strings from id 30133 to 30149
+
 msgctxt "#30150"
 msgid "Oops, sorry about that!"
 msgstr "Hmm, sollte nicht passieren."

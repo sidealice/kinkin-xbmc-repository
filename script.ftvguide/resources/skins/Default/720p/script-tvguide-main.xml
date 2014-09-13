@@ -387,7 +387,7 @@
             <control type="image" id="4100">
                 <posx>180</posx>
                 <posy>60</posy>
-                <width>100%</width>
+                <width>20</width>
                 <height>448</height>
                 <texture>tvguide-timebar.png</texture>
             </control>

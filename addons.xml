@@ -475,7 +475,7 @@ What the Furk provides the user the ability do do IMDB powered media searches on
 	</extension>
 </addon>
 
-<addon id="script.ftvguide" name="FTV Guide" version="1.0.4" provider-name="kinkin,rayw1986">
+<addon id="script.ftvguide" name="FTV Guide" version="1.0.6" provider-name="kinkin,rayw1986,bluezed">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="script.module.simplejson" version="2.0.10"/>

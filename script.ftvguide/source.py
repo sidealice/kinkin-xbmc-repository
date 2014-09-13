@@ -805,33 +805,79 @@ class Source(object):
 
 
 class XMLTVSource(Source):
+    PLUGIN_DATA = xbmc.translatePath(os.path.join("special://profile/addon_data","script.ftvguide"))
+    FTV_BASIC = 'guide_basic.xmltv'
+    FTV_ALL = 'guide.xmltv'
+    FTV_UKBASIC = 'guide_ukbasic.xmltv'
+    FTV_UKSKY = 'guide_uksky.xmltv'
+    FTV_USTV = 'guide_ustvnow.xmltv'
+    FTV_USUKBASIC = 'guide_usukbasic.xmltv'
+    FTV_URL = 'http://remoteman.tv/ftv/'
     KEY = 'xmltv'
-    TYPE_LOCAL_FILE = 0
-    TYPE_URL = 1
+    TYPE_FTV_ALL = 0
+    TYPE_FTV_BASIC = 1
+    TYPE_FTV_UKBASIC = 2
+    TYPE_FTV_UKSKY = 3
+    TYPE_FTV_USTV = 4
+    TYPE_FTV_USUKBASIC = 5
+    INTERVAL_ALWAYS = 0
+    INTERVAL_12 = 1
+    INTERVAL_24 = 2
+    INTERVAL_48 = 3
 
     def __init__(self, addon):
-        #self.logoFolder = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources', 'logos/')
-        self.logoFolder = 'http://remoteman.tv/ftv/logos/'
-        self.xmltvFile = 'http://remoteman.tv/ftv/guide.xmltv'
-        self.xmltvUrl = 'http://remoteman.tv/ftv/guide.xmltv'
-        self.xmltvType = 0
+        self.logoFolder = XMLTVSource.FTV_URL + 'logos/'
+        self.xmltvType = int(addon.getSetting('xmltv.type'))
+        self.xmltvInterval = int(addon.getSetting('xmltv.interval'))
+
+        if (self.xmltvType == XMLTVSource.TYPE_FTV_ALL):
+            self.xmltvFile = self.updateLocalFile(XMLTVSource.FTV_ALL)
+        elif (self.xmltvType == XMLTVSource.TYPE_FTV_BASIC):
+            self.xmltvFile = self.updateLocalFile(XMLTVSource.FTV_BASIC)
+        elif (self.xmltvType == XMLTVSource.TYPE_FTV_UKBASIC):
+            self.xmltvFile = self.updateLocalFile(XMLTVSource.FTV_UKBASIC)
+        elif (self.xmltvType == XMLTVSource.TYPE_FTV_UKSKY):
+            self.xmltvFile = self.updateLocalFile(XMLTVSource.FTV_UKSKY)
+        elif (self.xmltvType == XMLTVSource.TYPE_FTV_USTV):
+            self.xmltvFile = self.updateLocalFile(XMLTVSource.FTV_USTV)
+        elif (self.xmltvType == XMLTVSource.TYPE_FTV_USUKBASIC):
+            self.xmltvFile = self.updateLocalFile(XMLTVSource.FTV_USUKBASIC)
 
         if not self.xmltvFile or not xbmcvfs.exists(self.xmltvFile):
             raise SourceNotConfiguredException()
 
-    def getDataFromExternal(self, date, progress_callback=None):
-        if self.xmltvType == XMLTVSource.TYPE_LOCAL_FILE:
-            f = FileWrapper(self.xmltvFile)
-            context = ElementTree.iterparse(f, events=("start", "end"))
-            size = f.size
+    def updateLocalFile(self, name):
+        path = os.path.join(XMLTVSource.PLUGIN_DATA, name)
+        fetchFile = not os.path.exists(path) # always fetch if file doesn't exist!
+ 
+        # check the interval if not set to "Always"
+        if (not fetchFile and self.xmltvInterval <> XMLTVSource.INTERVAL_ALWAYS):
+            modTime = datetime.datetime.fromtimestamp(os.path.getmtime(path))
+            td = datetime.datetime.now() - modTime
+            # need to do it this way cause Android doesn't support .total_seconds() :(
+            diff = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
+            if ((self.xmltvInterval == XMLTVSource.INTERVAL_12 and diff >= 43200) or
+                (self.xmltvInterval == XMLTVSource.INTERVAL_24 and diff >= 86400) or
+                (self.xmltvInterval == XMLTVSource.INTERVAL_48 and diff >= 172800)):
+                fetchFile = True
+                xbmc.log('[script.tvguide] Interval reached, fetching remote file...', xbmc.LOGDEBUG)
         else:
-            u = urllib2.urlopen(self.xmltvUrl, timeout=30)
-            xml = u.read()
-            u.close()
+            fetchFile = True
+            xbmc.log('[script.tvguide] Interval set to always or file doesn\'t exist. Fetching...', xbmc.LOGDEBUG)
+ 
+        if (fetchFile):
+            f = open(path,'wb')
+            f.write(urllib2.urlopen(XMLTVSource.FTV_URL + name).read())
+            f.close()
+        else:
+            xbmc.log('[script.tvguide] Remote file fetching not due yet...', xbmc.LOGDEBUG)
+        return path
 
-            f = StringIO.StringIO(xml)
-            context = ElementTree.iterparse(f)
-            size = len(xml)
+    def getDataFromExternal(self, date, progress_callback=None):
+
+        f = FileWrapper(self.xmltvFile)
+        context = ElementTree.iterparse(f, events=("start", "end"))
+        size = f.size
 
         return self.parseXMLTV(context, f, size, self.logoFolder, progress_callback)
 

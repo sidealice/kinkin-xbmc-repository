@@ -4,6 +4,7 @@ import subprocess
 import settings
 import json
 import parentalcontrol
+import shutil
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.program.universalparentalcontrol/art', 'lock.png'))
 
 
@@ -109,6 +110,7 @@ def main():
 
 xbmc.log("##### UNIVERSAL PARENTAL CONTROL STARTED")
 main()
+
 
 
 

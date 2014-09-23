@@ -7,11 +7,13 @@ from hashlib import md5
 from metahandler import metahandlers
 from threading import Thread
 import json
+import shutil
 metainfo = metahandlers.MetaData()
 CUSTOM_PC = settings.pc_custom_pc_file()
 ADDON_STR = settings.pc_customstrings()
 EX_ADDONS = settings.pc_exclude_addons()
 EX_MODES = settings.pc_exclude_modes()
+FORCE_ADDONS=settings.pc_force_addons()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 settingfile = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.program.universalparentalcontrol'), "settings.xml")
 mrating = ['NC-17', 'R','PG-13','PG','G']
@@ -43,6 +45,9 @@ class play_timer(Thread):
                                 xbmc.executebuiltin('Dialog.Close(yesnodialog,true)')
 		
 def checkrating(name,year,mpaa,type,folderpath,foldername):
+    oldhubpcontrol=os.path.join(xbmc.translatePath('special://home/addons'), 'script.module.hubparentalcontrol')
+    if os.path.isdir(oldhubpcontrol):
+        shutil.rmtree(oldhubpcontrol)
     sf=read_from_file(settingfile)
     PC_ENABLE = regex_from_to(sf,'pc_enable_pc" value="', '"')
     id = regex_from_to(sf,'pc_watershed_pc" value="', '"')
@@ -56,7 +61,6 @@ def checkrating(name,year,mpaa,type,folderpath,foldername):
     elif id == '2':PC_WATERSHED = 17
     elif id == '1':PC_WATERSHED = 16
     else:PC_WATERSHED = 15
-    print 'watershed is ' + str(PC_WATERSHED)
     id = regex_from_to(sf,'pc_pw_required_at" value="', '"')
     if id == '3':PC_RATING = 4
     elif id == '2':PC_RATING = 3
@@ -67,7 +71,7 @@ def checkrating(name,year,mpaa,type,folderpath,foldername):
     playThread.start()
     if os.path.isfile(EX_ADDONS):
         ex_s = read_from_file(EX_ADDONS)
-    if 'plugin.video' in folderpath:
+    if 'plugin.' in folderpath or 'script.' in folderpath:
         addon_name = regex_from_to(folderpath, 'plugin://', '/')
         if addon_name in ex_s:
             PC = "PC_PLAY"
@@ -75,7 +79,7 @@ def checkrating(name,year,mpaa,type,folderpath,foldername):
             return PC,"",name
     if os.path.isfile(EX_MODES):
         ex_m = read_from_file(EX_MODES)
-    if 'plugin.' in folderpath and 'mode=' in folderpath:
+    if ('plugin.' in folderpath or 'script.' in folderpath) and 'mode=' in folderpath:
         addon_name = regex_from_to(folderpath, 'plugin://', '/')
         data = urllib.unquote(folderpath.split(addon_name + '/')[1])
         modetext = regex_from_to(data, 'mode=', '<')
@@ -89,7 +93,7 @@ def checkrating(name,year,mpaa,type,folderpath,foldername):
     if nm:
         name = nm.group(1)
         year = nm.group(2)
-    if type == 'stream' and mpaa == "" and 'plugin.video.' in folderpath:
+    if type == 'stream' and mpaa == "" and ('plugin.' in folderpath or 'script.' in folderpath):
         addon_name = regex_from_to(folderpath, 'plugin://', '/')
     if PC_ENABLE != 'true':
         print '## UNIVERSAL PARENTAL CONTROL ## PLAY - PC Disabled'
@@ -125,6 +129,12 @@ def parental_control(name,year,vmpaa,type,folderpath):
     id = regex_from_to(sf,'pc_default" value="', '"')
     if id == '1':PC_DEFAULT = "REQUIRE PIN"
     else:PC_DEFAULT = "PLAY"
+    if os.path.isfile(FORCE_ADDONS):
+        force_s = read_from_file(FORCE_ADDONS)
+    if 'plugin.' in folderpath or 'script.' in folderpath:
+        addon_name = regex_from_to(folderpath, 'plugin://', '/')
+        if addon_name in force_s:
+            return 5,"Addon Blocked",name
     mpaa = PC_DEFAULT
     if mpaa == "PLAY":
         mpaa_n = 0
@@ -150,17 +160,15 @@ def parental_control(name,year,vmpaa,type,folderpath):
                 infoLabels = get_meta(name,'tvshow',year=None,season=None,episode=None,imdb=None)
                 if infoLabels['mpaa']=='':
                     mpaa = 'notfound'
-                elif infoLabels['mpaa']=='N/A':
+                elif infoLabels['mpaa']=='N/A' or infoLabels['mpaa']=='Not Rated':
                     mpaa = 'Unrated'
                 else:
                     mpaa = infoLabels['mpaa']
-            elif infoLabels['mpaa']=='N/A':
-                mpaa = 'notfound'
-            elif infoLabels['mpaa']=='':
-                mpaa = 'notfound'
+            elif infoLabels['mpaa']=='N/A' or infoLabels['mpaa']=='Not Rated':
+                mpaa = 'Unrated'
             else:
                 mpaa = infoLabels['mpaa']
-        if vmpaa=='' and 'plugin.video.' in folderpath and (mpaa == 'notfound' or mpaa == PC_DEFAULT):#  and name == '' and (name == '..' or name =='' or '=Season' in folderpath)
+        if vmpaa=='' and ('plugin.' in folderpath or 'script.' in folderpath) and (mpaa == 'notfound' or mpaa == PC_DEFAULT):#  and name == '' and (name == '..' or name =='' or '=Season' in folderpath)
             name = plugin_mpaa(folderpath)
             if name != "" and ' (' in name and ')' in name:
                 name = name.split(' (')[0]
@@ -210,12 +218,12 @@ def parental_control(name,year,vmpaa,type,folderpath):
         rating_list = ["No thanks, I'll choose later", "G", "PG","PG-13", "R", "NC-17"]
         rating_list_return = ["No thanks, I'll choose later", "G", "PG","PG-13", "R", "NC-17"]
     elif type == 'stream':
-        rating_list = ["Exclude Addon", "No thanks, I'll choose later", "G", "PG","PG-13", "R", "NC-17", "TV-Y", "TV-Y7-FG", "TV-PG", "TV-14", "TV-MA"]
-        rating_list_return = ["PLAY", "No thanks, I'll choose later", "G", "PG","PG-13", "R", "NC-17", "TV-Y", "TV-Y7-FG", "TV-PG", "TV-14", "TV-MA"]
+        rating_list = ["Exclude Addon", "Exclude Mode","No thanks, I'll choose later", "G", "PG","PG-13", "R", "NC-17", "TV-Y", "TV-Y7-FG", "TV-PG", "TV-14", "TV-MA"]
+        rating_list_return = ["PLAY", "PLAY_mode", "No thanks, I'll choose later", "G", "PG","PG-13", "R", "NC-17", "TV-Y", "TV-Y7-FG", "TV-PG", "TV-14", "TV-MA"]
     else:
         rating_list = ["No thanks, I'll choose later", "TV-Y", "TV-Y7-FG", "TV-PG", "TV-14", "TV-MA"]
         rating_list_return = ["No thanks, I'll choose later", "TV-Y", "TV-Y7-FG", "TV-PG", "TV-14", "TV-MA"]
-    if mpaa=="Unrated" or mpaa=="":
+    if mpaa=="Unrated" or mpaa=="" or ( mpaa=="notfound" and name !=""):
         mpaa = PC_DEFAULT
         if os.path.isfile(CUSTOM_PC):
             s = read_from_file(CUSTOM_PC)
@@ -246,6 +254,12 @@ def parental_control(name,year,vmpaa,type,folderpath):
                         if mpaa == "PLAY":
                             addon_name = regex_from_to(folderpath, 'plugin://', '/')
                             add_to_list(addon_name,EX_ADDONS)
+                        elif mpaa == "PLAY_mode":
+                            data = urllib.unquote(folderpath.split('?')[1])
+                            modetext = regex_from_to(data, 'mode=', '<')
+                            modestring="%s | mode=%s" % (addon_name,modetext)
+                            add_to_list(modestring,EX_MODES)
+                            mpaa == "PLAY"
                         else:
                             content = '%s<>%s<>%s' % (name, mpaa,type)
                             add_to_list(content,CUSTOM_PC)
@@ -263,12 +277,13 @@ def parental_control(name,year,vmpaa,type,folderpath):
         mpaa_n = 3
     elif mpaa == "R" or mpaa == "NC-17" or mpaa == "TV-MA" or mpaa == "REQUIRE PIN":
         mpaa_n = 4
+    elif mpaa == "Addon Blocked":
+        mpaa_n = 5
     return mpaa_n,mpaa,name
 
 def plugin_mpaa(folderpath):
     sf=read_from_file(settingfile)
     PC_PASS = regex_from_to(sf,'pc_pass" value="', '"')
-    print PC_PASS
     dialog = xbmcgui.Dialog()
     menu_texts = []
     menu_data = []    
@@ -353,9 +368,7 @@ def plugin_mpaa(folderpath):
                         add_to_list(content,ADDON_STR)
             else:
                 name = ""
-    print "## PLUGIN ## " +addon_name, folderpath.split(addon_name)[1]
-    
-    print clean_file_name(name, use_blanks=False)
+
     return clean_file_name(name, use_blanks=False)
 	
     	

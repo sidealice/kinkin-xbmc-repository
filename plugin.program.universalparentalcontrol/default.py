@@ -5,13 +5,14 @@ AddonTitle="Universal Parental Control"
 addon_id='plugin.program.universalparentalcontrol'
 local=xbmcaddon.Addon(id=addon_id); maintenancepath=xbmc.translatePath(local.getAddonInfo('path'))
 art=xbmc.translatePath(os.path.join('special://home/addons/plugin.program.universalparentalcontrol/art', ''))
-PC_ENABLE=settings.pc_enable_pc(); PC_WATERSHED=settings.pc_watershed_pc(); PC_RATING=settings.pc_pw_required_at(); PC_PASS=settings.pc_pass(); PC_DEFAULT=settings.pc_default(); PC_TOGGLE=settings.pc_enable_pc_settings(); CUSTOM_PC=settings.pc_custom_pc_file(); ADDON_STR=settings.pc_customstrings(); EX_ADDONS=settings.pc_exclude_addons(); EX_MODES=settings.pc_exclude_modes(); CUSTOMSTRINGS=settings.pc_customstrings()
+PC_ENABLE=settings.pc_enable_pc(); PC_WATERSHED=settings.pc_watershed_pc(); PC_RATING=settings.pc_pw_required_at(); PC_PASS=settings.pc_pass(); PC_DEFAULT=settings.pc_default(); PC_TOGGLE=settings.pc_enable_pc_settings(); CUSTOM_PC=settings.pc_custom_pc_file(); ADDON_STR=settings.pc_customstrings(); EX_ADDONS=settings.pc_exclude_addons(); EX_MODES=settings.pc_exclude_modes(); CUSTOMSTRINGS=settings.pc_customstrings(); FORCE_ADDONS=settings.pc_force_addons()
 profiles_path=xbmc.translatePath(os.path.join('special://profile','profiles.xml'))
 
 def CATEGORIES():
     addDir("Settings",'url',63,xbmc.translatePath(os.path.join(art, 'settings.png')),"")
     addDir("Help",'url',61,xbmc.translatePath(os.path.join(art, 'info.png')),"")
     addDir("Exclude Addons (select to add/remove)","req",64,xbmc.translatePath(os.path.join(art, 'list.png')),"")
+    addDir("Always require PIN for selected addons (select to add/remove)","req",72,xbmc.translatePath(os.path.join(art, 'list.png')),"")
     addDir("Excluded Addon Modes (select to remove)","req",67,xbmc.translatePath(os.path.join(art, 'list.png')),"")
     addDir("Custom Addon Strings (select to remove)","req",68,xbmc.translatePath(os.path.join(art, 'list.png')),"")
     addDir("Custom Ratings (select to remove)","req",69,xbmc.translatePath(os.path.join(art, 'ratings.jpg')),"")
@@ -121,6 +122,13 @@ def pc_exclude(pw): #Include/Exclude Addons
         if 'plugin.' in file or 'script.' in file:
             if file in s:addDir('[COLOR red]'+file+'[/COLOR]',EX_ADDONS,65,"","")
             else:addDir(file,EX_ADDONS,66,"","")
+def pc_force_addons(pw): #Force PIN entry for all videos played from selected addons	
+    if os.path.isfile(FORCE_ADDONS): s = read_from_file(FORCE_ADDONS)
+    pluginpath = xbmc.translatePath(os.path.join('special://home/addons',''))
+    for file in os.listdir(pluginpath):
+        if 'plugin.' in file or 'script.' in file:
+            if file in s:addDir('[COLOR red]'+file+'[/COLOR]',FORCE_ADDONS,65,"","")
+            else:addDir(file,FORCE_ADDONS,66,"","")
 def pc_excludemode(): #Include/Exclude Addons	
     if os.path.isfile(EX_MODES): 
         s = read_from_file(EX_MODES)
@@ -202,5 +210,6 @@ elif mode==67: pc_excludemode()
 elif mode==68: pc_customstring()
 elif mode==69: pc_customratings()
 elif mode==70: master_lock()
-elif mode==71: ml_protect(name)		
+elif mode==71: ml_protect(name)
+elif mode==72: pc_force_addons(url)		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

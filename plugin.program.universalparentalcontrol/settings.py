@@ -1,11 +1,12 @@
 import xbmc,xbmcaddon,xbmcgui,xbmcplugin,os
 AddonID='plugin.program.universalparentalcontrol'
 ADDON=xbmcaddon.Addon(id=AddonID)
-DATA_PATH    =xbmc.translatePath(os.path.join('special://profile','addon_data',AddonID,''))
-ADDON_PATH   =xbmc.translatePath(os.path.join('special://home'   ,'addons',AddonID,''))
+DATA_PATH=xbmc.translatePath(os.path.join('special://profile','addon_data',AddonID,''))
+ADDON_PATH=xbmc.translatePath(os.path.join('special://home'   ,'addons',AddonID,''))
 def addon(): return ADDON
 #Parental controls
 def pc_exclude_addons(): return create_file(DATA_PATH, "exclude_addons.list")
+def pc_force_addons(): return create_file(DATA_PATH, "force_addons.list")
 def pc_custom_pc_file(): return create_file(DATA_PATH, "custom_pc.list")
 def pc_exclude_modes(): return create_file(DATA_PATH, "exclude_modes.list")
 def pc_customstrings(): return create_file(DATA_PATH, "addon_strings.list")

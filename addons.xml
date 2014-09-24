@@ -90,7 +90,7 @@
 
 </addon>
 
-<addon id="plugin.program.universalparentalcontrol" version="0.8.1"
+<addon id="plugin.program.universalparentalcontrol" version="0.8.2"
 	name="Universal Parental Control" provider-name="kinkin">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>

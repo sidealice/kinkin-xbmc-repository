@@ -126,6 +126,7 @@ def checkrating(name,year,mpaa,type,folderpath,foldername):
 		
 def parental_control(name,year,vmpaa,type,folderpath):
     sf=read_from_file(settingfile)
+    PC_PASS = regex_from_to(sf,'pc_pass" value="', '"')
     id = regex_from_to(sf,'pc_default" value="', '"')
     if id == '1':PC_DEFAULT = "REQUIRE PIN"
     else:PC_DEFAULT = "PLAY"
@@ -159,7 +160,16 @@ def parental_control(name,year,vmpaa,type,folderpath):
             if infoLabels['mpaa']=='':
                 infoLabels = get_meta(name,'tvshow',year=None,season=None,episode=None,imdb=None)
                 if infoLabels['mpaa']=='':
-                    mpaa = 'notfound'
+                    nm=re.search('(.+?) [0-9]x[0-9]',name)
+                    if nm:
+                        name = nm.group(1)
+                        infoLabels = get_meta(name,'tvshow',year=None,season=None,episode=None,imdb=None)
+                        if infoLabels['mpaa']=='':
+                            mpaa = 'notfound'
+                        elif infoLabels['mpaa']=='N/A' or infoLabels['mpaa']=='Not Rated':
+                            mpaa = 'Unrated'
+                        else:
+                            mpaa = infoLabels['mpaa']
                 elif infoLabels['mpaa']=='N/A' or infoLabels['mpaa']=='Not Rated':
                     mpaa = 'Unrated'
                 else:
@@ -238,7 +248,7 @@ def parental_control(name,year,vmpaa,type,folderpath):
                         if title==name and vtype==type:
                             mpaa=cmpaa
             else:		
-                rating_id = dialog.select("No rating found....set/save your own?", rating_list)
+                rating_id = dialog.select(name + ":  not found, set your own?", rating_list)
                 if(rating_id <= 0):
                     mpaa = PC_DEFAULT
                 else:

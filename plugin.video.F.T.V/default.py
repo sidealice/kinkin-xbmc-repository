@@ -53,58 +53,49 @@ session_url = 'http://www.filmon.com/api/init/'
 
 def open_url(url):
     req = urllib2.Request(url)
-    req.add_header('User-Agent','Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>')
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
     response = urllib2.urlopen(req)
     link=response.read()
     response.close()
     return link
 	
-	
-def POST_URL(url, form_data):
-    header_dict = {}
-    header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.filmon.com'
-    header_dict['Referer'] = 'http://www.filmon.com/'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>)'# AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>
-    header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
-    header_dict['X-Requested-With'] = 'XMLHttpRequest'
-    net.set_cookies(cookie_jar)
-    req = net.http_POST(url, form_data=form_data, headers=header_dict).content
-    plgurl = req.replace('gkplugins','').replace('|','')
-    print plgurl
-
-def login():
-    if FILMON_ACCOUNT:
-        header_dict = {}
-        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-        header_dict['Host'] = 'www.filmon.com'
-        header_dict['Referer'] = 'http://www.filmon.com/'
-        header_dict['User-Agent'] = 'Mozilla/5.0 (Linux; <Android Version>; <Build Tag etc.>) AppleWebKit/<WebKit Rev>(KHTML, like Gecko) Chrome/<Chrome Rev> Safari/<WebKit Rev>'
-        header_dict['Content-Type'] = 'application/x-www-form-urlencoded'
-        header_dict['Connection'] = 'keep-alive'
-        form_data = ({'login': FILMON_USER, 'password': FILMON_PASSWORD,'remember': '1'})	
-        net.set_cookies(cookie_jar)
-        login = net.http_POST('http://www.filmon.com/user/login', form_data=form_data, headers=header_dict)
-        net.save_cookies(cookie_jar)
-        keep_alive()
-
-
-def keep_alive():
-    url = "http://www.filmon.com/api/keep-alive?session_key=%s" % session_key
-    #url = "http://www.filmon.com/ajax/keepAlive"
-    net.set_cookies(cookie_jar)
-    net.http_GET(url)
-    net.save_cookies(cookie_jar)
-    tloop = Timer(60.0, keep_alive)
+def keep_session():
+    currentWindow = xbmcgui.getCurrentWindowId()
+    if currentWindow == 10000:
+        session_id = xbmcgui.Window(10000).getProperty("session_id")
+        lourl = "http://www.filmon.com/api/logout?session_key=%s" % (session_id)
+        open_url(lourl)
+        xbmcgui.Window(10000).clearProperty("session_id")
+        print 'F.T.V..........logged out of Filmon'
+        return
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = "http://www.filmon.com/api/keep-alive?session_key=%s" % (session_id)
+    open_url(url)
+    print 'F.T.V..........Filmon session kept alive'
+    tloop = Timer(60.0, keep_session)
     tloop.start()
+
+if not xbmcgui.Window(10000).getProperty("session_id"):
+    link = open_url(session_url)
+    match= re.compile('"session_key":"(.+?)"').findall(link)
+    session_id=match[0]
+    if FILMON_ACCOUNT:
+        login_url = "%s%s%s%s%s%s" % ("http://www.filmon.com/api/login?session_key=", session_id, "&login=", FILMON_USER, "&password=", FILMON_PASS)
+        login = open_url(login_url)
+        print "F.T.V......Logged in"
+        xbmcgui.Window(10000).setProperty("session_id", session_id)
+        keep_session()
+    else:
+        print "F.T.V......Not logged in"
+        xbmcgui.Window(10000).setProperty("session_id", session_id)
+        keep_session()
+            
+FILMON_SESSION = xbmcgui.Window(10000).getProperty("session_id")
+
 	
+
 def CATEGORIES():
     hidden_links = read_from_file(HIDDEN_FILE)
-    login()
-    if MY_VIDEOS:
-        addDir('My Video Addons','url',141,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'video_addons.jpg')), '', '')
-    if MY_AUDIO:
-        addDir('My Audio Addons','url',145,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'audio_addons.jpg')), '', '')
     addDir('Non Geo','url',110,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'xml.png')), '', '')
     addDir('Cartoons & More','url',399,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
@@ -112,46 +103,38 @@ def CATEGORIES():
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
     addDir('Favourite Channels','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('Favourite Movies','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
-    net.set_cookies(cookie_jar)
-    url = 'http://www.filmon.com/groups'
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    if "UK LIVE TV" not in link:
-        if not "UK LIVE TV" in hidden_links:
-            addDir("UK LIVE TV",'url',123,'http://static.filmon.com/couch/groups/5/big_logo.png', '','')
-    all_groups = regex_get_all(link, '<li class="group-item">', '</li>')
+    url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=', (FILMON_SESSION))
+    link = open_url(url)
+    all_groups = regex_get_all(link, '{', 'channels_count')
     for groups in all_groups:
-        group_id = regex_from_to(groups, 'http://static.filmon.com/couch/groups/','/big_logo.png')
-        title = regex_from_to(groups, 'title="', '"').replace('&amp;', '&')
-        thumb = 'http://static.filmon.com/couch/groups/%s/big_logo.png'	% group_id
-        url = base_url + regex_from_to(groups, '<a href="/', '">')
+        group_id = regex_from_to(groups, 'group_id":"', '",')
+        title = regex_from_to(groups, 'title":"', '",')
+        thumb = regex_from_to(groups, 'logo_148x148_uri":"', '",').replace('\\', '')
+        url = regex_from_to(groups, 'group_id":"', '",')
         if not title in hidden_links:
-            addDir(title,url,123,thumb, '','')
-    setView('episodes', 'episodes-view')
-    if FILMON_USER in link and FILMON_ACCOUNT:
-        notification('Logged in at Filmon', FILMON_USER, '5000', iconart)
+            addDir(title,group_id,123,thumb, '','')
+            setView('episodes', 'episodes-view')
 
 		
 def group_channels(url, title):
-    url = str(url)
     gt = str(title)
     name_lst = []
-    if url != 'url':
-        net.set_cookies(cookie_jar)
-        link = net.http_GET(url).content.encode("utf-8").rstrip()
+    url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', FILMON_SESSION)
+    link = open_url(url)
+    all_channels = regex_from_to(link, 'channels":', 'channels_count')
+    channels = regex_get_all(all_channels, '{"id"', 'teleport_technology')
+    for channel in channels:
+        channel_id = regex_from_to(channel, '"id":', ',')
+        title = regex_from_to(channel, 'title":"', '",').encode("utf-8")
+        name_lst.append(title)
+        if not 'description":null' in channel:
+            description = clean_file_name(regex_from_to(channel, 'description":"', '",'), use_blanks=False)
+        else:
+            description=""
+        thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % channel_id
+        addDirPlayable(title,channel_id,125,thumb,"",description, "", "grp")
+        setView('episodes', 'episodes-view')
 
-        channels = regex_get_all(link, '<li class="channel', '</li>')
-        for channel in channels:
-            alias = regex_from_to(channel, 'alias="', '" channel_id')
-            channel_id = regex_from_to(channel, 'id="', '" alias')
-            title = regex_from_to(channel, 'channel_title">', '</')
-            name_lst.append(title)
-            try:
-                description = clean_file_name(regex_from_to(channel, '<p>', '</p>'), use_blanks=False)
-            except:
-                description = ""
-            thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(channel_id)
-            url = base_url + regex_from_to(channel, 'href="/', '" class')
-            addDirPlayable(title,url,125,thumb,channel_id,description, alias, "grp")
     # read from channel list
 
     s = read_from_file(channel_list)
@@ -175,40 +158,38 @@ def group_channels(url, title):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def favourites():
-    url = base_url + 'my/favorites'
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    channels = regex_get_all(link, '<a class="left"', '/a>')
-    for c in channels:
-        ch_url = regex_from_to(c, 'href="/', '">')
-        ch_id = ch_url.split('/')
-        ch_id = ch_id[1]
-        url = base_url + ch_url
-        title = regex_from_to(c, '>', '<').encode("utf-8")
-        thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(ch_id)
-        addDirPlayable(title,url,125,thumb,str(ch_id),"", title, "fav")
+    url='http://www.filmon.com/api/favorites?session_key=%s&run=get'% (FILMON_SESSION)
+    link = open_url(url)
+    all_channels = regex_from_to(link, 'result":', ',"reason')
+    channel_ids = regex_get_all(all_channels, '"channel"', '}')
+    for id in channel_ids:
+        channel_id = regex_from_to(id, '"id":', ',')
+        title = regex_from_to(id, 'title":"', '",').encode("utf-8")
+        description = clean_file_name(regex_from_to(id, 'description":"', '",'), use_blanks=False)
+        thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % channel_id
+        addDirPlayable(title,channel_id,125,thumb,"",description, "", "fav")
         setView('episodes', 'episodes-view')
  
 		
 def add_fav(name, ch_id, iconimage):
-    url = base_url + 'ajax/toggleFavorite'
-    form_data = ({'channel': ch_id})
-    req = POST_URL(url, form_data)
-    text = req.replace('"','').replace('{','').replace('}','').replace(","," - ")
-    if "enable" in text and "true" in text:
-        notification('Toggle My Channels', name + ' added', '5000', iconart)
-    if "disable" in text and "true" in text:
-        notification('Toggle My Channels', name.upper() + ' removed', '5000', iconart)
-        xbmc.executebuiltin("Container.Refresh")	
+    dialog = xbmcgui.Dialog()
+    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=add'%(FILMON_SESSION,ch_id)
+    link = open_url(url)
+    text = regex_from_to(link, 'reason":"', '",').replace('"',' ')
+    dialog.ok("Add Favourite",name.upper(),text.upper())  
 
-
+def delete_fav(name, ch_id, iconimage):
+    dialog = xbmcgui.Dialog()
+    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=remove'%(FILMON_SESSION,ch_id)
+    link = open_url(url)
+    text = regex_from_to(link, 'reason":"', '",').replace('"',' ')
+    dialog.ok("Remove Favourite",name.upper(),text.upper())
+    xbmc.executebuiltin("Container.Refresh")
+		
 def tv_guide(name, url, iconimage):
-    url = base_url + 'tvguide/' + name
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    alias = regex_from_to(link, '"alias":"', '"')
-    tvg_list = regex_from_to(link, 'var channelJson', 'title":"HD - Year"')
-    programmes = regex_get_all(tvg_list, '{"programme"', 'vendor_id')
+    url='http://www.filmon.com/tv/api/tvguide/%s?session_key=%s' % (url, FILMON_SESSION)
+    link = open_url(url)
+    programmes = regex_get_all(link, '{', 'vendor_id')
     utc_now = datetime.datetime.now()
     for p in programmes:
         p_id = regex_from_to(p, 'programme":"', '"')
@@ -234,229 +215,105 @@ def tv_guide(name, url, iconimage):
             thumb = iconimage
         if end_time > utc_now:
             if start_time < utc_now and end_time > utc_now:
-                url = base_url + 'channel/' + alias
-                addDirPlayable('[COLOR cyan]' + title + '[/COLOR]',url,125,thumb,channel_id,description, start, "gd")
+                addDirPlayable('[COLOR cyan]' + title + '[/COLOR]',channel_id,125,thumb,"",description, start, "gd")
             else:
                 if allow_dvr == "true":
                     addDirPlayable(title,channel_id,129,thumb,p_id,description, start, "gd")
                 else:
                     addDirPlayable(title + "  [COLOR red](not recordable)[/COLOR]",channel_id,"",thumb,p_id,description, start, "gd")
-            setView('episodes', 'epg')
+            setView('episodes', 'episodes-view')
 
 		
 def play_filmon(name,url,iconimage,ch_id):
     grpurl = url
-    if url == "LOCAL TV" or url == "UK LIVE TV":
+    if url == "PAY TV" or url == "UK LIVE TV":
         parsplit = ch_id.split('<>')
         swap_ch = parsplit[0]
         swap_url = parsplit[1]
     else:
         swap_ch = ch_id
 
-
-    if url == "LOCAL TV":
-        url = 'http://www.filmon.com/channel/filmon-studio'
-        ch_id = '1676'
+    if url == "PAY TV":
+        url = '1676'
     if url == "UK LIVE TV":
-        url = 'http://www.filmon.com/channel/channel-5'
-        ch_id = '22'
-
-    pp = url.replace('/channel/', '/tv/')
-    net.set_cookies(cookie_jar)
-    streamerlink = net.http_GET(url).content.encode("utf-8").rstrip()
-    net.save_cookies(cookie_jar)
-    swfplay = 'http://www.filmon.com' + regex_from_to(streamerlink, '"streamer":"', '",').replace("\/", "/")
-
-    name = name.replace('[COLOR cyan]','').replace('[/COLOR]','')
+        url = '22'
+		
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())
+    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', FILMON_SESSION)
     utc_now = datetime.datetime.now()
-    channel_name=name
-    cl= 23 + len(ch_id)
-    net.set_cookies(cookie_jar)
-    header_dict = {}
-    header_dict['Accept'] = '*/*'
-    header_dict['Accept-Encoding'] = 'gzip, deflate'
-    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
-    header_dict['Host'] = 'www.filmon.com'
-    header_dict['Connection'] = 'keep-alive'
-    header_dict['Referer'] = 'http://www.filmon.com/tvguide'
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0'
-    header_dict['X-Requested-With'] = 'XMLHttpRequest'
-    if FILMON_QUALITY == '480p':
-        quality = 'high'
-    else:
-        quality = 'low'
-    churl = 'http://www.filmon.com/ajax/getChannelInfo?channel_id=%s&quality=%s&flash-player-type=rtmp' % (ch_id, quality)
-    link = net.http_GET(churl, headers=header_dict).content
-    net.save_cookies(cookie_jar)
-    link = json.loads(link)
-    link = str(link)
-
-    next_p = regex_from_to(link, "next_playing'", "u'title")
-    try:
-        n_start_time = datetime.datetime.fromtimestamp(int(regex_from_to(next_p, "startdatetime': u'", "',")))
-        n_end_time = datetime.datetime.fromtimestamp(int(regex_from_to(next_p, "enddatetime': u'", "',")))
-        n_programme_name = regex_from_to(next_p, "programme_name': u'", "',")
-        n_start_t = n_start_time.strftime('%H:%M')
-        n_end_t = n_end_time.strftime('%H:%M')
-        n_p_name = "[COLOR cyan]Next: %s (%s-%s)[/COLOR]" % (n_programme_name, n_start_t, n_end_t)
-    except:
-        n_p_name = ""
-		
-    now_p = regex_from_to(link, "now_playing':", "u'tvguide")
-    try:
-        start_time = datetime.datetime.fromtimestamp(int(regex_from_to(now_p, "startdatetime': u'", "',")))
-        end_time = datetime.datetime.fromtimestamp(int(regex_from_to(now_p, "enddatetime': u'", "',")))
-        programme_name = regex_from_to(now_p, "programme_name': u'", "',")
-        description = ""
-        start_t = start_time.strftime('%H:%M')
-        end_t = end_time.strftime('%H:%M')
-        p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
-        dp.update(50, p_name)
-    except:
+    channel_name=name.upper()
+    link = open_url(url)
+    nowplaying = regex_from_to(link, 'tvguide":', 'upnp_enabled')
+    pr_list = regex_get_all(nowplaying, '{"programme', '}')
+    for p in pr_list:
+        programme_name = regex_from_to(p, 'programme_name":"', '",')
         try:
-            p_name = programme_name
+            start_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'startdatetime":"', '",')))
+            end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":"', '",')))
+            if start_time < utc_now and end_time > utc_now:
+                npet = regex_from_to(p, 'enddatetime":"', '",')
+                programme_name = regex_from_to(p, 'programme_name":"', '",')
+                description = regex_from_to(nowplaying, 'programme_description":"', '",').replace('\u2019', "'").replace('\u2013', "-")
+                start_t = start_time.strftime('%H:%M')
+                end_t = end_time.strftime('%H:%M')
+                p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
+                dp.update(50, p_name)
+                try:
+                    next = regex_from_to(nowplaying, 'startdatetime":"' +npet, '}')
+                    n_start_time = datetime.datetime.fromtimestamp(int(npet))
+                    n_end_time = datetime.datetime.fromtimestamp(int(regex_from_to(next, 'enddatetime":"', '",')))
+                    n_programme_name = regex_from_to(next, 'programme_name":"', '",')
+                    n_start_t = n_start_time.strftime('%H:%M')
+                    n_end_t = n_end_time.strftime('%H:%M')
+                    n_p_name = "[COLOR cyan]Next: %s (%s-%s)[/COLOR]" % (n_programme_name, n_start_t, n_end_t)
+                except:
+                    n_p_name = ""
         except:
-            p_name = name
-    try:
-        timeout = regex_from_to(link, "u'watch-timeout': u'", "',")
-    except:
-        timeout = '86500'
-    timeout = int(timeout)
-	
-    if FILMON_QUALITY == '480p' and (AUTO_SWITCH == False or timeout > 1800):
-        urlhls = regex_from_to(link, "name': u'HD', u'url': u'", "',")
+            p_name = programme_name
+            n_p_name = ""
+    if not '"quality":"low"' in link:
+        streams = re.compile('"id":(.+?),"quality":"high","url":"(.+?)","name":"(.+?)","is_adaptive":"(.+?)","watch-timeout":(.+?)}').findall(link)
     else:
-        urlhls = regex_from_to(link, "name': u'SD', u'url': u'", "',")
-		
-    url2 = urlhls.split('/')
-    urlrtmp = "rtmp://%s/live/%s" % (url2[2],url2[5].replace('playlist.m3u8',''))
-    name = url2[4]
-    url3 = url2[2]
-    
-    name = name.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
+        streams = re.compile('"id":(.+?),"quality":"low","url":"(.+?)","name":"(.+?)","is_adaptive":"(.+?)","watch-timeout":(.+?)}').findall(link)
+    for id,url,name,adaptive,wt in streams:
+        url = url.replace("\/", "/")
+        name = name
+        id=id
+        if name.endswith('m4v'):
+            app = 'vodlast'
+        else:
+            app='live/?id=' + url.split('=')[1]
     if grpurl == "UK LIVE TV":
         name = name.replace('22', swap_ch)
-        urlrtmp = urlrtmp.replace(url3, swap_url)
-    if grpurl == "LOCAL TV":
+    if grpurl == "PAY TV":
         name = name.replace('1676', swap_ch)
-        urlrtmp = urlrtmp.replace(url3, swap_url)
-    
-    if name.endswith('m4v'):
-        app = 'vodlast'
-    else:
-        appfind = url[7:].split('/')
-        app = 'live/' + appfind[2]
-
-    if STRM_TYPE == 'RTMP':		
-        if url.endswith('/'):
-            STurl = str(urlrtmp) + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=true timeout=45 swfVfy=true'
-        else:
-            STurl = str(urlrtmp) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=true timeout=45 swfVfy=true'
-    else:
-        STurl = urlhls
+    if FILMON_QUALITY == '480p':
+        name = name.replace('low','high')
 		
+    STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf' + ' tcUrl=' + url + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     handle = str(sys.argv[1])
-    try:
-        if ch_id == '857' or 'http' not in grpurl:
-            listitem = xbmcgui.ListItem(channel_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        else:
-            listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        if handle != "-1":	
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer = xbmc.Player()
-            xbmcPlayer.play(STurl,listitem)
-    except:
-        listitem = xbmcgui.ListItem(channel_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
-        if handle != "-1":
-            listitem.setProperty("IsPlayable", "true")
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-        else:
-            xbmcPlayer = xbmc.Player()
-            xbmcPlayer.play(STurl,listitem)
+    listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
+    if handle != "-1":	
+        listitem.setProperty("IsPlayable", "true")
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+    else:
+        xbmcPlayer = xbmc.Player()
+        xbmcPlayer.play(STurl,listitem)	
     dp.close()
-    keep_alive()
 	
 def non_geo():
-    url = 'http://www.filmon.com/channel/filmon-studio'
-    ch_id = '1676'
-
-    pp = url.replace('/channel/', '/tv/')
-    streamerlink = net.http_GET(url).content.encode("utf-8").rstrip()
-    net.save_cookies(cookie_jar)
-    swfplay = 'http://www.filmon.com' + regex_from_to(streamerlink, '"streamer":"', '",').replace("\/", "/")
-
-    cl= '27'
-    net.set_cookies(cookie_jar)
-    header_dict = {}
-    header_dict['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-    header_dict['Accept-Encoding'] = 'gzip, deflate'
-    header_dict['Accept-Language'] = 'en-US,en;q=0.5'
-    header_dict['Content-Length'] = str(cl)
-    header_dict['Host'] = 'www.filmon.com'
-    header_dict['Connection'] = 'keep-alive'
-    header_dict['Pragma'] = '	no-cache'
-    header_dict['Referer'] = 'http://www.filmon.com/'
-    header_dict['User-Agent'] = 'AppleWebKit/<WebKit Rev>'
-    header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
-    header_dict['X-Requested-With'] = 'XMLHttpRequest'
-    form_data = ({'channel_id': ch_id, 'quality': 'low'})
-    churl = 'http://www.filmon.com/ajax/getChannelInfo'
-    link = net.http_POST(churl, form_data=form_data, headers=header_dict).content
-    link = json.loads(link)
-    link = str(link)
-    url_ch5 = regex_from_to(link, "serverURL': u'", "',")
-    urls_ch5 = url_ch5.split('/')
-    url2_ch5 = urls_ch5[2]
-    url4_ch5 = urls_ch5[4]
-    url4 = url4_ch5
-    url4_ch5 = url4_ch5.replace('id=', '')
-    name_ch5 = regex_from_to(link, "streamName': u'", "',")
-    name_ch5 = name_ch5.replace('.l.stream', '.low.stream').replace('.lo.stream', '.low.stream')
-
-    try:
-        timeout = regex_from_to(link, "expire_timeout': u'", "',")
-    except:
-        timeout = '86500'
-    if FILMON_QUALITY == "480p":
-        name_ch5 = name_ch5.replace('low', 'high')
-    if name_ch5.endswith('m4v'):
-        app = 'vodlast'
-    else:
-        appfind = url[7:].split('/')
-        app = 'live/' + appfind[2]
-	
     list = read_from_file(xml_list)
     all_streams = regex_get_all(list, '<stream>', '</stream>')
     for s in all_streams:
         title = regex_from_to(s, '<title>', '</title>').replace(' [Borg TV Update]', '')
-        swfUrl = regex_from_to(s, '<swfUrl>', '</swfUrl>')
-        link = regex_from_to(s, '<link>', '</link>').replace('"', '').replace(':1935/', '').replace('rtmp://', '').replace('/live/', '')
-        linkedge = regex_from_to(s, '<link>', '</link>').replace('"', '').replace(':1935/', '')
-        linkcdn = regex_from_to(s, '<link>', '</link>').replace('"', '').replace(':1935', '')
-        pageUrl = regex_from_to(s, '<pageUrl>', '</pageUrl>')
-        playpath = regex_from_to(s, '<playpath>', '</playpath>')
-        advanced = regex_from_to(s, '<advanced>', '</advanced>').replace('-a ', '').replace(' -o- -b 96000000', '')
-
-        ppsplit = playpath.split('.')
-        ch_id = ppsplit[0]
+        name = regex_from_to(s, '<playpath>', '</playpath>')
+        link = regex_from_to(s, '<link>"', '"</link>')
+        ch_id=name.split('.')[0]
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(ch_id)#+ '.mp4' + advpp
-        name = name_ch5.replace('1676', ch_id)
-        url = url_ch5.replace(url2_ch5, link)
-
-        if "World Cup" in title:
-            STurl = 'rtmp://' + link + advanced +' playpath=' + playpath + ' swfUrl=' + swfUrl + ' pageUrl=' + pageUrl + ' live=1 timeout=10 swfVfy=1'#
-        elif url.endswith('/'):
-            STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
-        else:
-            STurl = str(url) + '/' + name + ' playpath=' + name + ' swfUrl=' + swfplay + ' pageUrl=' + pp + ' live=1 timeout=10 swfVfy=1'
-
-        addDirPlayable(title,str(STurl),111,thumb,str(ch_id),link, title, "ng")
+        addDirPlayable(title,ch_id,111,thumb,link,"", "", "ng")
 		
 def add_ng(title,ch_id,link):
     grp_texts = []
@@ -476,53 +333,75 @@ def add_ng(title,ch_id,link):
         add_to_list(list_data, channel_list)
         notification(title + ' added to:', grpname, '5000', iconart)
 
-def play_ng(name,url,iconimage):
+def play_ng(name,url,iconimage,link):
+    chname=name
+    ng_link=link
+    ng_id=url
+    url='689'
+    dp = xbmcgui.DialogProgress()
+    dp.create('Opening ' + name.upper())
+    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', FILMON_SESSION)
+    utc_now = datetime.datetime.now()
+    channel_name=name.upper()
+    link = open_url(url)
+    streams = re.compile('"id":(.+?),"quality":"high","url":"(.+?)","name":"(.+?)","is_adaptive":"(.+?)","watch-timeout":(.+?)}').findall(link)
+    for id,url,name,adaptive,wt in streams:
+        url = url.replace("\/", "/")
+        name = name
+        id=id
+        if name.endswith('m4v'):
+            app = 'vodlast'
+        else:
+            app='live/?id=' + url.split('=')[1]
+    name = name.replace('689', ng_id)
+    url = "%s/%s" % (ng_link,app)
+    if FILMON_QUALITY == '480p':
+        name = name.replace('low','high')
+		
+    STurl = str(url) + ' playpath=' + name + ' app=' + app + ' swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf' + ' tcUrl=' + url + ' pageUrl=http://www.filmon.com/' + ' live=1 timeout=45 swfVfy=1'
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     handle = str(sys.argv[1])
-    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)    
+    listitem = xbmcgui.ListItem(chname, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
     if handle != "-1":	
         listitem.setProperty("IsPlayable", "true")
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
     else:
         xbmcPlayer = xbmc.Player()
-        xbmcPlayer.play(url,listitem)	
+        xbmcPlayer.play(STurl,listitem)	
+    dp.close()	
 
 def record_programme(name,ch_id,p_id,start):
     dialog = xbmcgui.Dialog()
-    url = base_url + 'dvr/add'
-    form_data = ({'channel_id': ch_id, 'programme_id': p_id,'start_time': start})	
-    
     if dialog.yesno("Record Programme?", '', name.upper()):
-        req = POST_URL(url, form_data)
-        text = regex_from_to(req, 'reason":"', '"}').replace('"',' ')
-        notification('Record Programme', name.upper() + ' ' + text.upper(), '5000', iconart)
+        rec_url ='http://filmon.com/api/dvr-add?session_key=%s&channel_id=%s&programme_id=%s&start_time=%s' % (FILMON_SESSION,ch_id,p_id,start)
+        link = open_url(rec_url)
+        text = regex_from_to(link, 'reason":"', '"}').replace('"',' ')
+        dialog = xbmcgui.Dialog()
+        dialog.ok("Record Programme",name.upper(),text.upper())
 		
 def delete_recording(name,start,iconimage):
     dialog = xbmcgui.Dialog()
-    url = base_url + 'dvr/remove'
-    form_data = ({'record_id': start})	
-    
     if dialog.yesno("Delete Recording?", '', name.upper()):
-        req = POST_URL(url, form_data)
-        text = regex_from_to(req, 'reason":"', '"}').replace('"',' ')
-        notification('Delete Recording', name.upper() + ' ' + text.upper(), '5000', iconart)
+        rec_url ='http://filmon.com/api/dvr-remove?session_key=%s&recording_id=%s' % (FILMON_SESSION, start)
+        link = open_url(rec_url)
+        text = regex_from_to(link, 'reason":"', '"}').replace('"',' ')
+        dialog = xbmcgui.Dialog()
+        dialog.ok("Delete Recording",name.upper(),text.upper())
         xbmc.executebuiltin("Container.Refresh")
 
 	
 def recordings(url):
-    url = base_url + 'my/recordings'
-    net.set_cookies(cookie_jar)
-    link = net.http_GET(url).content.encode("utf-8").rstrip()
-    t = regex_from_to(link, '<span class="total" >', '</span>')
-    r = regex_from_to(link, 'span class="recordedTime recorded">', '</span>')
-    a = regex_from_to(link, '<span class="leftTime available">', '</span>')
-    acc_status = "Allowed: %shrs - Recorded: %shrs - Available %shrs" % (t, r, a)
+    recs_url='http://www.filmon.com/api/dvr-list?session_key=%s'%(FILMON_SESSION)
+    link = open_url(recs_url)
+    match = re.compile('"permanent":"(.+?)","subscribed":(.+?),"recorded":(.+?),"total":(.+?),"available":(.+?)}').findall(link)
+    for p,s,r,t,a in match:
+        acc_status = "Allowed: %shrs - Recorded: %shrs - Available %shrs" % (t, r, a)
     addLink('[COLOR cyan]'+acc_status+'[/COLOR]',"","","","","", "", "", "")
-    recordings = regex_get_all(link, '"id"', 'is_deleted"')
+    recordings = regex_get_all(link, '"id":"', 'is_deleted"')
     for r in recordings:
+        STurl = regex_from_to(r, 'stream_url":"', '",').replace("\/", "/")
         STname = regex_from_to(r, 'stream_name":"', '",').replace("\/", "/")
-        
         p_id = regex_from_to(r, 'id":"', '",')
         p_name = regex_from_to(r, 'title":"', '",')
         description = regex_from_to(r, 'description":"', '",')
@@ -533,12 +412,11 @@ def recordings(url):
         duration = regex_from_to(r, 'duration":"', '",')
         status = regex_from_to(r, 'status":"', '",')
         try:
-            download_link = regex_from_to(r, 'download_link":"', '"').replace("\/", "/")#'http://s2.dvr.gv.filmon.com/' + STname
+            download_link = regex_from_to(r,'download_url":"','"')
         except:
             download_link = "error"
-        STurl = regex_from_to(r, 'stream_url":"', '",').replace("\/", "/") + " playpath=" + "mp4:" + STname + " swfUrl=http://www.filmon.com/tv/modules/FilmOnTV/files/flashapp/filmon/FilmonPlayer.swf pageUrl=http://www.filmon.com/my/recordings"
-        text = "[COLOR gold]%s[/COLOR] %s (%s)" % (p_name, start_time.strftime('%d %b %H:%M'), status)
-        addLink(text,download_link,logo,description,status,download_link, p_id, start,p_name)
+        text = "[COLOR gold]%s[/COLOR] %s (%s) [COLOR cyan]Dur[%s][/COLOR]" % (p_name, start_time.strftime('%d %b %H:%M'), status,duration)
+        addLink(text,STurl,logo,description,status,download_link, p_id, start,p_name)
         setView('episodes', 'episodes-view')
 
 def download_rec(name, url, iconimage):
@@ -680,7 +558,6 @@ def play_od(name, url, iconimage):
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(STurl,listitem)
     dp.close()
-    keep_alive()	
 
 
 def my_addons():
@@ -1211,10 +1088,9 @@ def addLink(name,url,iconimage,description,status,download_link, p_id, start, p_
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
         liz.setProperty("IsPlayable","true")
-        if p_id != "":
-            contextMenuItems.append(("Delete Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=133&iconimage=%s)'%(sys.argv[0],p_name,str(p_id),iconimage)))
-            if status == "Recorded" and download_link != "error":
-                contextMenuItems.append(("Download Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=139&iconimage=%s)'%(sys.argv[0],p_name,str(download_link),iconimage)))
+        contextMenuItems.append(("Delete Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=133&iconimage=%s)'%(sys.argv[0],p_name,str(p_id),iconimage)))
+        if status == "Recorded" and download_link != "error":
+            contextMenuItems.append(("Download Recording",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=139&iconimage=%s)'%(sys.argv[0],p_name,str(download_link),iconimage)))
         liz.addContextMenuItems(contextMenuItems, replaceItems=True)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=url,listitem=liz,isFolder=False)
         return ok
@@ -1241,9 +1117,12 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.setProperty('fanart_image', fanart)
+        if function=="grp":
+            contextMenuItems.append(("Add to Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
+        if function=="fav":
+            contextMenuItems.append(("Remove from Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=137&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
         if function != 'od' and function != 'gb'and function != 'djr' and function != 'ng' and function != '' and function != 'favlist':
             contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],ch_fanart, start,iconimage)))
-            contextMenuItems.append(("Toggle My Channels",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=135&iconimage=%s)'%(sys.argv[0],name,ch_fanart,iconimage)))
             contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=410&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
         if function == 'favlist':
             contextMenuItems.append(("Remove from FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=416&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
@@ -1326,17 +1205,15 @@ elif mode==123:
         group_channels(url, name)
 		
 elif mode==125:
-        login()
         play_filmon(name, url, iconimage, ch_fanart)
 		
 elif mode == 111:
-        play_ng(name,url,iconimage)
+        play_ng(name,url,iconimage,ch_fanart)
 		
 elif mode == 112:
         add_ng(name, url, iconimage)
 		
 elif mode==126:
-        login()
         play_filmon_gb(name, url, iconimage)
 		
 elif mode==127:

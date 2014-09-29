@@ -61,19 +61,20 @@ def open_url(url):
 	
 def keep_session():
     currentWindow = xbmcgui.getCurrentWindowId()
-    if currentWindow == 10000:
-        session_id = xbmcgui.Window(10000).getProperty("session_id")
-        lourl = "http://www.filmon.com/api/logout?session_key=%s" % (session_id)
-        open_url(lourl)
-        xbmcgui.Window(10000).clearProperty("session_id")
-        print 'F.T.V..........logged out of Filmon'
-        return
+    #if currentWindow == 10000:
+        #session_id = xbmcgui.Window(10000).getProperty("session_id")
+        #lourl = "http://www.filmon.com/api/logout?session_key=%s" % (session_id)
+        #open_url(lourl)
+        #xbmcgui.Window(10000).clearProperty("session_id")
+        #print 'F.T.V..........logged out of Filmon'
+        #return
     session_id = xbmcgui.Window(10000).getProperty("session_id")
     url = "http://www.filmon.com/api/keep-alive?session_key=%s" % (session_id)
     open_url(url)
     print 'F.T.V..........Filmon session kept alive'
     tloop = Timer(60.0, keep_session)
     tloop.start()
+	
 
 if not xbmcgui.Window(10000).getProperty("session_id"):
     link = open_url(session_url)
@@ -103,7 +104,8 @@ def CATEGORIES():
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
     addDir('Favourite Channels','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('Favourite Movies','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
-    url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=', (FILMON_SESSION))
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=', (session_id))
     link = open_url(url)
     all_groups = regex_get_all(link, '{', 'channels_count')
     for groups in all_groups:
@@ -119,7 +121,8 @@ def CATEGORIES():
 def group_channels(url, title):
     gt = str(title)
     name_lst = []
-    url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', FILMON_SESSION)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', session_id)
     link = open_url(url)
     all_channels = regex_from_to(link, 'channels":', 'channels_count')
     channels = regex_get_all(all_channels, '{"id"', 'teleport_technology')
@@ -158,7 +161,8 @@ def group_channels(url, title):
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def favourites():
-    url='http://www.filmon.com/api/favorites?session_key=%s&run=get'% (FILMON_SESSION)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url='http://www.filmon.com/api/favorites?session_key=%s&run=get'% (session_id)
     link = open_url(url)
     all_channels = regex_from_to(link, 'result":', ',"reason')
     channel_ids = regex_get_all(all_channels, '"channel"', '}')
@@ -173,21 +177,24 @@ def favourites():
 		
 def add_fav(name, ch_id, iconimage):
     dialog = xbmcgui.Dialog()
-    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=add'%(FILMON_SESSION,ch_id)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=add'%(session_id,ch_id)
     link = open_url(url)
     text = regex_from_to(link, 'reason":"', '",').replace('"',' ')
     dialog.ok("Add Favourite",name.upper(),text.upper())  
 
 def delete_fav(name, ch_id, iconimage):
     dialog = xbmcgui.Dialog()
-    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=remove'%(FILMON_SESSION,ch_id)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = 'http://www.filmon.com/api/favorites?session_key=%s&channel_id=%s&run=remove'%(session_id,ch_id)
     link = open_url(url)
     text = regex_from_to(link, 'reason":"', '",').replace('"',' ')
     dialog.ok("Remove Favourite",name.upper(),text.upper())
     xbmc.executebuiltin("Container.Refresh")
 		
 def tv_guide(name, url, iconimage):
-    url='http://www.filmon.com/tv/api/tvguide/%s?session_key=%s' % (url, FILMON_SESSION)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url='http://www.filmon.com/tv/api/tvguide/%s?session_key=%s' % (url, session_id)
     link = open_url(url)
     programmes = regex_get_all(link, '{', 'vendor_id')
     utc_now = datetime.datetime.now()
@@ -225,6 +232,7 @@ def tv_guide(name, url, iconimage):
 
 		
 def play_filmon(name,url,iconimage,ch_id):
+    print name,url,iconimage,ch_id
     grpurl = url
     if url == "PAY TV" or url == "UK LIVE TV":
         parsplit = ch_id.split('<>')
@@ -237,10 +245,12 @@ def play_filmon(name,url,iconimage,ch_id):
         url = '1676'
     if url == "UK LIVE TV":
         url = '22'
-		
+    if len(url)>6:
+        url=ch_id	
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())
-    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', FILMON_SESSION)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', session_id)
     utc_now = datetime.datetime.now()
     channel_name=name.upper()
     link = open_url(url)
@@ -340,7 +350,8 @@ def play_ng(name,url,iconimage,link):
     url='689'
     dp = xbmcgui.DialogProgress()
     dp.create('Opening ' + name.upper())
-    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', FILMON_SESSION)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', session_id)
     utc_now = datetime.datetime.now()
     channel_name=name.upper()
     link = open_url(url)
@@ -374,7 +385,8 @@ def play_ng(name,url,iconimage,link):
 def record_programme(name,ch_id,p_id,start):
     dialog = xbmcgui.Dialog()
     if dialog.yesno("Record Programme?", '', name.upper()):
-        rec_url ='http://filmon.com/api/dvr-add?session_key=%s&channel_id=%s&programme_id=%s&start_time=%s' % (FILMON_SESSION,ch_id,p_id,start)
+        session_id = xbmcgui.Window(10000).getProperty("session_id")
+        rec_url ='http://filmon.com/api/dvr-add?session_key=%s&channel_id=%s&programme_id=%s&start_time=%s' % (session_id,ch_id,p_id,start)
         link = open_url(rec_url)
         text = regex_from_to(link, 'reason":"', '"}').replace('"',' ')
         dialog = xbmcgui.Dialog()
@@ -383,7 +395,8 @@ def record_programme(name,ch_id,p_id,start):
 def delete_recording(name,start,iconimage):
     dialog = xbmcgui.Dialog()
     if dialog.yesno("Delete Recording?", '', name.upper()):
-        rec_url ='http://filmon.com/api/dvr-remove?session_key=%s&recording_id=%s' % (FILMON_SESSION, start)
+        session_id = xbmcgui.Window(10000).getProperty("session_id")
+        rec_url ='http://filmon.com/api/dvr-remove?session_key=%s&recording_id=%s' % (session_id, start)
         link = open_url(rec_url)
         text = regex_from_to(link, 'reason":"', '"}').replace('"',' ')
         dialog = xbmcgui.Dialog()
@@ -392,7 +405,8 @@ def delete_recording(name,start,iconimage):
 
 	
 def recordings(url):
-    recs_url='http://www.filmon.com/api/dvr-list?session_key=%s'%(FILMON_SESSION)
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    recs_url='http://www.filmon.com/api/dvr-list?session_key=%s'%(session_id)
     link = open_url(recs_url)
     match = re.compile('"permanent":"(.+?)","subscribed":(.+?),"recorded":(.+?),"total":(.+?),"available":(.+?)}').findall(link)
     for p,s,r,t,a in match:
@@ -1122,7 +1136,7 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
         if function=="fav":
             contextMenuItems.append(("Remove from Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=137&iconimage=%s)'%(sys.argv[0],name,url,iconimage)))
         if function != 'od' and function != 'gb'and function != 'djr' and function != 'ng' and function != '' and function != 'favlist':
-            contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],ch_fanart, start,iconimage)))
+            contextMenuItems.append(("TV Guide",'XBMC.Container.Update(%s?name=%s&url=%s&mode=127&iconimage=%s)'%(sys.argv[0],urllib.quote(name), url,iconimage)))
             contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=410&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
         if function == 'favlist':
             contextMenuItems.append(("Remove from FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=416&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))

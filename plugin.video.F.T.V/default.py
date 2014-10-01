@@ -74,8 +74,13 @@ def keep_session():
     print 'F.T.V..........Filmon session kept alive'
     tloop = Timer(60.0, keep_session)
     tloop.start()
-	
 
+try:
+    session_id = xbmcgui.Window(10000).getProperty("session_id")
+    url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=',(session_id))
+    link = open_url(url)
+except:
+    xbmcgui.Window(10000).setProperty("session_id", '')
 if not xbmcgui.Window(10000).getProperty("session_id"):
     link = open_url(session_url)
     match= re.compile('"session_key":"(.+?)"').findall(link)
@@ -232,7 +237,6 @@ def tv_guide(name, url, iconimage):
 
 		
 def play_filmon(name,url,iconimage,ch_id):
-    print name,url,iconimage,ch_id
     grpurl = url
     if url == "PAY TV" or url == "UK LIVE TV":
         parsplit = ch_id.split('<>')
@@ -426,9 +430,10 @@ def recordings(url):
         duration = regex_from_to(r, 'duration":"', '",')
         status = regex_from_to(r, 'status":"', '",')
         try:
-            download_link = regex_from_to(r,'download_url":"','"')
+            download_link = regex_from_to(r,'download_url":"','"').replace('\/','/')
         except:
             download_link = "error"
+        print download_link
         text = "[COLOR gold]%s[/COLOR] %s (%s) [COLOR cyan]Dur[%s][/COLOR]" % (p_name, start_time.strftime('%d %b %H:%M'), status,duration)
         addLink(text,STurl,logo,description,status,download_link, p_id, start,p_name)
         setView('episodes', 'episodes-view')

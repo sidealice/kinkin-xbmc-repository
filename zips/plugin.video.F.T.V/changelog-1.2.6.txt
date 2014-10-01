@@ -95,6 +95,7 @@ Added new category "Disney Junior Videos"
 1.0.10
 Fixed script errors
 
+
 1.0.9
 Fixed change in page source returning no channels
 
@@ -128,7 +129,7 @@ Added settings to enable/disable "My Video Addons", "My Audio Addons" and "Other
 1.0.1
 Added Most Watched menu
 Added context option to add to xbmc favourites
-Changed FilmOn option text to "Add to My Channels"
+Changed FilmOn option to "Add to My Channels"
 
 1.0.0
 Initial release

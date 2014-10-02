@@ -144,7 +144,6 @@ def group_channels(url, title):
         setView('episodes', 'episodes-view')
 
     # read from channel list
-
     s = read_from_file(channel_list)
     search_list = s.split('\n')
     for list in search_list:
@@ -238,6 +237,7 @@ def tv_guide(name, url, iconimage):
 		
 def play_filmon(name,url,iconimage,ch_id):
     grpurl = url
+    origname=name
     if url == "PAY TV" or url == "UK LIVE TV":
         parsplit = ch_id.split('<>')
         swap_ch = parsplit[0]
@@ -246,9 +246,9 @@ def play_filmon(name,url,iconimage,ch_id):
         swap_ch = ch_id
 
     if url == "PAY TV":
-        url = '1676'
+        url = '689'
     if url == "UK LIVE TV":
-        url = '22'
+        url = '689'
     if len(url)>6:
         url=ch_id	
     dp = xbmcgui.DialogProgress()
@@ -272,7 +272,8 @@ def play_filmon(name,url,iconimage,ch_id):
                 start_t = start_time.strftime('%H:%M')
                 end_t = end_time.strftime('%H:%M')
                 p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
-                dp.update(50, p_name)
+                if grpurl != "UK LIVE TV" and grpurl != "PAY TV":
+                    dp.update(50, p_name)
                 try:
                     next = regex_from_to(nowplaying, 'startdatetime":"' +npet, '}')
                     n_start_time = datetime.datetime.fromtimestamp(int(npet))
@@ -296,12 +297,16 @@ def play_filmon(name,url,iconimage,ch_id):
         id=id
         if name.endswith('m4v'):
             app = 'vodlast'
-        else:
+        else:#rtmp://204.107.26.234/live/?
             app='live/?id=' + url.split('=')[1]
+    swapout_url = regex_from_to(url,'rtmp://','/')
     if grpurl == "UK LIVE TV":
-        name = name.replace('22', swap_ch)
+        name = name.replace('689', swap_ch)
+        url=url.replace(swapout_url,swap_url)
     if grpurl == "PAY TV":
-        name = name.replace('1676', swap_ch)
+        name = name.replace('689', swap_ch)
+        url=url.replace(swapout_url,swap_url)
+
     if FILMON_QUALITY == '480p':
         name = name.replace('low','high')
 		
@@ -309,7 +314,10 @@ def play_filmon(name,url,iconimage,ch_id):
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     handle = str(sys.argv[1])
-    listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
+    if grpurl=='UK LIVE TV' or grpurl=='PAY TV':
+        listitem = xbmcgui.ListItem(origname, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
+    else:
+        listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
     if handle != "-1":	
         listitem.setProperty("IsPlayable", "true")
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)

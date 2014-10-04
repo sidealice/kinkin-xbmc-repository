@@ -2,7 +2,7 @@
 kinkin
 '''
 
-import urllib,urllib2,re,xbmcplugin,xbmcgui,os,extract
+import urllib,urllib2,re,xbmcplugin,xbmcgui,os
 import settings
 import time,datetime
 from datetime import date
@@ -97,11 +97,6 @@ if not xbmcgui.Window(10000).getProperty("session_id"):
         keep_session()
             
 FILMON_SESSION = xbmcgui.Window(10000).getProperty("session_id")
-#Check if FTV Guide Repo is installed, install if it doesn't exist
-guide_archive=xbmc.translatePath(os.path.join('special://home','addons','plugin.video.F.T.V','helpers','script.module.hubparentalcontrol.zip'))
-addonfolder=xbmc.translatePath(os.path.join('special://home','addons',''))
-if not os.path.exists(xbmc.translatePath(os.path.join('special://home','addons','repository.FTV-Guide-Repo'))): extract.all(guide_archive,addonfolder); xbmc.executebuiltin("XBMC.UpdateLocalAddons()")
-	
 
 def CATEGORIES():
     hidden_links = read_from_file(HIDDEN_FILE)

@@ -2,7 +2,7 @@
 kinkin
 '''
 
-import urllib,urllib2,re,xbmcplugin,xbmcgui,os
+import urllib,urllib2,re,xbmcplugin,xbmcgui,os,extract
 import settings
 import time,datetime
 from datetime import date

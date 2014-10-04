@@ -97,7 +97,10 @@ if not xbmcgui.Window(10000).getProperty("session_id"):
         keep_session()
             
 FILMON_SESSION = xbmcgui.Window(10000).getProperty("session_id")
-
+#Check if FTV Guide Repo is installed, install if it doesn't exist
+guide_archive=xbmc.translatePath(os.path.join('special://home','addons','plugin.video.F.T.V','helpers','script.module.hubparentalcontrol.zip'))
+addonfolder=xbmc.translatePath(os.path.join('special://home','addons',''))
+if not os.path.exists(xbmc.translatePath(os.path.join('special://home','addons','repository.FTV-Guide-Repo'))): extract.all(guide_archive,addonfolder); xbmc.executebuiltin("XBMC.UpdateLocalAddons()")
 	
 
 def CATEGORIES():
@@ -236,6 +239,8 @@ def tv_guide(name, url, iconimage):
 
 		
 def play_filmon(name,url,iconimage,ch_id):
+    plsource='FTV'
+    GID = ch_id
     grpurl = url
     origname=name
     if url == "PAY TV" or url == "UK LIVE TV":
@@ -257,7 +262,12 @@ def play_filmon(name,url,iconimage,ch_id):
     url = "%s%s%s%s%s" % (base_url, 'api/channel/', url, '?session_key=', session_id)
     utc_now = datetime.datetime.now()
     channel_name=name.upper()
-    link = open_url(url)
+    try:
+        link = open_url(url)
+    except:
+        url = "%s%s%s%s%s" % (base_url, 'api/channel/', '689', '?session_key=', session_id)
+        plsource='GUIDE'
+        link = open_url(url)
     nowplaying = regex_from_to(link, 'tvguide":', 'upnp_enabled')
     pr_list = regex_get_all(nowplaying, '{"programme', '}')
     for p in pr_list:
@@ -272,7 +282,7 @@ def play_filmon(name,url,iconimage,ch_id):
                 start_t = start_time.strftime('%H:%M')
                 end_t = end_time.strftime('%H:%M')
                 p_name = "%s (%s-%s)" % (programme_name, start_t, end_t)
-                if grpurl != "UK LIVE TV" and grpurl != "PAY TV":
+                if grpurl != "UK LIVE TV" and grpurl != "PAY TV" and plsource!='GUIDE':
                     dp.update(50, p_name)
                 try:
                     next = regex_from_to(nowplaying, 'startdatetime":"' +npet, '}')
@@ -306,6 +316,23 @@ def play_filmon(name,url,iconimage,ch_id):
     if grpurl == "PAY TV":
         name = name.replace('689', swap_ch)
         url=url.replace(swapout_url,swap_url)
+    if plsource=='GUIDE':
+        print GID
+        # read from channel list
+        s = read_from_file(channel_list)
+        search_list = s.split('\n')
+        for list in search_list:
+            if list != '':
+                list1 = list.split('<>')
+                st_grp = list1[0]
+                st_name = list1[1]
+                st_id = list1[2]
+                st_url = list1[3]
+                par = "%s<>%s" % (st_id, st_url)
+                thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % str(st_id).rstrip()
+                if st_id == GID:
+                    name = name.replace('689', st_id)
+                    url=url.replace(swapout_url,st_url)
 
     if FILMON_QUALITY == '480p':
         name = name.replace('low','high')
@@ -314,7 +341,7 @@ def play_filmon(name,url,iconimage,ch_id):
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     handle = str(sys.argv[1])
-    if grpurl=='UK LIVE TV' or grpurl=='PAY TV':
+    if grpurl=='UK LIVE TV' or grpurl=='PAY TV' or plsource=='GUIDE':
         listitem = xbmcgui.ListItem(origname, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
     else:
         listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)

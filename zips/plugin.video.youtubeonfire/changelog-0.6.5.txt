@@ -5,13 +5,21 @@ Fixed movie links
 Fixed dead links
 Fixed issue where playlist not cleared
 Added TV Series
+Updated YouTube fix
 
 0.6.3
 Added art for Knowledge menu
 Fixed next page errors
 
+0.6.2
+More art updated
+Fixed some playback errors
+Added Knowledge section
+Added Artist A-Z section to Music Videos (different source)
+Added Parental Control for movies
+
 0.6.1
-Art updated by Chistara
+Art updated by Christara
 Music art added
 Favourite Artists option added to Music Videos
 Code tweaks

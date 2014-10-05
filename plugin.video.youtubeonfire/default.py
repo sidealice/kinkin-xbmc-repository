@@ -51,7 +51,7 @@ addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'icon.png'))
 movie_url = 'http://www.movietube.co/'
-posturl = 'http://movietube.co/index.php'
+posturl = 'http://www.youtubeonfire.com/index.php'
 ytplayerfixed = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'helpers', 'YouTubePlayer.py'))
 ytplayercopyto = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtube', ''))
 ytplayerorig = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtube', 'YouTubePlayer.py'))
@@ -86,7 +86,7 @@ def POST_URL(url,a,c,p):#, form_data
     elif 'watch33' in url:
         header_dict['Host'] = 'watch33.tv'
     else:
-        header_dict['Host'] = 'www.movietube.co'
+        header_dict['Host'] = 'www.youtubeonfire.com'
     header_dict['Connection'] = 'keep-alive'
     header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
     if 'mvtube' in url:
@@ -105,8 +105,10 @@ def POST_URL(url,a,c,p):#, form_data
             header_dict['Referer'] = 'http://watch33.tv/search.php'
     elif 'knowledge' in url:
         header_dict['Referer'] = 'http://knowledgetube.co/search.php'
-    else:
+    elif 'movietube' in url:
         header_dict['Referer'] = 'http://www.movietube.co/search.php'
+    else:
+       header_dict['Referer'] = 'http://www.youtubeonfire.com/watch.php?v=' + regex_from_to(str(p),'KeyWord":"', '"')
     #header_dict['Content-Length'] = '113'
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
     header_dict['X-Requested-With'] = 'XMLHttpRequest'
@@ -344,7 +346,8 @@ def search_moviefile(query):
         else:
             infoLabels =None
             iconimage=thumb
-        addDir(str(title) + ' [COLOR lime][max ' + quality + '][/COLOR]' + ' ' + mpaa, url,3,iconimage, hosturl,'mov',infoLabels=infoLabels)
+            name=title
+        addDir(name + ' [COLOR lime][max ' + quality + '][/COLOR]' + ' ' + mpaa, url,3,iconimage, hosturl,name,infoLabels=infoLabels)
     setView('movies', 'movies-view')
 
 def movies(name,url,page,token):
@@ -400,7 +403,8 @@ def movies(name,url,page,token):
         else:
             infoLabels =None
             iconimage=thumb
-        addDir(str(title) + ' [COLOR lime][max ' + quality + '][/COLOR]' + ' ' + mpaa, url,3,iconimage, hosturl,'mov',infoLabels=infoLabels)
+            name=title
+        addDir(name + ' [COLOR lime][max ' + quality + '][/COLOR]' + ' ' + mpaa, url,3,iconimage, hosturl,name,infoLabels=infoLabels)
 
     nextpage=int(page)+1
     nextpage = "%s<>%s<>%s<>%s" % (nextpage,genre,year,sort)
@@ -430,6 +434,7 @@ def movie_quality(name,url,iconimage,list):
     c = 'result'
     p = url 
     req = POST_URL(posturl,a,c,p)
+    req=urllib.unquote(req)
 
     #PARENTAL CONTROL
     now = time.strftime("%H")
@@ -447,6 +452,14 @@ def movie_quality(name,url,iconimage,list):
         else:
             pw=''
     if int(now) >= int(PC_WATERSHED) or not(PC_ENABLE) or ((pw == PC_PASS) or mpaa < PC_RATING or (int(now) < 6 and int(PC_WATERSHED) != 25)):
+        if  'genvideos.com' in req:
+            vlink = regex_get_all(req, '<source', '">')
+            for link in vlink:
+                q = regex_from_to(link, 'res="', '"')
+                url = regex_from_to(link, 'src="', '"')
+                infoLabels =None
+                list = "%s<>%s<>%s" % (list,url,name)
+                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
         if 'src="//www.youtube.com/embed' in req:
             vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
             for link in vlink:
@@ -454,39 +467,24 @@ def movie_quality(name,url,iconimage,list):
                 url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
                 infoLabels =None
                 list = "%s<>%s<>%s" % (list,url,name)
-                addDirPlayable('[COLOR lime]'+ q + '[/COLOR] | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
-        elif 'streamin.to' in req:
+                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
+        if 'streamin.to' in req:
             url = regex_from_to(req, 'src="', '"')
-            try:
-                size = get_file_size(url)
-                #size = "%.2fGB" % size
-            except:
-                size = ""
             infoLabels =None
             list = "%s<>%s<>%s" % (list,url,name)
-            addDirPlayable('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
-        elif 'docs.google.com' in req:
+            addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
+        if 'docs.google.com' in req:
             url = regex_from_to(req, 'src="', '"')
-            try:
-                size = get_file_size(url)
-                #size = "%.2fGB" % size
-            except:
-                size = ""
             infoLabels =None
             list = "%s<>%s<>%s" % (list,url,name)
-            addDirPlayable('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+            addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
         else:
             match = re.compile('<source data-res="(.+?)" src="(.+?)"').findall(req)
             for quality, url in match:
                 quality = quality + 'p'
-                try:
-                    size = get_file_size(url)
-                    #size = "%.2fGB" % size
-                except:
-                    size = ""
                 infoLabels =None
                 list = "%s<>%s<>%s" % (list,url,name)
-                addDirPlayable('[COLOR lime]'+ quality + '[/COLOR] ' + size + ' | ' + name,url,5,iconimage, list,infoLabels=infoLabels)
+                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)                
     else:
         dialog.ok("You cannot play this video","PIN incorrect")
         		
@@ -496,7 +494,6 @@ def play_movie(name,url,iconimage,hosturl):
         url = spliturl[1]
         hosturl = spliturl[0]
         name = spliturl[2]
-    validresolver = urlresolver.HostedMediaFile(url)
     if 'plugin://plugin.video.youtube' in url or 'googlevideo' in url:
         url1 = url
     elif 'http://watch32.com' in url:
@@ -504,7 +501,7 @@ def play_movie(name,url,iconimage,hosturl):
         header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
         header_dict['Accept-Language'] = 'en-US,en;q=0.5'
         header_dict['Connection'] = 'keep-alive'
-        header_dict['Referer'] = 'http://www.youtubeonfire.com/watch.php?v=y36iVzlH4fs'#hosturl
+        header_dict['Referer'] = hosturl
         header_dict['Range'] = 'bytes=0-'
         header_dict['Host'] = 'watch32.com'
         header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
@@ -523,7 +520,6 @@ def play_movie(name,url,iconimage,hosturl):
         header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
         #net.set_cookies(cookie_jar)
         req = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
-        print req
         #net.save_cookies(cookie_jar)
         url1 = 'https://r' + regex_from_to(req, 'https://r','https://r').replace('|', '').replace('\u003d','=').replace('\u0026','&')
     elif 'streamin.to' in url:
@@ -585,9 +581,21 @@ def play_movie(name,url,iconimage,hosturl):
                 url1 = regex_from_to(link, 'file: "', '"')#file_link = 
             except:
                 url1 = regex_from_to(link, 'file_link = "', '"')
-    elif validresolver:
-        url1 = urlresolver.resolve(url)
-    else:
+    elif 'genvideos.com' in url:
+        header_dict = {}
+        header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Connection'] = 'keep-alive'
+        header_dict['Range'] = 'bytes=0-'
+        header_dict['Referer'] = hosturl
+        if 'http://genvideos' in url:
+            header_dict['Host'] = 'genvideos.com'
+        else:
+            header_dict['Host'] = 'm.genvideos.com'
+        response = requests.get(url,headers=header_dict,allow_redirects=False)
+        print response
+        url1 = response.headers['location']
+    elif 'googlevideo' in url:
         header_dict = {}
         header_dict['Accept'] = 'video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5'
         header_dict['Accept-Language'] = 'en-US,en;q=0.5'
@@ -597,6 +605,10 @@ def play_movie(name,url,iconimage,hosturl):
         header_dict['Host'] = 'redirector.googlevideo.com'
         response = requests.get(url,headers=header_dict,allow_redirects=False)
         url1 = response.headers['location']
+    else:
+        validresolver = urlresolver.HostedMediaFile(url)
+        if validresolver:
+            url1 = urlresolver.resolve(url)
     listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url1)
     xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
     handle = str(sys.argv[1])    
@@ -651,6 +663,14 @@ def strm_movie_quality(name,url,iconimage,list):
         else:
             pw=''
     if int(now) >= int(PC_WATERSHED) or not(PC_ENABLE) or ((pw == PC_PASS) or mpaa < PC_RATING or (int(now) < 6 and int(PC_WATERSHED) != 25)):
+        if  'genvideos.com' in req:
+            vlink = regex_get_all(req, '<source', '">')
+            for link in vlink:
+                q = regex_from_to(link, 'res="', '"')
+                url = regex_from_to(link, 'src="', '"')
+                infoLabels =None
+                menu_texts.append('[COLOR lime]'+ q + '[/COLOR] | ' + name)
+                menu_data.append(url)
         if 'src="//www.youtube.com/embed' in req:
             vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
             for link in vlink:
@@ -658,7 +678,7 @@ def strm_movie_quality(name,url,iconimage,list):
                 url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
                 menu_texts.append('[COLOR lime]'+ q + '[/COLOR] | ' + name)
                 menu_data.append(url)
-        elif 'docs.google.com' in req:
+        if 'docs.google.com' in req:
             url = regex_from_to(req, 'src="', '"')
             try:
                 size = get_file_size(url)
@@ -667,7 +687,7 @@ def strm_movie_quality(name,url,iconimage,list):
                 size = ""
             menu_texts.append('[COLOR lime]'+ q + '[/COLOR] ' + size + ' | ' + name)
             menu_data.append(url)
-        elif 'streamin.to' in req:
+        if 'streamin.to' in req:
             url = regex_from_to(req, 'src="', '"')
             try:
                 size = get_file_size(url)
@@ -702,7 +722,7 @@ def strm_movie_quality(name,url,iconimage,list):
             if download == 'download':
                 download_only(name,url)	
             else:			
-                strm_movie(name,url,iconimage,hosturl)
+                play_movie(name,url,iconimage,hosturl)
     else:
         dialog.ok("You cannot play this video","PIN incorrect")
         		
@@ -1905,7 +1925,7 @@ def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&description="+str(description)
         ok=True
         contextMenuItems = []
-        if "mov" in description:
+        if description in name:
             contextMenuItems.append(("[COLOR cyan]Download Movie[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=109&iconimage=%s&list=%s)'%(sys.argv[0], name, url,iconimage, str(url)+'<>'+str(name)+'<>'+'download')))
             contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=106&iconimage=%s&list=%s)'%(sys.argv[0], name, url,iconimage, str(url)+'<>'+str(name))))
             if description != 'movfav':

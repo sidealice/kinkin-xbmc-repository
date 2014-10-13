@@ -336,7 +336,7 @@ def play_filmon(name,url,iconimage,ch_id):
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     handle = str(sys.argv[1])
-    if grpurl=='UK LIVE TV' or grpurl=='PAY TV' or plsource=='GUIDE':
+    if grpurl=='UK LIVE TV' or grpurl=='PAY TV' or plsource=='GUIDE' or len(pr_list)==0:
         listitem = xbmcgui.ListItem(origname, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)
     else:
         listitem = xbmcgui.ListItem(p_name + ' ' + n_p_name, iconImage=iconimage, thumbnailImage=iconimage, path=STurl)

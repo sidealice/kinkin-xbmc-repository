@@ -65,6 +65,7 @@ def CATEGORIES():
 def audio():
     addDir('Billboard Hot Singles','http://www.itemvn.com/hot100/',1070,art + 'billboard_hot_singles.png','')
     addDir('Best Selling Albums','http://www.itemvn.com/bestsellers/',1070,art + 'best_selling_albums.png','')
+    addDir('Charts','url',101,art + 'billboardcharts.jpg','')
     addDir('Hot Artists','http://www.itemvn.com/topartists/',1070,art + 'hot_artists.png','')
     addDir('Artist A-Z','url',1010,art + 'artists_a-z.png','')
     addDir('Browse Songs','url',1080,art + 'browse_songs.png','')
@@ -535,6 +536,51 @@ def artists_menu(name, url, iconimage, page):
     if not 'bestsellers' in origurl and page != 'artists':
         addDir('Next Page >>',origurl,1050,art + 'newalbums.jpg',str(nextpage))
 		
+def charts():
+    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,art +'ukalbumchart.jpg','')
+    addDir('UK Single Chart - Top 100','http://www.officialcharts.com/singles-chart/',102,art +'uksinglecharttop100.jpg','')
+    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,art +'billboard200.jpg','')
+    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,art +'hot100singles.jpg','')
+    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,art +'countryalbums.jpg','')
+    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,art +'heatseekeralbums.jpg','')
+    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,art +'independentalbums.jpg','')
+    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,art +'cataloguealbums.jpg','')
+    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,art +'folkalbums.jpg','')
+    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,art +'bluesalbums.jpg','')
+    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,art +'tastemakeralbums.jpg','')
+    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,art +'rockalbums.jpg','')
+    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,art +'alternativealbums.jpg','')
+    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,art +'hardrockalbums.jpg','')
+    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,art +'digitalalbums.jpg','')
+    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,art +'randbalbums.jpg','')
+    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,art +'toprandbandhiphop.jpg','')
+    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,art +'danceandelectronic.jpg','')
+	
+def chart_lists(name, url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+    response = urllib2.urlopen(req)
+    link=response.read()
+    response.close()
+    if "officialcharts" in url:
+        all_list = regex_get_all(link, '<tr class="entry">', '</tr>')
+        for list in all_list:
+            iconimage = regex_from_to(list, '<img src="', '"')
+            artist = regex_from_to(list, '<h4>', '</h4>').replace('&#039;',"'")
+            title = regex_from_to(list, '<h3>', '</h3>').replace('&#039;',"'")
+            addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
+    elif "billboard" in url:
+        match = re.compile('"title" : "(.+?)"\r\n.+?"artist" : "(.+?)"\r\n.+?image" : "(.+?)"\r\n.+?"entityId" : ".+?"\r\n.+?"entityUrl" : "(.+?)"').findall(link)
+        for title, artist, iconimage, url1 in match:
+            text = "%s %s" % (artist, title)
+            url='http://www1.billboard.com'+url1+'#'+url1
+            if re.search('.gif',iconimage):
+                iconimage=""
+            if not 'Single' in name:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',25,iconimage,'')
+            else:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
+		
 def get_song_url(session,url,songid):
     origurl = url
     url = 'http://www.itemvn.com/wsp/service.asmx'
@@ -553,6 +599,8 @@ def get_song_url(session,url,songid):
         
     	
 def play_album(name, url, iconimage,mix,clear, artist):
+    if url.startswith('s_'):
+        url=url.upper()
     tophitlink = artist
     urlorig = url
     try:
@@ -605,7 +653,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
                 url = stored_path1
             else:
                 url = get_song_url(session,url,songid)
-            addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'')
+            addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'S_'+songid)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
             liz.setProperty('mimetype', 'audio/mpeg')
@@ -641,7 +689,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
                 url = stored_path1
             else:
                 url = get_song_url(session,url,songid)
-            addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'')
+            addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'S_'+songid)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
             liz.setProperty('mimetype', 'audio/mpeg')
@@ -671,7 +719,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
                     url = stored_path1
                 else:
                     url = get_song_url(session,url,songid)
-                addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'')
+                addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'S_'+songid)
                 liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
                 liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
                 liz.setProperty('mimetype', 'audio/mpeg')
@@ -992,30 +1040,39 @@ def instant_mix():
         return (None, None)
         dialog.close()
     groupname = menu_texts[menu_id]
-	
-    playlist = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
-    playlist.clear()
-    if os.path.isfile(FAV_SONG):
-        s = read_from_file(FAV_SONG)
-        search_list = s.split('\n')
-        for list in search_list:
-            if list != '':
-                title = list1[0]
-                try:
-                    artist=title.split(' - ')[0]
-                    songname=title.split(' - ')[1]
-                except:
-                    artist = title
-                    songname=title
-                url = list1[1]
-                iconimage = list1[2]
-                try:
-                    plname = list1[3]
-                except:
-                    plname = "Ungrouped"
-                if (plname == groupname) or groupname == "All Songs":
-                    play_song(url,title,songname,artist,'',iconimage, '',False)
-    playlist.shuffle()
+    shuffleThread = ShuffleSongThread(groupname)
+    shuffleThread.start()
+
+class ShuffleSongThread(Thread):
+    def __init__(self,groupname):
+        self.groupname=groupname
+        Thread.__init__(self)
+
+    def run(self):
+        groupname=self.groupname        
+        playlist = xbmc.PlayList(xbmc.PLAYLIST_MUSIC)
+        playlist.clear()
+        if os.path.isfile(FAV_SONG):
+            s = read_from_file(FAV_SONG)
+            search_list = s.split('\n')
+            for list in search_list:
+                if list != '':
+                    list1 = list.split('<>')
+                    title = list1[0]
+                    try:
+                        artist=title.split(' - ')[0]
+                    except:
+                        artist = title
+                    albumid = list1[1]
+                    iconimage = list1[2]
+                    try:
+                        plname = list1[3]
+                    except:
+                        plname = "Ungrouped"
+                    if (plname == groupname) or groupname == "All Songs":
+                        play_album(title, albumid, iconimage,'mix',False,artist)
+                    time.sleep(5)
+            playlist.shuffle()
 	
 def instant_mix_album():
     menu_texts = []
@@ -1152,7 +1209,7 @@ def favourite_albums():
                 except:
                     plname = "Ungrouped"
                 if (plname == groupname) or groupname == "All Albums":
-                    addDir(title, albumid,1100,iconimage, artist)
+                    addDir(title, albumid,1100,iconimage, 'qq'+list)
 				
 def favourite_songs():
     menu_texts = []
@@ -1197,7 +1254,7 @@ def favourite_songs():
                 except:
                     plname = "Ungrouped"
                 if (plname == groupname) or groupname == "All Songs":
-                    addDirAudio(title,url,10,iconimage,songname,artist,'','','favsong')
+                    addDirAudio(title,url,1100,iconimage,songname,artist,'',list,'favsong')
 					
 def favourite_videoartists():
     menu_texts = []
@@ -1320,7 +1377,8 @@ def add_favourite(name, url, iconimage, dir, text):
         add_to_list(data_add, dir, False)
     notification(name, "[COLOR lime]" + text + "[/COLOR]", '5000', iconimage)
 	
-def remove_from_favourites(name, url, dir, text):
+def remove_from_favourites(name, url, iconimage,dir, text):
+    url=url.replace('qq','')
     splitdata = url.split('<>')
     artist = splitdata[0]
     url1 = splitdata[1]
@@ -1515,7 +1573,7 @@ def addDir(name,url,mode,iconimage,artist):
                 contextMenuItems.append(("[COLOR lime]Add to Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=64&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
-                contextMenuItems.append(("[COLOR orange]Remove from Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=65&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
+                contextMenuItems.append(("[COLOR orange]Remove from Favourite Albums[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=65&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(artist), urllib.quote(iconimage))))
         liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
@@ -1544,10 +1602,10 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur,type):
             contextMenuItems.append(('[COLOR cyan]Queue Song[/COLOR]', 'XBMC.RunPlugin(%s)' % queue_song))
         if type != 'favsong':
             suffix = ""
-            contextMenuItems.append(("[COLOR lime]Add to Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=67&iconimage=%s)'%(sys.argv[0], urllib.quote(artistsong), urllib.quote(url), urllib.quote(iconimage))))
+            contextMenuItems.append(("[COLOR lime]Add to Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=67&iconimage=%s)'%(sys.argv[0], urllib.quote(artistsong), urllib.quote(type), urllib.quote(iconimage))))
         else:
             suffix = ' [COLOR lime]+[/COLOR]'
-            contextMenuItems.append(("[COLOR orange]Remove from Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=68&iconimage=%s)'%(sys.argv[0], urllib.quote(artistsong), urllib.quote(url), urllib.quote(iconimage))))
+            contextMenuItems.append(("[COLOR orange]Remove from Favourite Songs[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=68&iconimage=%s)'%(sys.argv[0], urllib.quote(artistsong), urllib.quote(dur), urllib.quote(iconimage))))
         liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
@@ -1660,10 +1718,16 @@ elif mode == 10:
         play_song(url,name,songname,artist,album,iconimage,dur,True)
 	
 elif mode == 11:
-    play_song(url,name,songname,artist,album,iconimage,dur,False)
+    if url.lower().startswith('s_'):
+        play_album(name, url, iconimage,'', False,artist)
+    else:
+        play_song(url,name,songname,artist,album,iconimage,dur,False)
 	
 elif mode == 18:
-    play_song(url,name,songname,artist,album,iconimage,dur,True)
+    if url.lower().startswith('s_'):
+        play_album(name, url, iconimage, '', True,artist)
+    else:
+        play_song(url,name,songname,artist,album,iconimage,dur,True)
 	
 elif mode == 1010:
     artists(url)
@@ -1735,7 +1799,7 @@ elif mode == 25:
     search_albums(name)
 	
 elif mode == 26:
-    search_songs(name,artist)
+    search_songs(name,"1")
 	
 elif mode == 27:
     search_artists(name)

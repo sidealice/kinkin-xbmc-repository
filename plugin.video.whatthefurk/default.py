@@ -1158,47 +1158,30 @@ def imdb_similar_menu(name, data, imdb_id):
         return create_tv_show_items(movies,"","")
 	
 def dvd_release_menu():
-    items = []
-    lists = ['Top Rentals', 'Current Releases', 'New Releases', 'Upcoming']
-    for list in lists:
-        items.append(create_subdirectory_tuple(list, 'dvd releases menu', ''))
-    return items
+    now = time.strftime("%Y-%m")
+    url = 'http://www.ondvdreleases.com/new-dvd-releases-%s/' % now
+    body = get_url(url, cache=CACHE_PATH)
+    match = re.compile('<li class="genre">(.+?)<a href="(.+?)"(.+?)>(.+?)</a></li>').findall(body)
+    for num,url,d1,title in match:
+        url = 'http://www.ondvdreleases.com' + url
+        addDir(title,url,'dvd releases menu','')
 
-	
-def dvd_releases(list):
+def dvd_releases(url):
     items = []
     movies = []
-    list = list.replace(' ', '_').lower()
-    if list == "top_rentals":
-        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?country=us&apikey=crcvkfzgky27e276ug8pjckt")
-    elif list == "upcoming":
-        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/upcoming.json?page_limit=16&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
-    else:
-        url = "%s%s%s" % ("http://api.rottentomatoes.com/api/public/v1.0/lists/dvds/",list, ".json?limit=16&page=1&country=us&apikey=crcvkfzgky27e276ug8pjckt")
-    try:
-        body = get_url(url, cache=CACHE_PATH)
-        try:
-            all_mov = regex_get_all(body, '{"id"', '}}')
-            for mov in all_mov:
-                try:
-                    imdb_id = "%s%s" % ("tt", regex_from_to(mov, 'imdb":"', '"}'))
-                except:
-                    imdb_id = ""
-                name = regex_from_to(mov, 'title":"', '","year')
-                year = regex_from_to(mov, 'year":', ',"')
-                rating = regex_from_to(mov, 'critics_score":', ',"')
-                votes = regex_from_to(mov, 'audience_score":', '}')
-
-                movies.append({'imdb_id': imdb_id, 'name': name, 'year': year, 'rating': rating, 'votes': votes})
-        except:
-            xbmc.log("[What the Furk...XBMCHUB.COM] Rotten Tomatoes regex error")
-            display_error("Unable to scrape rottentomatoes.com", "Page structure may have changed")
-    except:
-        xbmc.log("[What the Furk...XBMCHUB.COM] Rotten Tomatoes URL request timed out")
-        display_error("Rotten Tomatoes URL request timed out", "Is the website down?")
-        movies.append({'imdb_id': "", 'name': "error", 'year': "visit www.xbmchub.com", 'rating': "", 'votes': ""})
+    body = get_url(url, cache=CACHE_PATH)#thumb,w,h,title,year
+    data = regex_from_to(body, '<div class="rline"></div>', '<br />')
+    match = re.compile('<img src="(.+?)" width="(.+?)" height="(.+?)" alt="(.+?) (.+?)"').findall(data)
+    for thumb,w,h,name,year in match:
+        print name
+        thumb = 'http://www.ondvdreleases.com' + thumb
+        imdb_id = ""
+        year = year
+        rating = ""
+        votes = ""
+        addDir(clean_file_name(name),'url','movie result menu',thumb)
+    return create_movie_items(movies,"","") 
     
-    return create_movie_items(movies,"","")
 
 def threed_menu():#
     items = []
@@ -2259,19 +2242,26 @@ def episode_dialog(data, imdb_id, strm=False):################### SEARCH TV ARCH
             url = f.url_dl
             id = f.id
             video_info = f.video_info
-            match = re.compile('Duration: (.+?), start: (.+?),').findall(video_info)
-            match2 = re.compile('bitrate: (.+?) ').findall(video_info)
-            match1 = re.compile('Video: (.+?), (.+?), (.+?),').findall(video_info.replace('[',''))
-            for duration, start in match:
-                duration = duration.split('.')
-                length = duration[0]
-                timestr = duration[0]
-                ftr = [3600,60,1]
-                duration = sum([a*b for a,b in zip(ftr, map(int,timestr.split(':')))])
-            for format, color, vid_info in match1:
-                vid_info = "%s %s" % (format, vid_info)
-            for bitrate in match2:
-                br = bitrate.replace('kb/s','')
+            
+            try:
+                match = re.compile('Duration: (.+?), start: (.+?),').findall(video_info)
+                for duration, start in match:
+                    duration = duration.split('.')
+                    length = duration[0]
+                    timestr = duration[0]
+                    ftr = [3600,60,1]
+                    duration = sum([a*b for a,b in zip(ftr, map(int,timestr.split(':')))])
+                match2 = re.compile('bitrate: (.+?) ').findall(video_info)
+                match1 = re.compile('Video: (.+?), (.+?), (.+?),').findall(video_info.replace('[',''))
+            
+                for format, color, vid_info in match1:
+                    vid_info = "%s %s" % (format, vid_info)
+                for bitrate in match2:
+                    br = bitrate.replace('kb/s','')
+            except:
+                duration=""
+                br=1
+                vid_info=""
             is_ready = f.is_ready
             info_hash = f.info_hash
             size = f.size
@@ -3800,7 +3790,7 @@ def set_resolved_to_dummy():
     xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
 
 
-def search_furk(query, match, sort='cached', filter=FURK_RESULTS, moderated=FURK_MODERATED):
+def search_furk(query, match, sort=FURK_SORT+',size', filter=FURK_RESULTS, moderated=FURK_MODERATED):
     query = clean_file_name(query)
     query = query.replace('\'', ' ')
     if not login_at_furk():
@@ -3809,11 +3799,11 @@ def search_furk(query, match, sort='cached', filter=FURK_RESULTS, moderated=FURK
     files = []
     if type(query).__name__ == 'list':
         for q in query:
-            search_result = FURK.search(q, match, filter=FURK_RESULTS, moderated=FURK_MODERATED)
+            search_result = FURK.search(q, match, sort=FURK_SORT+',size', filter=FURK_RESULTS, moderated=FURK_MODERATED)
             if search_result.query_changed == None:
                 files.extend(search_result.files)
     else:
-        search_result = FURK.search(query, match, filter=FURK_RESULTS, moderated=FURK_MODERATED)
+        search_result = FURK.search(query, match, sort=FURK_SORT+',size', filter=FURK_RESULTS, moderated=FURK_MODERATED)
         if search_result.query_changed == None:
             files = search_result.files
     return files
@@ -4527,11 +4517,7 @@ def create_actor_list_item(name, photo, imdb_id, profession):
 def create_movie_list_item(name, imdb_id, rating, votes):
     contextMenuItems = []
     if mode == "dvd releases menu" and name!="error (visit www.xbmchub.com)":
-        ratings = '[COLOR cyan]' + "[%s: %s %s: %s]" % ("Critics", rating, "User", votes) + '[/COLOR]'
-        if name.find(">>> Next Page")>0 or rating == "" or rating == "0" or IMDB_RATING == False:
-            listname = clean_file_name(name, use_blanks=False)
-        else:
-            listname = "%s - %s" % (clean_file_name(name, use_blanks=False), ratings)
+        listname = clean_file_name(name, use_blanks=False)
     else:
         ratings = '[COLOR cyan]' + "[imdb: %s]" % (rating) + '[/COLOR]'
         if name.find(">>> Next Page")>0 or mode == "similartitles menu" or mode == "similartitles tv menu" or rating == "" or rating == "0" or IMDB_RATING == False:
@@ -4979,7 +4965,7 @@ def get_menu_items(name, mode, data, imdb_id):
     elif mode  == "browse context menu":
         items = t_file_dialog_movie(name, data, imdb_id, strm=False)
     elif mode == "dvd releases menu":
-        items, missing_meta = dvd_releases(str(name).lower())
+        items, missing_meta = dvd_releases(data)
         get_missing_meta(missing_meta, 'movies')
         setView('movies', 'movies-view')
         enable_sort = XBMC_SORT#

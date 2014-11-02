@@ -1,4 +1,4 @@
-import urllib,urllib2,re,xbmcplugin,xbmcgui,os
+import urllib,urllib2,re,xbmcplugin,xbmcgui,os,xbmcaddon,extract
 import time,datetime
 from datetime import date, timedelta
 import settings
@@ -6,13 +6,26 @@ import json
 from t0mm0.common.net import Net
 net = Net()
 import cookielib
-
+local=xbmcaddon.Addon(id='plugin.video.smoothschedule')
+SMOOTHSTREAMSADDON = xbmcaddon.Addon(id='plugin.video.mystreamstv.beta')
+SS_quality=SMOOTHSTREAMSADDON.getSetting('high_def')
+SS_server_type=SMOOTHSTREAMSADDON.getSetting('server_type')
+SS_server=SMOOTHSTREAMSADDON.getSetting('server')
+SS_service=SMOOTHSTREAMSADDON.getSetting('service')
+SS_Suname=SMOOTHSTREAMSADDON.getSetting('SUserN')
+SS_Spwd=SMOOTHSTREAMSADDON.getSetting('SPassW')
+ENABLE_SUBS = settings.enable_subscriptions()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.smoothschedule', 'fanart.jpg'))
 art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.smoothschedule/art', ''))
 cookie_jar = settings.cookie_jar()
 USER = settings.username()
 PW = settings.user_password()
-
+SS_library=xbmc.translatePath(os.path.join('special://home/addons/plugin.video.mystreamstv.beta', 'default.py'))
+xml_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.smoothschedule'), 'smooth_epg.xml')
+xml_url='http://cdn.smoothstreams.tv/schedule/feed.xml'
+m3u_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.smoothschedule'), 'smooth.m3u')
+logo_archive = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.smoothschedule/art', 'pvrlogos.zip'))
+logo_path = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.smoothschedule'), '')
 
 TIMEZONE = settings.timezone()
 
@@ -24,6 +37,8 @@ t2 = (i + timedelta(days=2)).strftime('%Y-%m-%d')
 t3 = (i + timedelta(days=3)).strftime('%Y-%m-%d')
 t4 = (i + timedelta(days=4)).strftime('%Y-%m-%d')
 t5 = (i + timedelta(days=5)).strftime('%Y-%m-%d')
+
+if not os.path.exists(os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.smoothschedule'), 'pvrlogos')): extract.all(logo_archive,logo_path)
 
 def GET_URL(url):
     header_dict = {}
@@ -60,6 +75,8 @@ def open_url(url):
     return link
 
 def main_menu():
+    addDir('Create m3u playlist for IPTV Simple PVR','0',50,"")
+    addDir('PVR Help','0',51,"")
     addDir('Channels','http://smoothstreams.tv/schedule/?cat=0&js=1&timezone=%s&hours=6' % TIMEZONE,5,xbmc.translatePath(os.path.join(art, 'channels.png')))
     addDir('All','0',3,xbmc.translatePath(os.path.join(art, 'allsports.png')))
     addDir('Football','24',3,xbmc.translatePath(os.path.join(art, 'football.png')))
@@ -86,7 +103,7 @@ def main_menu():
     addDir('Wrestling','39',3,xbmc.translatePath(os.path.join(art, 'wrestling.gif')))
 	
 def channels(name,url,iconimage):
-    link =GET_URL(url).replace("'", '"').replace("|", '<>')
+    link =GET_URL(url).encode('utf-8','ignore').replace("'", '"').replace("|", '<>')
     all_ch = regex_get_all(link, '<ul class="row">', '</ul>')
     for a in all_ch:
         all_li = regex_get_all(a, '<li', '</li>')
@@ -110,7 +127,7 @@ def CATEGORIES(name,url,iconimage):
     addDir(t5,'http://smoothstreams.tv/schedule/list.php?cat=%s&js=1&timezone=%s&day=%s&auto=null' % (url,TIMEZONE, t5),1,iconimage)
 		
 def listings(name, url):
-    link =GET_URL(url).replace("'", '"').replace("|", '<>')
+    link =GET_URL(url).encode('utf-8','ignore').replace("'", '"').replace("|", '<>')
     match = re.compile('<li class=(.+?) style="color:(.+?)">(.+?) <> <i>(.+?)</i> <> (.+?)</li>').findall(link)
     for cl,color,dttime,channel,title in match:
         endtime = dttime[11:]
@@ -135,8 +152,109 @@ def listings(name, url):
                 if name != t0 or(name == t0 and (endtime > t0time or endtime < starttime)):
                     addDirPlayable(title,url,2,iconimage)
 
+def write():
+    mystreams=read_from_file(SS_library)
+    pl_name=regex_from_to(mystreams,'plugin = "', '"')
+    pl_version=regex_from_to(mystreams,'version = "', '"')
+    ua='|User-Agent=SmoothStreams.tv+Beta-' + pl_version
 
+    if SS_server=='0':
+        server="dEU.SmoothStreams.tv"
+    elif SS_server=='1':
+        server="d88.SmoothStreams.tv"
+    elif SS_server=='2':
+        server="d11.SmoothStreams.tv"
+    elif SS_server=='3':
+        server="dNAE.SmoothStreams.tv"
+    elif SS_server=='4':
+        server="dNAW.SmoothStreams.tv"
+    elif SS_server=='5':
+        server="dNA.SmoothStreams.tv"
+    elif SS_server=='6':
+        server="dSG.SmoothStreams.tv"
 	
+    if SS_quality == "true":
+        quality = "q1"
+    else:
+        quality = "q2"
+    if SS_server_type == "0":
+        if SS_service == "1":
+            stream_port = "2935"
+        elif SS_service in ["0"]:
+            stream_port = "29350"
+        elif SS_service == "2":
+            stream_port = "3935"
+        elif SS_service == "3":
+            stream_port = "5540"
+    else:
+        if SS_service == "1":
+            stream_port = "12935"
+        elif SS_service in ["0"]:
+            stream_port = "29355"
+        elif SS_service == "2":
+            stream_port = "39355"
+        elif SS_service == "3":
+            stream_port = "5545"
+
+    urllib.urlretrieve(xml_url, xml_path)
+    #Write M3U
+    write_to_file(m3u_path, '#EXTM3U tvg-shift=3\n', False)
+    link=read_from_file(xml_path)
+    all_ch = regex_get_all(link, '<channel', '</channel>')
+    for a in all_ch:
+        ch_id = regex_from_to(a, 'id="', '"')
+        ch_name = regex_from_to(a, 'display-name>', '</display-name>')
+        ch_num=ch_name.split(' - ')[0]
+        ch_title=ch_name.split(' - ')[1]
+        if SS_server_type == "0":
+            write_to_file(m3u_path, '#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s.png" group-title="Smoothstreams",%s\nrtmp://%s:%s/view?u=%s&p=%s/ch%s%s.stream\n' % (ch_id,ch_name,ch_name,ch_title,server,stream_port,SS_Suname,SS_Spwd,ch_num,quality), True)
+        else:
+            write_to_file(m3u_path, '#EXTINF:-1 tvg-id="%s" tvg-name="%s" tvg-logo="%s.png" group-title="Smoothstreams",%s\nhttp://%s:%s/view/ch%s%s.stream/playlist.m3u8?u=%s&p=%s%s\n' % (ch_id,ch_name,ch_name,ch_title,server,stream_port,ch_num,quality,SS_Suname,SS_Spwd,ua), True)
+    local.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=2)).split('.')[0])
+	
+def help(text): header="[B][COLOR red]"+text+"[/B][/COLOR]"; msg=os.path.join(local.getAddonInfo('path'),'resources','textbox','help.txt'); TextBoxes(header,msg)
+
+def TextBoxes(heading,anounce):
+        class TextBox():
+            """Thanks to BSTRDMKR for this code:)"""
+            WINDOW=10147; CONTROL_LABEL=1; CONTROL_TEXTBOX=5 # constants
+            def __init__(self,*args,**kwargs):
+                xbmc.executebuiltin("ActivateWindow(%d)" % (self.WINDOW,)) # activate the text viewer window
+                self.win=xbmcgui.Window(self.WINDOW) # get window
+                xbmc.sleep(500) # give window time to initialize
+                self.setControls()
+            def setControls(self):
+                self.win.getControl(self.CONTROL_LABEL).setLabel(heading) # set heading
+                try: f=open(anounce); text=f.read()
+                except: text=anounce
+                self.win.getControl(self.CONTROL_TEXTBOX).setText(text); return
+        TextBox()
+		
+def write_to_file(path, content, append, silent=False):
+    try:
+        if append:
+            f = open(path, 'a')
+        else:
+            f = open(path, 'w')
+        f.write(content)
+        f.close()
+        return True
+    except:
+        if not silent:
+            print("Could not write to " + path)
+        return False
+		
+def read_from_file(path, silent=False):
+    try:
+        f = open(path, 'r')
+        r = f.read()
+        f.close()
+        return str(r)
+    except:
+        if not silent:
+            print("Could not read from " + path)
+        return None
+		
 def run_smooth(name, url, iconimage):
     print "URL IS " + url
     xbmc.Player().play(url)
@@ -236,7 +354,10 @@ print "URL: "+str(url)
 print "Name: "+str(name)
 
 if mode==None or url==None or len(url)<1:
-    login()
+    try:
+        login()
+    except:
+        pass
     main_menu()
        
 elif mode==1:
@@ -250,6 +371,12 @@ elif mode==3:
 	
 elif mode==5:
     channels(name,url,iconimage)
+	
+elif mode==50:
+    write()
+	
+elif mode==51:
+    help(name)
 		
 
 		

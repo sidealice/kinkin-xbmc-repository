@@ -1,4 +1,5 @@
 <strings>
 	<!-- Settings -->
     <string id="10001">Timezone</string>
+    <string id="10002">Enable PVR updates</string>
 </strings>

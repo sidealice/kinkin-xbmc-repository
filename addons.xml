@@ -308,7 +308,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.smoothschedule"
        name="Smooth Schedule"
-       version="0.6.0"
+       version="1.0.0"
        provider-name="Kinkin">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
@@ -317,6 +317,9 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
                	library="default.py">
         <provides>video</provides>
     </extension>
+    <extension point="xbmc.service"
+        library="service.py" start="startup">
+	</extension>
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
         <summary>An easier to read schedule for Smoothstreams</summary>

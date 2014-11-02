@@ -4,12 +4,18 @@ import os
 ADDON = xbmcaddon.Addon(id='plugin.video.smoothschedule')
 SMOOTHSTREAMSADDON = xbmcaddon.Addon(id='plugin.video.mystreamstv.beta')
 DATA_PATH = os.path.join(xbmc.translatePath('special://profile/addon_data/plugin.video.smoothschedule'), '')
-
+	
 def username():
     return SMOOTHSTREAMSADDON.getSetting('username')
 	
 def user_password():
     return SMOOTHSTREAMSADDON.getSetting('user_password')
+	
+def enable_subscriptions():
+    if ADDON.getSetting('enable_subscriptions') == "true":
+        return True
+    else:
+        return False
 
 def timezone():
     timezone = ADDON.getSetting('timezone')

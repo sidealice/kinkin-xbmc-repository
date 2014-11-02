@@ -1,0 +1,28 @@
+To use the Live TV function with Smoothstreams you will need to enable Live TV and install/enable the PVR IPTV Simple client.
+
+To do this:
+
+1. In Smooth Schedule, go to settings and enable m3u updates.
+2. Now in Smooth Schedule,select "Create m3u playlist for IPTV Simple PVR.
+3. In Settings/Live TV/, make sure the "Enabled" option is activated
+4. In Settings/Addons/Disabled addons, enable PVR IPTV Simple
+5. Configure IPTV Simple as follows:
+
+General:
+Set Location to "Local Path"
+Set M3U Playlist path to ".....userdata/addon_data/plugin.video.smoothschedule/smooth.m3u"	
+
+EPG Settings:
+Set Location to "Local Path"
+Set XMLTV path to ".....userdata/addon_data/plugin.video.smoothschedule/smooth_epg.xml"	
+
+Channel Logos:
+Set Location to "Local Path"
+Set Channel logos folder to ".....userdata/addon_data/plugin.video.smoothschedule/pvrlogos/"
+
+Select OK. PVR will restart.
+
+In Settings/Live TV, uncheck "Do not show No Information available labels"
+	
+
+

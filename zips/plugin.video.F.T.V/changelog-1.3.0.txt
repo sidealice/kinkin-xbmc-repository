@@ -7,7 +7,7 @@ Fixed url error for Non-Geo channels
 Fixed new UK Live channel ITVBe
 Added ITVBe to Non-Geo
 
-1.2.8a
+1.2.8
 Added another fox for non UK users streaming UK via FTV Guide
 Install new FTV Guide Repo
 
@@ -111,6 +111,7 @@ Added new category "Disney Junior Videos"
 1.0.10
 Fixed script errors
 
+
 1.0.9
 Fixed change in page source returning no channels
 
@@ -144,7 +145,7 @@ Added settings to enable/disable "My Video Addons", "My Audio Addons" and "Other
 1.0.1
 Added Most Watched menu
 Added context option to add to xbmc favourites
-Changed FilmOn option text to "Add to My Channels"
+Changed FilmOn option to "Add to My Channels"
 
 1.0.0
 Initial release

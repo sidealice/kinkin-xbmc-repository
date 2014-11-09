@@ -135,9 +135,9 @@ def group_channels(url, title,alias):
     for channel in channels:
         channel_id = regex_from_to(channel, '"id":', ',')
         title = regex_from_to(channel, 'title":"', '",').encode("utf-8")
+        name_lst.append(title)
         if SHOW_ID:
             title="%s (%s)" % (title,channel_id)
-        name_lst.append(title)
         if not 'description":null' in channel:
             description = clean_file_name(regex_from_to(channel, 'description":"', '",'), use_blanks=False)
         else:

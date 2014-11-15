@@ -17,15 +17,12 @@ from threading import Thread
 import cookielib
 from t0mm0.common.net import Net
 from helpers import clean_file_name
+import requests
 import urlresolver
 from metahandler import metahandlers
 metainfo = metahandlers.MetaData()
 net = Net()
-if os.path.exists(xbmc.translatePath("special://home/addons/")+'script.module.hubparentalcontrol'):
-    HUBPC = True
-    from hubparentalcontrol import parentalcontrol
-else:
-    HUBPC = False
+
 
 
 ADDON = settings.addon()
@@ -72,6 +69,23 @@ def open_url(url,referer, cache_time=3600):
         net.save_cookies(cookie_jar)
         write_to_file(cache_file, link)
         return link
+		
+def check_url(url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0')
+    try:
+        response = urllib2.urlopen(req)
+        link=response.read()
+        write_to_file(cache_file, link)
+        response.close()
+        return True
+    except urllib2.URLError as e:
+        if hasattr(e, 'reason'):
+            print 'Failed. Reason: ' + e.reason
+            return False
+        elif hasattr(e, 'code'):
+            print 'Error code: ', e.code
+            return False
 	
 def open_gurl(url, cache_time=3600):
     req = urllib2.Request(url)
@@ -86,12 +100,23 @@ def open_gurl(url, cache_time=3600):
         if r:
             return r
     else:
-        response = urllib2.urlopen(req)
-        link=response.read()
-        write_to_file(cache_file, link)
-        print "FliXanity.........NO CACHE"
-        response.close()
-        return link
+        try:
+            response = urllib2.urlopen(req)
+            link=response.read()
+            write_to_file(cache_file, link)
+            print "FliXanity.........NO CACHE"
+            response.close()
+            return link
+        except urllib2.URLError as e:
+            if hasattr(e, 'reason'):
+                print 'We failed to reach a server. Reason: ' + e.reason
+                #print e.reason
+                return e.reason
+            elif hasattr(e, 'code'):
+                print 'The server could not fulfill the request.'
+                print 'Error code: ', e.code
+                return "error"
+        
 	
 def get_file_age(file_path):
     try:    
@@ -258,7 +283,7 @@ def tvschedule(url):
                 if AUTOPLAY:
                     addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
                 else:
-                    addDir(name, url,2,iconimage, showname,'sh',infoLabels=infoLabels)
+                    addDir(name, url,2,iconimage, showname,showname,infoLabels=infoLabels)
             except:
                 pass
     setView('episodes', 'episodes-view')
@@ -302,7 +327,7 @@ def Main(name,url,page,pagin):
     nextpage = int(page) + 1
     referer = 'http://www.flixanity.com/'
     link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
-    data = regex_from_to(link, 'MAIN CONTAINER', 'div id="footer')
+    data = regex_from_to(link, '<section class="cardBox flip">', 'Privacy Policy')
     match = re.compile('<div class=(.+?)<img class="img-preview spec-border"(.+?)src="(.+?)" alt="(.+?)<h3><a href="(.+?)">(.+?)</a></h3>').findall(data)
     if '<>' in pagin:
         nAllItem = len(match)
@@ -355,9 +380,9 @@ def Main(name,url,page,pagin):
                     year = ''
                 name2 = "%s%s [COLOR cyan]%s[/COLOR]" % (name.replace('\u00e0', 'a'), year, HD)
                 if AUTOPLAY:
-                    addDirPlayable(name2, url,2,iconimage, 'movies',infoLabels=infoLabels)
+                    addDirPlayable(name2, url,2,iconimage, name,infoLabels=infoLabels)
                 else:
-                    addDir(name2, url,2,iconimage, title,'movies',infoLabels=infoLabels)
+                    addDir(name2, url,2,iconimage, title,name,infoLabels=infoLabels)
                 setView('movies', 'movies-view')
             else:
                 if ENABLE_META:
@@ -379,7 +404,7 @@ def Main(name,url,page,pagin):
                     iconimage=thumb
                     year = ''
                 name2 = "%s%s [COLOR cyan]%s[/COLOR]" % (name.replace('\u00e0', 'a'), year, HD)
-                addDir(name2, url,103,iconimage, 'sh',title,infoLabels=infoLabels)
+                addDir(name2, url,103,iconimage, showname,title,infoLabels=infoLabels)
                 setView('tvshows', 'tvshows-view')
     if not '<>' in pagin:#'Box Office' not in nm and 'New Movies' not in nm and 'New Episodes' not in nm and not 'shows' in url1 and not 'tv-tags' in url1
         addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'a')
@@ -391,8 +416,8 @@ def tvseries_seasons(name,url,thumb,showname):
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
     link = open_gurl(url)
-    data = regex_from_to(link, 'id="season-list"', '</ul>')
-    match = re.compile("<a href='(.+?)'>(.+?)</a>").findall(data)
+    data = regex_from_to(link, '<select name="sortSeason', '</select')
+    match = re.compile('value="(.+?)" >(.+?)</option>').findall(data)
     for url, title in match:
         if ENABLE_META:
             season = title.replace('Season ', '')
@@ -408,7 +433,7 @@ def tvseries_seasons(name,url,thumb,showname):
         else:
             infoLabels =None
             iconimage=thumb
-        addDir(title, url,104,iconimage, 'sh', showname,infoLabels=infoLabels)
+        addDir(title, url,104,iconimage, showname, showname,infoLabels=infoLabels)
     setView('seasons', 'seasons-view')
 		
 def tvseries_episodes(name, url, thumb, showname):
@@ -417,7 +442,7 @@ def tvseries_episodes(name, url, thumb, showname):
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
     link = open_gurl(url)
-    all_episodes = regex_get_all(link, '<li class="episodes">', '<span class="item-overlay">')
+    all_episodes = regex_get_all(link, '<li class="episode ">', '</li>')
     for a in all_episodes:
         thumb = regex_from_to(a, 'show-thumbnail"  src="', '"')
         titleurl = regex_from_to(a, '<a class="link"', '</a>')
@@ -444,7 +469,7 @@ def tvseries_episodes(name, url, thumb, showname):
         if AUTOPLAY:
             addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
         else:
-            addDir(name, url,2,iconimage, 'sh', showname,infoLabels=infoLabels)
+            addDir(name, url,2,iconimage, showname, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
     if ENABLE_META:
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_EPISODE)
@@ -485,7 +510,7 @@ def new_episodes(name, url, thumb):
                 if AUTOPLAY:
                     addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
                 else:
-                    addDir(name, url,2,iconimage, 'sh', showname,infoLabels=infoLabels)
+                    addDir(name, url,2,iconimage, showname, showname,infoLabels=infoLabels)
             except:
                 pass
     setView('episodes', 'episodes-view')
@@ -545,9 +570,9 @@ def search_movie(name,query):
                 name = title
             name = "%s%s" % (name.replace('\u00e0', 'a'), year)
             if AUTOPLAY:
-                addDirPlayable(name, url,2,iconimage, 'movies',infoLabels=infoLabels)
+                addDirPlayable(name, url,2,iconimage, name,infoLabels=infoLabels)
             else:
-                addDir(name, url,2,iconimage, '','movies',infoLabels=infoLabels)
+                addDir(name, url,2,iconimage, '',name,infoLabels=infoLabels)
             setView('movies', 'movies-view')
 		
 def search_show(name,query):
@@ -593,24 +618,17 @@ def search_show(name,query):
                 name = title
                 year = ''
             name = "%s%s" % (name.replace('\u00e0', 'a'), year)
-            addDir(name.encode('utf-8'), url,103,iconimage, 'sh',name.encode('utf-8'),infoLabels=infoLabels)
+            addDir(name.encode('utf-8'), url,103,iconimage, showname,name.encode('utf-8'),infoLabels=infoLabels)
     setView('tvshows', 'tvshows-view')
 		
 def links(name,url,iconimage,showname):
-    if HUBPC:
-        if showname == 'movies':
-            PC = parentalcontrol.checkrating(name,None,None,'movies')
-        else:
-            PC = parentalcontrol.checkrating(showname,None,None,'tvshow')
-        if PC != 'PC_PLAY':
-            return
     urllist = []
     dp = xbmcgui.DialogProgress()
     dp.create("FliXanity",'Searching for links')
     dp.update(0)
     dialog = xbmcgui.Dialog()
     link = open_gurl(url)
-    link = link.replace('IFRAME SRC', 'iframe src')
+    link = link.replace('IFRAME SRC', 'iframe src')#<iframe src="
     embeds = regex_from_to(link, 'var embeds', '</script>')
     links = regex_get_all(embeds, ' src="', '"')
     nItem = len(links)
@@ -637,22 +655,20 @@ def links(name,url,iconimage,showname):
             return
         if AUTOPLAY:
             try:
+                #if not 'googlevideo' in url or ('googlevideo' in url and check_url(url)):
                 dp = xbmcgui.DialogProgress()
                 dp.create("FliXanity: Trying Links",titlelist)
                 play(title,url,iconimage,name)
                 return
             except:
                 pass
-        addDirPlayable(title,url,3,iconimage,name)
+        
+        else:
+            #if not 'googlevideo' in url or ('googlevideo' in url and check_url(url)):
+            addDirPlayable(title,url,3,iconimage,name)
 			
 def stream_links(name,url,iconimage,showname):
-    if HUBPC:
-        if showname == 'movies':
-            PC = parentalcontrol.checkrating(name,None,None,'movies')
-        else:
-            PC = parentalcontrol.checkrating(showname,None,None,'tvshow')
-        if PC != 'PC_PLAY':
-            return
+
     urllist = []
     menu_texts = []
     menu_data = []
@@ -708,10 +724,41 @@ def stream_links(name,url,iconimage,showname):
 
 		
 def play(name, url, iconimage, showname):
-    if 'googlevideo' in url:
+    #dp = xbmcgui.DialogProgress()
+    #dp.create(showname,'Resolving Link')
+    #dp.update(25)
+    if 'docs.google.com' in url:
+        link = open_gurl(url)
+        stream = regex_from_to(link, 'fmt_stream_map', 'fmt_list')
+        playlink = 'https' + regex_from_to(stream,'https', 'https').replace('|','').replace('\u003d', '=').replace('\u0026', '&')
+    elif 'mooshare' in url:
+        header_dict = {}
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header_dict['Accept-Encoding'] = 'gzip, deflate'
+        header_dict['Accept-Language'] = 'en-US,en;q=0.5'
+        header_dict['Host'] = 'mooshare.biz'
+        header_dict['Referer'] = url
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+        header_dict['Connection'] = 'keep-alive'
+        url= url + '?play=1&confirm=Close+Ad+and+Watch+as+Free+User'
+        link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+        url1 = regex_from_to(link,'file: "', '"')
+        #if check_url(url1):
+        playlink=url1
+    elif 'googlevideo' in url:
+        #if check_url(url):
         playlink = url
+    elif 'm.genvideos' in url:
+        response = requests.get(url,allow_redirects=False)
+        url1 = response.headers['location']
+        #if check_url(url1):
+        playlink=url1
+        #dp.update(50, name,'Resolving Link')
     else:
-       playlink = resolve_url(url)
+        playlink = resolve_url(url)
+        #dp.update(50, showname,'Resolving Link')
+    #if dp.iscanceled():
+        #return
     listitem = xbmcgui.ListItem(showname, iconImage=iconimage, thumbnailImage=iconimage, path=playlink)
     xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
     handle = str(sys.argv[1])    
@@ -721,14 +768,34 @@ def play(name, url, iconimage, showname):
     else:
         xbmcPlayer.play(playlink, listitem)
 	
-def resolve_url(url): 
-    if 'docs.google.com' in url:
-        link = open_gurl(url)
-        stream = regex_from_to(link, 'fmt_stream_map', 'fmt_list')
-        playlink = 'https' + regex_from_to(stream,'https', 'https').replace('|','').replace('\u003d', '=').replace('\u0026', '&')
-    elif 'vodlocker' in url:
+def resolve_url(url):
+    #link = open_gurl(url)
+    if 'vodlocker' in url:
         link = open_gurl(url)
         playlink = regex_from_to(link, 'file: "', '"')
+    elif 'my.mail.ru' in url:
+        url=url.replace('/embed','').replace('.html','.json?ver=0.2.56')
+        link = open_gurl(url)
+        try:
+            playlink=regex_from_to(link, '480p","url":"', '"')
+        except:
+            playlink=regex_from_to(link, '360p","url":"', '"')
+        prov_id=regex_from_to(link, 'provider":"', '"')
+        acc_id=regex_from_to(link, 'accId":', ',')
+        ext_id=regex_from_to(link, 'externalId":"', '"')#.replace('/', '\/')
+        #form_data='{"sid":"5048840355840","id":"86308546019328","itemId":"","accid":"%s","externalId":"%s","version":"0.2.56","batch":[{"name":"inited"}],"providerId":"%s","statVersion":2}' % (acc_id,ext_id,prov_id)
+        form_data = '{"sid":"204533347647488","batch":[{"name":"inited"}],"externalId":"%s","providerId":"%s","version":"0.2.56","id":"86308546019328","statVersion":2,"itemId":"","accid":"%s"}' % (ext_id,prov_id,acc_id)
+        header_dict = {}
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header_dict['Accept-Encoding'] = 'gzip, deflate'
+        header_dict['Host'] = 'pump.video.mail.ru'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0'
+        header_dict['Connection'] = 'keep-alive'#
+        r = requests.post('http://pump.video.mail.ru/', data=json.dumps(form_data), headers=header_dict)
+        print r.text
+
+        #link = net.http_POST(url, form_data=form_dict, headers=header_dict).content
+        #playlink=urllib.unquote(playlink)
     elif 'played.to' in url:
         header_dict = {}
         header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -846,19 +913,13 @@ def resolve_url(url):
             try:
                 playlink = urlresolver.resolve(url)
             except:
-                pass
+                notification('Video not available', url, '2000', iconart)
     return playlink
 	
 def view_trailer(name, url, iconimage,showname):
     if ' (' in name:
         name = name.split(' (')[0]
-    if HUBPC:
-        if showname == 'movies':
-            PC = parentalcontrol.checkrating(name,None,None,'movies')
-        else:
-            PC = parentalcontrol.checkrating(showname,None,None,'tvshow')
-        if PC != 'PC_PLAY':
-            return
+
     menu_texts = []
     menu_data = []
     menu_res = []
@@ -988,7 +1049,7 @@ def favourites():
                     infoLabels =None
                     iconimage=thumb
                     name = title
-                addDir(name, url,103,iconimage, 'sh',name,infoLabels=infoLabels)
+                addDir(name, url,103,iconimage, showname,name,infoLabels=infoLabels)
                 setView('episodes', 'episodes-view')
 				
 def favourite_movies():
@@ -1016,9 +1077,9 @@ def favourite_movies():
                     iconimage=thumb
                     name = title
                 if AUTOPLAY:
-                    addDirPlayable(name, url,2,iconimage, 'movies',infoLabels=infoLabels)
+                    addDirPlayable(name, url,2,iconimage, name,infoLabels=infoLabels)
                 else:
-                    addDir(name, url,2,iconimage, '','movies',infoLabels=infoLabels)
+                    addDir(name, url,2,iconimage, name,name,infoLabels=infoLabels)
                 setView('movies', 'movies-view')
 
 				
@@ -1047,7 +1108,7 @@ def subscriptions():
                     infoLabels =None
                     iconimage=thumb
                     name = title
-                addDir(name, url,103,iconimage, 'sh',name,infoLabels=infoLabels)
+                addDir(name, url,103,iconimage, showname,name,infoLabels=infoLabels)
                 setView('episodes', 'episodes-view')
 
 def add_favourite(name, url, iconimage, dir, text):
@@ -1372,13 +1433,13 @@ def addDir(name,url,mode,iconimage,list,showname,infoLabels=None):
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
-def addDirPlayable(name,url,mode,iconimage,showname,infoLabels=None):
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&showname="+urllib.quote_plus(showname)
+def addDirPlayable(name,url,mode,iconimage,list,infoLabels=None):
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+urllib.quote_plus(list)
         list1 = "%s<>%s<>%s" % (name.lower(),url,iconimage)
         list2 = "%s<>%s<>%s" % (name,url,iconimage)
         ok=True
         contextMenuItems = []
-        contextMenuItems.append(("[COLOR lime]Download[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=25&iconimage=%s)'%(sys.argv[0], urllib.quote(showname), urllib.quote(url), urllib.quote(iconimage))))
+        contextMenuItems.append(("[COLOR lime]Download[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=25&iconimage=%s)'%(sys.argv[0], urllib.quote(list), urllib.quote(url), urllib.quote(iconimage))))
         if showname == "movies":
             contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
             contextMenuItems.append(("[COLOR cyan]View Trailer[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=27&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
@@ -1494,10 +1555,10 @@ elif mode==1:
         Main(name,url,list,showname)        
        
 elif mode==2:
-        links(name,url,iconimage,showname)
+        links(name,url,iconimage,list)
 		
 elif mode==3:
-        play(name, url, iconimage, showname)
+        play(name, url, iconimage, list)
 
 elif mode==4:
         movie_genre_menu(url)

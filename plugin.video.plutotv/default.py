@@ -17,7 +17,9 @@ from t0mm0.common.net import Net
 from helpers import clean_file_name
 net = Net()
 
-
+ytplayerfixed = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.plutotv', 'helpers', 'YouTubePlayer.py'))
+ytplayerorig = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtube', 'YouTubePlayer.py'))
+ytplayerbak = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.plutotv', 'helpers', 'youtubeplayer_bak', 'YouTubePlayer.py'))
 ADDON = settings.addon()
 FAV = settings.favourites_file()
 HIDE_PLUTO = settings.hide_pluto_vid()
@@ -79,6 +81,7 @@ def CATEGORIES(name):
             LOGIN()
         except:
             pass
+    addDirPlayable("Apply YouTube Fix",'url',999,iconart, '')
     addDir("All Channels", 'http://cdn-api.prod.pluto.tv/v1/channels.json',1,iconart, '','')
     addDir("Music", 'http://cdn-api.prod.pluto.tv/v1/channels.json',1,iconart, '','')
     addDir("News & Info", 'http://cdn-api.prod.pluto.tv/v1/channels.json',1,iconart, '','')
@@ -93,12 +96,12 @@ def CATEGORIES(name):
     addDir("Favourite Videos", 'url',9,iconart, '','')
 
 def all_channels(chname,url):
-    link = GET_URL(url)
-    match = re.compile('{"_id":"(.+?)","category":"(.+?)","description":"(.+?)","featuredImage":{"path":"(.+?)","title":""},"hash":"(.+?)","name":"(.+?)","number":(.+?)}').findall(link)
-    for id,cat,plot,thumb,hash,name,number in match:
+    link = GET_URL(url).replace('\n','').replace('\t','')
+    match = re.compile('"_id": "(.+?)",    "category": "(.+?)",    "featured": (.+?),    "featuredImage": {      "path": "(.+?)",      "title": "(.+?)"    },    "hash": "(.+?)",    "name": "(.+?)",    "number": (.+?),    "onDemand": (.+?),    "thumbnail": {      "path": "(.+?)",      "title": "(.+?)"    },    "visibility": "(.+?)",    "slug": "(.+?)",    "description": "(.+?)"  }').findall(link)
+    for id,cat,feat,art,title,hash,name,number,od,thumb,d1,vis,slug,plot in match:
         if chname == "All Channels":
             title = "%s - %s: %s" % (cat,number,name)
-            addDirPlayable(title,id,2,iconart,plot)
+            addDirPlayable(title,id,2,thumb,plot)
         elif chname == cat:
             title = "%s: %s" % (number,name)
             addDirPlayable(title,id,2,thumb,plot)
@@ -111,22 +114,23 @@ def channel_schedule(name,url,iconimage):
     t2 = i2.strftime('%Y-%m-%dT%H:00:00')
     url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
     link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
+    #print url,link
     ch_start = "%s%s" % ( url,'": <<')
     channel_info = regex_from_to(link,ch_start, ">>")
-    id2 = regex_get_all(channel_info, '"_id"', '}')
+    id2 = regex_get_all(channel_info, '{', '"channel"')
     for i in id2:
         start=regex_from_to(regex_from_to(i,'start": "','"'),'T', 'Z')
         stop=regex_from_to(regex_from_to(i,'stop": "','"'),'T', 'Z')
-        idstring = regex_from_to(channel_info, '"episode":', '"description"') 
+        idstring = regex_from_to(i, '"episode":', '"channel"') 
         id = 'sched' + regex_from_to(idstring, '_id": "', '"')
         plot=regex_from_to(i,'description": "','"')
-        name=regex_from_to(i,'name": "',' "').replace('",','')
+        name=regex_from_to(i,'name": "','"').replace('",','')
         title = "%s-%s  %s" % (start[:5],stop[:5],name)
         addDirPlayable(title,id,2,iconart,plot)
     setView('episodes', 'episodes-view')
         
 def play_channel(name,url,iconimage,clear):
-
+    origurl=url
     if not 'sched' in url:
         i = datetime.datetime.now()
         i2 = datetime.datetime.now() + timedelta(hours=8)
@@ -134,25 +138,32 @@ def play_channel(name,url,iconimage,clear):
         t2 = i2.strftime('%Y-%m-%dT%H:00:00')
         url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
         link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
-        channel_info = regex_from_to(link,url, "premiere")
-        idstring = regex_from_to(channel_info, '"episode":', '"description"') 
+        channel_info = regex_from_to(link,url, url)#"premiere"
+        idstring = regex_from_to(channel_info, '"episode":', '"channel"') 
         id = regex_from_to(idstring, '_id": "', '"')
+        start_time = regex_from_to(channel_info,'start": "', '"')
+        ch_start= datetime.datetime.fromtimestamp(time.mktime(time.strptime(start_time.replace('.000Z','').replace('T',' '), "%Y-%m-%d %H:%M:%S")))
+        ch_timediff=(i-ch_start).seconds
     else:
         id = url.replace('sched','')
+    
     dp = xbmcgui.DialogProgress()
     dp.create("Pluto.TV",'Creating Your Channel')
     dp.update(0)
     playlist=[]
     url = 'http://cdn-api.prod.pluto.tv/v2/episodes/%s/clips.json' % id
-    print url
     link = GET_URL(url)
     data = json.loads(link)
     nItem=len(data)
     pl = get_XBMCPlaylist(clear)
+    dur_sum=0
     for field in data:
         video_id = field['code']
         name = field['name']
         provider = field['provider']
+        dur=int(field['duration'])/1000
+        dur_start=dur_sum
+        dur_sum+=dur
         if provider == 'youtube':
             iconimage = 'https://i1.ytimg.com/vi/%s/hqdefault.jpg' % video_id
             url = str('plugin://plugin.video.youtube/?action=play_video&videoid=' +  video_id)
@@ -164,11 +175,22 @@ def play_channel(name,url,iconimage,clear):
         liz.setProperty('fanart_image', fanart)
         liz.setProperty("IsPlayable","true")
         if HIDE_PLUTO==False or (HIDE_PLUTO==True and 'pluto.tv' not in name.lower() and 'plutotv' not in name.lower() and name != 'Music 15 3'):
-            playlist.append((url, liz))
-            progress = len(playlist) / float(nItem) * 100               
-            dp.update(int(progress), 'Adding to channel',name)
-            if dp.iscanceled():
-                return
+            if 'sched' in origurl:
+                playlist.append((url, liz))
+                progress = len(playlist) / float(nItem) * 100               
+                dp.update(int(progress), 'Adding to channel',name)
+                if dp.iscanceled():
+                    return
+            else:
+                if dur_start<ch_timediff and dur_sum>ch_timediff:
+                    vid_offset=ch_timediff-dur_start
+                    liz.setProperty('ResumeTime', str(vid_offset) )
+                if dur_sum>ch_timediff:
+                    playlist.append((url, liz))
+                    progress = len(playlist) / float(nItem) * 100               
+                    dp.update(int(progress), 'Adding to channel',name)
+                    if dp.iscanceled():
+                        return
     for blob,liz in playlist:
         try:
             if blob:
@@ -183,6 +205,8 @@ def play_channel(name,url,iconimage,clear):
         else:
             try:
                 xbmc.Player().play(pl)
+                #time.sleep(1)
+                xbmc.Player().seekTime(vid_offset)
             except:
                 pass
 				
@@ -219,9 +243,8 @@ def browse_channel(name,url,iconimage,clear):
         t2 = i2.strftime('%Y-%m-%dT%H:00:00')
         url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
         link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
-        ch_start = "%s%s" % ( url,'": <<')
-        channel_info = regex_from_to(link,ch_start, ">>")
-        idstring = regex_from_to(channel_info, '"episode":', '"description"') 
+        channel_info = regex_from_to(link,url, url)#"premiere"
+        idstring = regex_from_to(channel_info, '"episode":', '"channel"') 
         id = regex_from_to(idstring, '_id": "', '"')
     else:
         id = url.replace('sched','')
@@ -283,8 +306,23 @@ def get_XBMCPlaylist(clear):
     pl=xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     if clear:
         pl.clear()
-    return pl	   
-
+    return pl
+	
+def youtubefix():
+    s = read_from_file(ytplayerorig)
+    f = open(ytplayerbak, 'w')
+    f.write(s)
+    f.close()
+	
+    s = read_from_file(ytplayerfixed)
+    f = open(ytplayerorig, 'w')
+    f.write(s)
+    f.close()
+	
+    #shutil.copy2(ytplayerorig, ytplayerbak)
+    #shutil.copy2(ytplayerfixed, ytplayercopyto)    
+    notification('YouTube Player Fix Applied', 'Fix Applied, original backed up', '3000', iconart)
+	
 def search():
     keyboard = xbmc.Keyboard('', 'Search TV Show', False)
     keyboard.doModal()
@@ -615,6 +653,9 @@ elif mode == 9:
 		
 elif mode == 10:
         remove_from_favourites(name, url, iconimage, FAV, "Removed from Favourites")
+		
+elif mode == 999:
+        youtubefix()
 		
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

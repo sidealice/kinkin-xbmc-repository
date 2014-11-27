@@ -16,6 +16,7 @@ from threading import Thread
 import cookielib
 from helpers import clean_file_name
 import plugintools
+import requests
 from t0mm0.common.net import Net
 
 
@@ -86,7 +87,7 @@ def highlights_list(url):
         country = regex_from_to(hl, 'alt="', '"')
         matchdate = regex_from_to(hl, '11px;">', '</td>')
         url = base_url + regex_from_to(hl, "<a href='", "' class")
-        text = "%s - [COLOR cyan]%s[/COLOR] - [COLOR gold]%s[/COLOR]" % (matchdate, title, country)
+        text = "%s - [COLOR cyan]%s[/COLOR] - [COLOR gold]%s[/COLOR]" % (matchdate, title, country.replace('"/><img src=',''))
         iconimage = ""
         addDir(text,url,2,iconimage,text,"")
     try:
@@ -101,9 +102,10 @@ def highlights_list(url):
 		
 def matchoftheday(url):
     link = open_url(url)
-    match = re.compile('<a class="layer-link" href="(.+?)">&nbsp;</a><div class="article-image-wrapper"><div class="article-image"><div class="layer-gradient"></div><a href="(.+?)"><img width="263" height="180" src="(.+?)" class="attachment-grid-4 wp-post-image" alt="(.+?)" title="(.+?) &#8211; Watch Online" /></a>').findall(link)
-    for url,url2,iconimage,alt,title in match:
-        title = title.replace('&#8211;', '-')
+    match = re.compile('<a class="overlay-link" href="(.+?)">(.+?)background-image:url(.+?);"></div>(.+?)READ MORE<span class="(.+?)<span class="title-text">(.+?)Watch Online').findall(link)
+    for url,d1,iconimage,d2,d3,title in match:
+        title = title.replace('&#8211; ', '')
+        iconimage = iconimage.replace('(', '').replace(')', '')
         addDirPlayable(title,url,3,iconimage,"")
     try:
         nexturl = regex_from_to(link, 'link rel="next" href="', '"')
@@ -111,7 +113,7 @@ def matchoftheday(url):
     except:
         pass
 		
-def ninety_minutes_menu():
+def ninety_minutes_menu():#http://www.footballtarget.com/full-match-replay-video/
     addDir("90 Minutes - Latest", 'http://livefootballvideo.com/fullmatch',92,iconart, '','')
     addDir("90 Minutes - Top Competitions", 'http://livefootballvideo.com/competitions',93,iconart, '','')
     addDir("90 Minutes - All Competitions", 'http://livefootballvideo.com/competitions',93,iconart, '','')
@@ -127,7 +129,7 @@ def ninety_minutes_submenu(name, url):
             iconimage = 'http://livefootballvideo.com/images/leagues/big/x%s.png.pagespeed.ic.45fxD8-tJP.png' % urlname
             addDir(title,url,92,iconimage,"","")
     else:
-        all_comp = regex_from_to(link, 'All Competitions', '</ul><div class="cleaner">')
+        all_comp = regex_from_to(link, 'All Competitions', '<h3>Follow Us</h3>')
         match = re.compile('<a href="(.+?)" title="(.+?)">(.+?)</a></li>').findall(all_comp)
         for url,d1,title in match:
             url = 'http://livefootballvideo.com' + url
@@ -167,8 +169,7 @@ def ninety_minutes_latest(name,url,iconimage):
 def ninety_minutes_source(name,url,iconimage):
 #'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7'
     link = open_url(url).replace("'", '"').replace('\n','')
-    print link
-    fullmatch = regex_from_to(link, 'Full Match Video', '</div><br/><div style')
+    fullmatch = regex_from_to(link, 'Full Match Video', '<div style="text-align:center">')
     all_lang = regex_get_all(fullmatch, '<h3 class="heading', '</p></div>')
     for lang in all_lang:
         language = regex_from_to(lang, '<span>', '</span>')
@@ -189,7 +190,13 @@ def ninety_minutes_source(name,url,iconimage):
             elif 'youtube' in url:
                 title = " [youtube.com]"
             elif 'firedrive' in url:
-                title = " [firedrive.com]"            
+                title = " [firedrive.com]"
+            elif 'mail.ru' in url:
+                title = "[my.mail.ru]"
+                url = url.replace('.html','.json?ver=0.2.60').replace('embed/','')
+            else:
+                title = url	
+            print url				
             addDirPlayable(name + ' - ' + language + title,url,3,iconimage,"")
 		
 def best_videos_list(url):
@@ -384,7 +391,7 @@ def source_video(name, url, iconimage):
             source = 'Source: rutube'
         else:
             source = regex_from_to(links, 'Football Highlights</a> ', '<')
-        if len(source)>8 and 'facebook' not in url and 'sapo.pt' not in url:
+        if len(source)>8 and 'facebook' not in url and 'sapo.pt' not in url and 'moevideo' not in url:
             addDirPlayable(name + ' ' + source,url,3,iconimage,name)
 			
 def dm_icon(videoid):
@@ -466,14 +473,32 @@ def resolve_url(url):
                 playlink = playlink.replace('\/', '/')
 			
     #VIDEA.HU
-    if 'videa.hu' in url:#http://videa.hu/player?v=a6eZxnrQf9JoHi9o
-        url = url.replace('http://videa.hu/player?',  'http://videa.hu/flvplayer_get_video_xml.php?')
+    if 'videa.hu' in url:
+        url=url.replace('flvplayer.swf','player')
+        key=url.replace('http://videa.hu/player?','')
+        url = 'http://videa.hu/flvplayer_get_video_xml.php?https=0&%s&start=0&enablesnapshot=0' % key
         link = open_url(url)
-        if not 'video_url="' in link:
-            playlink = 'none available'
-        else:
-            playlink = regex_from_to(link, 'video_url="', '"')
-			
+        max = 0
+        match=re.compile('<version quality="(.+?)" video_url="(.+?)" width="(.+?)" height="(.+?)" />').findall(link)
+        for q,url,w,h in match:
+            width=int(w)
+            if width>max:
+                max=width
+                playlink=url
+
+    #MAIL.RU
+    if 'mail.ru' in url:
+        max=0
+        link = requests.get(url).content
+        cookielink = requests.get(url)
+        setcookie = cookielink.headers['Set-Cookie']
+        #link = open_url(url)
+        match=re.compile('"key":"(.+?)","url":"(.+?)"').findall(link)
+        for q,url in match:
+            quality=int(q.replace('p',''))
+            if quality > max:
+                max=quality
+                playlink="%s|Cookie=%s" % (url,urllib.quote(setcookie))
     #EURORIVALS
     if 'eurorivals.net' in url:
         link = open_url(url)
@@ -517,7 +542,9 @@ def resolve_url(url):
 		
     #SKY SPORTS
     if 'skysports' in url:
+        print url
         link = open_url(url)
+        print link
         try:
             playlink = regex_from_to(link, 'video-url="', '"')
         except:
@@ -553,7 +580,7 @@ def resolve_url(url):
 
 def news_directory(url):
     addDir("Latest News", 'http://eurorivals.net/news',30,xbmc.translatePath(os.path.join('special://home/addons/plugin.thebeautifulgame', 'art', 'HitTVShows.png')), '','')
-    addDir("Sky Sports Videos", 'http://www1.skysports.com/watch/video/sports/football',79,xbmc.translatePath(os.path.join('special://home/addons/plugin.thebeautifulgame', 'art', 'HitTVShows.png')), '','')
+    #addDir("Sky Sports Videos", 'http://www1.skysports.com/watch/video/sports/football',79,xbmc.translatePath(os.path.join('special://home/addons/plugin.thebeautifulgame', 'art', 'HitTVShows.png')), '','')
     addDir("Transfer Rumours", 'http://eurorivals.net/news/transfer-rumours',30,xbmc.translatePath(os.path.join('special://home/addons/plugin.thebeautifulgame', 'art', 'HitTVShows.png')), '','')
     addDir("Premier League News", 'http://eurorivals.net/news/premier-league',30,xbmc.translatePath(os.path.join('special://home/addons/plugin.thebeautifulgame', 'art', 'HitTVShows.png')), '','')
     addDir("Spanish La Liga News", 'http://eurorivals.net/news/la-liga',30,xbmc.translatePath(os.path.join('special://home/addons/plugin.thebeautifulgame', 'art', 'HitTVShows.png')), '','')
@@ -591,7 +618,7 @@ def news_link(name, url, iconimage):
     link = open_url(url).replace(' </div> </div>', '').replace('left">', '> ').replace('/tr>', '>\n').replace('      <caption>            ', '').replace('          </caption>      <thead>        ', '\n').replace('      </thead>      <tbody>        ', '')#.encode('utf-8','ignore')
     try:
         try:
-            newsbody = regex_from_to(link, '<p>', '</p><div class').replace('</p>', '\n').replace('<p>', '\n').replace('&eacute;', 'e').replace('&nbsp;', ' ')
+            newsbody = regex_from_to(link, '<p>', '</div>').replace('</p>', '\n').replace('<p>', '\n').replace('&eacute;', 'e').replace('&nbsp;', ' ')
         except:
             try:
                 newsbody = regex_from_to(link, '<p>', '</p></blockquote').replace('</p>', '\n').replace('<p>', '\n').replace('&eacute;', 'e').replace('&nbsp;', ' ')

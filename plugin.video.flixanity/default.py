@@ -773,26 +773,18 @@ def resolve_url(url):
     if 'vodlocker' in url:
         link = open_gurl(url)
         playlink = regex_from_to(link, 'file: "', '"')
-    elif 'my.mail.ru' in url:
-        url=url.replace('/embed','').replace('.html','.json?ver=0.2.56')
-        link = open_gurl(url)
-        try:
-            playlink=regex_from_to(link, '480p","url":"', '"')
-        except:
-            playlink=regex_from_to(link, '360p","url":"', '"')
-        prov_id=regex_from_to(link, 'provider":"', '"')
-        acc_id=regex_from_to(link, 'accId":', ',')
-        ext_id=regex_from_to(link, 'externalId":"', '"')#.replace('/', '\/')
-        #form_data='{"sid":"5048840355840","id":"86308546019328","itemId":"","accid":"%s","externalId":"%s","version":"0.2.56","batch":[{"name":"inited"}],"providerId":"%s","statVersion":2}' % (acc_id,ext_id,prov_id)
-        form_data = '{"sid":"204533347647488","batch":[{"name":"inited"}],"externalId":"%s","providerId":"%s","version":"0.2.56","id":"86308546019328","statVersion":2,"itemId":"","accid":"%s"}' % (ext_id,prov_id,acc_id)
-        header_dict = {}
-        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        header_dict['Accept-Encoding'] = 'gzip, deflate'
-        header_dict['Host'] = 'pump.video.mail.ru'
-        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0'
-        header_dict['Connection'] = 'keep-alive'#
-        r = requests.post('http://pump.video.mail.ru/', data=json.dumps(form_data), headers=header_dict)
-        print r.text
+    elif 'mail.ru' in url:
+        url = url.replace('.html','.json?ver=0.2.60').replace('embed/','')
+        max=0
+        link = requests.get(url).content
+        cookielink = requests.get(url)
+        setcookie = cookielink.headers['Set-Cookie']
+        match=re.compile('"key":"(.+?)","url":"(.+?)"').findall(link)
+        for q,url in match:
+            quality=int(q.replace('p',''))
+            if quality > max:
+                max=quality
+                playlink="%s|Cookie=%s" % (url,urllib.quote(setcookie))
 
         #link = net.http_POST(url, form_data=form_dict, headers=header_dict).content
         #playlink=urllib.unquote(playlink)

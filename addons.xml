@@ -177,13 +177,14 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.flixanity"
        name="FliXanity"
-       version="0.8.8"
+       version="0.8.9"
        provider-name="kinkin, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
         <import addon="script.module.t0mm0.common" version="1.1.0"/>
         <import addon="script.module.metahandler" version="1.0.0"/>
 		<import addon="script.module.urlresolver" version="1.0.0"/>
+        <import addon="script.module.requests" version="1.1.0"/>
     </requires>
     <extension point="xbmc.python.pluginsource"
                	library="default.py">

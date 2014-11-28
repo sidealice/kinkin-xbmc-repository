@@ -281,7 +281,6 @@ def tv_show_episodes(name, list, iconimage, showname):
         else:
             infoLabels =None
             iconimage=iconart
-        print url
         addDirPlayable(name,url,5,iconimage, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
 		
@@ -315,15 +314,26 @@ def play(name, url, iconimage, showname):
         key = re.compile('"http://www.watch-tvseries.me/"(.+?)"(.+?)"').findall(link)
     for a, url in key:
         url1 = 'http://www.watch-tvseries.%s/play/plvids%s' % (site, url)
-        print url1
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Host'] = 'vk.com'
     header_dict['Referer'] = str(hosturl)
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
     linkvk = net.http_GET(url1).content.encode("utf-8").rstrip()
-    if 'http://vk.com/video_ext.php?oid' in linkvk:
-        
+    if 'mail.ru' in linkvk:
+        url = regex_from_to(linkvk, 'src="', '"')
+        url = url.replace('.html','.json?ver=0.2.60').replace('embed/','')
+        max=0
+        link = requests.get(url).content
+        cookielink = requests.get(url)
+        setcookie = cookielink.headers['Set-Cookie']
+        match=re.compile('"key":"(.+?)","url":"(.+?)"').findall(link)
+        for q,url in match:
+            quality=int(q.replace('p',''))
+            if quality > max:
+                max=quality
+                playlink="%s|Cookie=%s" % (url,urllib.quote(setcookie))	
+    elif 'http://vk.com/video_ext.php?oid' in linkvk:
         url = regex_from_to(linkvk, 'src="', '"').replace('&amp;', '&') + '&hd=1'
         net.set_cookies(cookie_jar)
         link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
@@ -352,7 +362,7 @@ def play(name, url, iconimage, showname):
         if 'gorillavid.in' in url1:
             link = requests.get(url1).text
             playlink = regex_from_to(link, 'file: "', '"')
-        if 'vidbull' in url1:#http://50.7.161.74:182/d/4bsk263bljrwuximtq6wd6k56crrum354frynzfz53rotmdi4orryvxl/video.mp4
+        if 'vidbull' in url1:
             link = requests.get(url1).text.replace('|', '.')#.182.34.161.50
             u1 = regex_from_to(link, '<img src="http://', '/')#key,u2
             data = regex_from_to(link, '<div id="player_code">', '<br></div>')
@@ -678,7 +688,6 @@ def get_params():
 
 
 def addDir(name,url,mode,iconimage,list,description,infoLabels=None):
-        print list
         suffix = ""
         suffix2 = ""
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+str(iconimage)+"&list="+str(list)+"&description="+str(description)

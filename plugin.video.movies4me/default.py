@@ -2,7 +2,7 @@
 kinkin
 '''
 
-import urllib,urllib2,re,xbmcplugin,xbmcgui,os
+import urllib,urllib2,re,xbmcaddon,xbmcplugin,xbmcgui,os
 import settings
 import time,datetime
 from datetime import date, timedelta
@@ -90,6 +90,7 @@ def get_file_age(file_path):
 	
 	
 def CATEGORIES(name):
+    addDir("Recent Movies", 'http://www.hdmoviezone.net/feeds/posts/default?alt=json&start-index=',1,iconart, '1','')
     addDir("Movies by Genre", 'url',100,iconart, '','')
     addDir("Movies by Country", 'url',110,iconart, '','')
     addDir("Movies by Year", 'url',120,iconart, '','')
@@ -164,8 +165,7 @@ def all_movies(chname,url,start):
     if chname != 'search':
         url = "%s%s%s" % (url,start,'&max-results=50')
         nextstart = int(start) + 50
-    link = open_url(url).replace('\\"', '<>')
-    print link
+    link = open_url(url).replace('\\"', '<>').translate(trans_table).replace('\\"', '<>')
     if chname == 'search':
         all_data = regex_get_all(link, ',"title":{"type":"text', ']')
     else:
@@ -260,6 +260,7 @@ def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episod
 	
         
 def play_channel(name,url,iconimage):
+
     min = 1920
     max = 0
     url1 = 'http://hdmozo.com/hdmzgl.php'
@@ -306,6 +307,7 @@ def play_movie(name,url,iconimage):
     
 
 def view_trailer(name, url, iconimage):
+
     menu_texts = []
     menu_data = []
     menu_res = []
@@ -406,6 +408,7 @@ def favourites():
     setView('movies', 'movies-view')
 				
 def download(name, url, iconimage, dir):
+
     min = 1920
     max = 0
     url1 = 'http://hdmozo.com/hdmzgl.php'
@@ -434,7 +437,7 @@ def download(name, url, iconimage, dir):
                 min = width
                 max = width
                 playlink = url
-    filename = name + '.mp4'
+    filename = name.replace(':','') + '.mp4'
     WAITING_TIME = 5
     data_path = os.path.join(dir, filename)
     dlThread = DownloadFileThread(name, playlink, data_path, WAITING_TIME)

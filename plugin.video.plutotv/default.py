@@ -69,9 +69,9 @@ def GET_URL(url):
     net.set_cookies(cookie_jar)
     trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
     if not 'timelines' in url:
-        req = net.http_GET(url, headers=header_dict).content.translate(trans_table).rstrip()
+        req = net.http_GET(url, headers=header_dict).content.translate(trans_table)#.rstrip()
     else:
-        req = net.http_GET(url, headers=header_dict).content.encode("utf-8", 'ignore').rstrip()
+        req = net.http_GET(url, headers=header_dict).content.encode("utf-8", 'ignore')#.rstrip()
     net.save_cookies(cookie_jar)
     return req
 	
@@ -96,9 +96,17 @@ def CATEGORIES(name):
     addDir("Favourite Videos", 'url',9,iconart, '','')
 
 def all_channels(chname,url):
-    link = GET_URL(url).replace('\n','').replace('\t','')
-    match = re.compile('"_id": "(.+?)",    "category": "(.+?)",    "featured": (.+?),    "featuredImage": {      "path": "(.+?)",      "title": "(.+?)"    },    "hash": "(.+?)",    "name": "(.+?)",    "number": (.+?),    "onDemand": (.+?),    "thumbnail": {      "path": "(.+?)",      "title": "(.+?)"    },    "visibility": "(.+?)",    "slug": "(.+?)",    "description": "(.+?)"  }').findall(link)
-    for id,cat,feat,art,title,hash,name,number,od,thumb,d1,vis,slug,plot in match:
+    link = GET_URL(url)#.replace('\n','').replace('\t','')
+    data=json.loads(link)
+    for i in data:
+        id = i['_id']
+        cat = i['category']
+        number = i['number']
+        name = i['name']
+        plot = i['description']
+        thumb = i['thumbnail']['path']
+    #match = re.compile('"_id": "(.+?)",    "category": "(.+?)",    "featured": (.+?),    "featuredImage": {      "path": "(.+?)",      "title": "(.+?)"    },    "hash": "(.+?)",    "name": "(.+?)",    "number": (.+?),    "onDemand": (.+?),    "thumbnail": {      "path": "(.+?)",      "title": "(.+?)"    },    "visibility": "(.+?)",    "slug": "(.+?)",    "description": "(.+?)"  }').findall(link)
+    #for id,cat,feat,art,title,hash,name,number,od,thumb,d1,vis,slug,plot in match:
         if chname == "All Channels":
             title = "%s - %s: %s" % (cat,number,name)
             addDirPlayable(title,id,2,thumb,plot)
@@ -115,16 +123,16 @@ def channel_schedule(name,url,iconimage):
     url1='http://cdn-api.prod.pluto.tv/v1/timelines/%s.000Z/%s.000Z/matrix.json' % (t1,t2)
     link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
     #print url,link
-    ch_start = "%s%s" % ( url,'": <<')
+    ch_start = "%s%s" % ( url,'":<<')
     channel_info = regex_from_to(link,ch_start, ">>")
     id2 = regex_get_all(channel_info, '{', '"channel"')
     for i in id2:
-        start=regex_from_to(regex_from_to(i,'start": "','"'),'T', 'Z')
-        stop=regex_from_to(regex_from_to(i,'stop": "','"'),'T', 'Z')
+        start=regex_from_to(regex_from_to(i,'start":"','"'),'T', 'Z')
+        stop=regex_from_to(regex_from_to(i,'stop":"','"'),'T', 'Z')
         idstring = regex_from_to(i, '"episode":', '"channel"') 
-        id = 'sched' + regex_from_to(idstring, '_id": "', '"')
-        plot=regex_from_to(i,'description": "','"')
-        name=regex_from_to(i,'name": "','"').replace('",','')
+        id = 'sched' + regex_from_to(idstring, '_id":"', '"')
+        plot=regex_from_to(i,'description":"','"')
+        name=regex_from_to(i,'name":"','"').replace('",','')
         title = "%s-%s  %s" % (start[:5],stop[:5],name)
         addDirPlayable(title,id,2,iconart,plot)
     setView('episodes', 'episodes-view')
@@ -140,8 +148,8 @@ def play_channel(name,url,iconimage,clear):
         link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
         channel_info = regex_from_to(link,url, url)#"premiere"
         idstring = regex_from_to(channel_info, '"episode":', '"channel"') 
-        id = regex_from_to(idstring, '_id": "', '"')
-        start_time = regex_from_to(channel_info,'start": "', '"')
+        id = regex_from_to(idstring, '_id":"', '"')
+        start_time = regex_from_to(channel_info,'start":"', '"')
         ch_start= datetime.datetime.fromtimestamp(time.mktime(time.strptime(start_time.replace('.000Z','').replace('T',' '), "%Y-%m-%d %H:%M:%S")))
         ch_timediff=(i-ch_start).seconds
     else:
@@ -245,7 +253,7 @@ def browse_channel(name,url,iconimage,clear):
         link = GET_URL(url1).replace('[', '<<').replace(']', '>>')
         channel_info = regex_from_to(link,url, url)#"premiere"
         idstring = regex_from_to(channel_info, '"episode":', '"channel"') 
-        id = regex_from_to(idstring, '_id": "', '"')
+        id = regex_from_to(idstring, '_id":"', '"')
     else:
         id = url.replace('sched','')
     dp = xbmcgui.DialogProgress()

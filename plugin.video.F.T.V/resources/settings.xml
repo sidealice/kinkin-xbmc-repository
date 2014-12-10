@@ -9,7 +9,7 @@
         <setting id="stream_type" type="enum" values="HLS|RTMP" label="10011" default="0" visible="false" />
         <setting id="auto_switch" type="bool" label="10010" default="true" visible="false"/>
         <setting id="download_path" type="folder" label="10005" default="notset"/>
-        <setting id="movie_directory" type="folder" label="10020" default="set"/>
+        <setting id="movie_directory" type="folder" label="10020" default="set" visible="false"/>
         <setting id="show_ch_id" type="bool" label="10025" default="true" />
         <setting id="root_channel" type="number" label="10026" default="689" />
         <setting id="separator" type="lsep" label="10006"/>

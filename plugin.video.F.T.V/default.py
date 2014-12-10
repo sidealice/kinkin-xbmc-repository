@@ -5,6 +5,7 @@ kinkin
 import urllib,urllib2,re,xbmcplugin,xbmcgui,os
 import settings
 import time,datetime
+import calendar
 from datetime import date
 from threading import Timer
 from hashlib import md5
@@ -61,6 +62,13 @@ def open_url(url):
     response.close()
     return link
 	
+def GET_URL(url):
+    header_dict = {}
+    header_dict['Accept'] = 'application/json, text/javascript, */*; q=0.01'
+    header_dict['User-Agent'] = 'User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
+    req = net.http_GET(url, headers=header_dict).content
+    return req
+	
 def keep_session():
     currentWindow = xbmcgui.getCurrentWindowId()
     #if currentWindow == 10000:
@@ -103,47 +111,44 @@ FILMON_SESSION = xbmcgui.Window(10000).getProperty("session_id")
 def CATEGORIES():
     hidden_links = read_from_file(HIDDEN_FILE)
     addDir('Non Geo','url',110,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'xml.png')), '', '')
-    addDir('Cartoons & More','url',399,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
     addDir('Favourite Channels','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
-    addDir('Favourite Movies','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     session_id = xbmcgui.Window(10000).getProperty("session_id")
     url = "%s%s%s" % (base_url,'/tv/api/groups?session_key=', (session_id))
     link = open_url(url)
-    all_groups = regex_get_all(link, '{', 'channels_count')
+    all_groups = regex_get_all(link, '{', '_count')
     for groups in all_groups:
         alias = regex_from_to(groups, 'alias":"', '",')
         group_id = regex_from_to(groups, 'group_id":"', '",')
+        channels=regex_from_to(groups,'channels":',',"channels').replace('[','').replace(']','').replace('"','')
         title = regex_from_to(groups, 'title":"', '",')
         thumb = regex_from_to(groups, 'logo_148x148_uri":"', '",').replace('\\', '')
         url = regex_from_to(groups, 'group_id":"', '",')
         if not title in hidden_links:
-            addDir(title,group_id,123,thumb, alias,'')
+            addDir(title,group_id,123,thumb, alias,channels)
             setView('episodes', 'episodes-view')
 
 		
-def group_channels(url, title,alias):
+def group_channels(url, title,alias,channels):#1416096000
     gt = str(title)
     name_lst = []
     session_id = xbmcgui.Window(10000).getProperty("session_id")
     url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', session_id)
-    link = open_url(url)
-    all_channels = regex_from_to(link, 'channels":', 'channels_count')
-    channels = regex_get_all(all_channels, '{"id"', 'teleport_technology')
-    for channel in channels:
-        channel_id = regex_from_to(channel, '"id":', ',')
-        title = regex_from_to(channel, 'title":"', '",').encode("utf-8")
+    link = GET_URL(url)
+    data=json.loads(link)
+    channels=data['channels']
+    for c in channels:
+        channel_id=c['id']
+        title=c['title']
+        description=c['description']
         name_lst.append(title)
         if SHOW_ID:
             title="%s (%s)" % (title,channel_id)
-        if not 'description":null' in channel:
-            description = clean_file_name(regex_from_to(channel, 'description":"', '",'), use_blanks=False)
-        else:
-            description=""
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % channel_id
-        addDirPlayable(title,channel_id,125,thumb,"",description, "", "grp")
+        if 'BBC Music Magazine' not in title:
+            addDirPlayable(title,str(channel_id),125,thumb,"","not available", "", "grp")
         setView('episodes', 'episodes-view')
 
     # read from channel list
@@ -161,8 +166,6 @@ def group_channels(url, title,alias):
             if st_grp == gt  and st_name not in name_lst:#
                 addDirPlayable(st_name,gt,125,thumb,par,"", "", "lst")
 
-    if gt == 'UK LIVE TV':
-        addDirPlayable('Chelsea TV','http://www.watchfeed.co/watch/44-1/chelsea-tv.html',15,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'chelsea.jpg')), '', '', '', "")
     setView('episodes', 'episodes-view')
     if SORT_ALPHA:    
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
@@ -215,6 +218,7 @@ def tv_guide(name, url, iconimage):
             except:
                 start = regex_from_to(p, 'startdatetime":', ',"')
             start_time = datetime.datetime.fromtimestamp(int(start))
+            print start_time
             end_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'enddatetime":"', '"')))
         except:
             start_time = datetime.datetime.fromtimestamp(int(regex_from_to(p, 'startdatetime":', ',')))
@@ -621,53 +625,6 @@ def play_od(name, url, iconimage):
         xbmcPlayer.play(STurl,listitem)
     dp.close()
 
-
-def my_addons():
-    addons = os.listdir(addon_path)
-    for a in addons:
-        if a.startswith('plugin.video') and a != 'plugin.video.F.T.V'  and a != 'plugin.video.adblocker' and a != 'plugin.video.gachecker' and not a.endswith('zip'):
-            plugin_path = os.path.join(addon_path, a)
-            iconimage = os.path.join(addon_path, a, 'icon.png')
-            xml = os.path.join(addon_path, a, 'addon.xml')
-            text = open(xml, 'r')
-            r = text.read()
-            text.close()
-            try:
-                id = strip_text(r, ' id="', '"')
-            except:
-                id = strip_text(r, " id='", "'")
-            try:
-                name = strip_text(r, ' name="', '"')
-            except:
-                name = strip_text(r, " name='", "'")
-
-            addDirPlayable(name,a,143,iconimage,"","","","")
-			
-def my_addons_audio():
-    addons = os.listdir(addon_path)
-    for a in addons:
-        if a.startswith('plugin.audio'):
-            plugin_path = os.path.join(addon_path, a)
-            iconimage = os.path.join(addon_path, a, 'icon.png')
-            xml = os.path.join(addon_path, a, 'addon.xml')
-            text = open(xml, 'r')
-            r = text.read()
-            text.close()
-            try:
-                id = strip_text(r, ' id="', '"')
-            except:
-                id = strip_text(r, " id='", "'")
-            try:
-                name = strip_text(r, ' name="', '"')
-            except:
-                name = strip_text(r, " name='", "'")
-
-            addDirPlayable(name,a,143,iconimage,"","","","")
-
-def run_addon(name, url, iconimage):
-    url = "XBMC.Container.Update(plugin://%s)" % url
-    xbmc.executebuiltin(url)
-
  
 def play(name, url, iconimage):  
     link = open_url(url)
@@ -681,166 +638,7 @@ def play(name, url, iconimage):
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(playlist)
 
-def cartoons(name,url):
-    addDir('Top Movies','picasa_topmovie',398,'https://lh4.googleusercontent.com/-xwlVx-Rv1qw/UrQN_iy5w0I/AAAAAAAABnY/l_wjhLjykuY/s630/marvel-rankings.jpg', '', '')
-    addDir('Disney','picasa_disneycollection',398,'https://lh6.googleusercontent.com/-srGy1JeuoxU/UmpVe7gEGBI/AAAAAAAABbA/m0LgdL3mAwQ/s640/WaltDisneyPicturesSpecialPoster.jpeg', '', '')
-    addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
-    addDir('IMDB','picasa_imdb',398,'https://lh5.googleusercontent.com/-U-eB6iRwwns/UxxNvZrXHFI/AAAAAAAACmA/8HAwCVDzuSg/s800/imdb_top_250_bg.jpg', '', '')
-    addDir('Disney Classic','http://gdata.youtube.com/feeds/api/users/UCa0h983kQj5OYa06gYhxgiw/uploads?start-index=1&max-results=50',395,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'mickey.gif')),'','')
-    addDir('Top Cartoons','picasa_topcartoon',398,'https://lh5.googleusercontent.com/-l6lQqrU7BW0/UrQqqA4AlqI/AAAAAAAAIyE/LqwNMn_RBHo/s800/Disney-Pixar-Wallpaper-for-Desktop1.jpg', '', '')
-    addDir('Other Cartoons','url',397,'https://lh6.googleusercontent.com/-jcF96PO3xPA/UpaegauaWNI/AAAAAAAABgY/FnNZ5kRj3fI/s800/the_simpsons.jpg', '', '')
 	
-def other_cartoons(name,url):
-    list = read_from_file(ct_list)
-    match = re.compile('"Name":"(.+?)","Action":"(.+?)","Type":"(.+?)","ImageVideo":(.+?),"Image":"(.+?)"').findall(list)
-    for name,action,type,iv,iconimage in match:
-        if action != 'picasa_topmovie' and action != 'picasa_disneycollection' and action != 'picasa_topimdb' and action != 'picasa_topcartoon':
-            url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % action
-            addDir(name,action,398,iconimage, '', '')
-    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
-
-def cartoon_list(name,url):
-    listname=url
-    try:
-        url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
-        link = open_url(url)
-        if not 'Link' in link:
-            list = read_from_file(cartoonlinks)
-            link = regex_from_to(list, name + '<<', '>>')
-    except:
-        list = read_from_file(cartoonlinks)
-        link = regex_from_to(list, name + '<<', '>>')
-    match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
-    for title,type,url,iconimage in match:
-        if listname=='picasa_disneycollection':
-            title=title[5:]
-        url=url.replace('\/', '/')
-        iconimage=iconimage.replace('\/', '/')
-        addDirPlayable(title,url,396,iconimage,listname, '', '', '')
-    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
-
-def play_cartoons(name,url,iconimage):
-    if 'auengine.com' in url:
-        link=open_url(url)
-        url=re.compile("url: '(.+?)'").findall(link)[0]
-        
-    if 'animeonhand.com' in url:
-        html=open_url(url)
-        url=re.compile("'file': '(.+?)'").findall(link)[0]
-  
-    handle = str(sys.argv[1])
-    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)
-    if handle != "-1":	
-        listitem.setProperty("IsPlayable", "true")
-        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
-    else:
-        xbmcPlayer = xbmc.Player()
-        xbmcPlayer.play(url,listitem)	
-        
-		
-def disney_jr(url):
-    link = open_url(url)#.replace('\n','')
-    categories = regex_get_all(link, '<li class="video_brand_promo">', '</li>')
-    for c in categories:
-        url = 'http://www.disney.co.uk' + regex_from_to(c, 'href="', '"')
-        name = regex_from_to(c, 'data-originpromo="', '"').replace('-',' ').upper()
-        thumb = 'http://www.disney.co.uk' + regex_from_to(c, 'data-hover="', '"')
-        if name == 'A POEM IS HOME IN THE FASHION':
-            thumb = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg'))
-        addDir(name,url,302,thumb, '','')
-		
-def disney_jr_links(name, url):
-    link = open_url(url).replace('\t', '').replace('\n', '')
-    videos = regex_get_all(link, 'div class="promo" style', 'img src="/cms_res/disney-junior/images/promo')
-    for v in videos:
-        url = 'http://www.disney.co.uk' + regex_from_to(v, 'href="', '"')
-        name = regex_from_to(v, 'data-itemName="', '"').replace('-',' ').upper()
-        thumb = 'http://www.disney.co.uk' + regex_from_to(v, 'img src="', '"')
-        addDirPlayable(name,url,310,thumb,'', '', '', 'djr')
-	
-def disney_play(name, url, iconimage):
-    urlid = url.replace('http://www.disney.co.uk/disney-junior/content/video.jsp?v=','')
-    link = open_url(url)
-    stream = regex_from_to(link, urlid, 'progressive')
-    server = regex_from_to(stream,'server":"', '"')
-    strm = regex_from_to(stream, 'program":"', '"')
-    url = server + strm + ' swfVfy=1'
-    title = regex_from_to(stream, 'pageTitle":"', '"').replace('Disney Junior | Videos - ', '')
-    liz=xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
-    liz.setInfo( type="Video", infoLabels={ "Title": name} )
-    liz.setProperty("IsPlayable","true")
-    pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-    pl.clear()
-    pl.add(url, liz)
-    xbmc.Player().play(pl)
-	
-def disney_playlist(name, url, iconimage):
-    dp = xbmcgui.DialogProgress()
-    dp.create("F.T.V",'Creating Playlist')
-    playlist = []
-    link = open_url(url)
-    stream = regex_get_all(link, 'analyticsAssetName', 'progressive')
-    nItem = len(stream)
-    for s in stream:
-        server = regex_from_to(s,'server":"', '"')
-        strm = regex_from_to(s, 'program":"', '"')
-        url = server + strm + ' swfVfy=1'
-        title = regex_from_to(s, 'pageTitle":"', '"').replace('Disney Junior | Videos - ', '')
-        liz=xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
-        liz.setInfo( type="Video", infoLabels={ "Title": title} )
-        liz.setProperty("IsPlayable","true")
-        pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
-        pl.clear()
-        playlist.append((url, liz))
-        progress = len(playlist) / float(nItem) * 100  
-        dp.update(int(progress), 'Adding to Your Playlist',title)
-
-        if dp.iscanceled():
-            return
-    dp.close()
-    for blob ,liz in playlist:
-        try:
-            if blob:
-                pl.add(blob,liz)
-        except:
-            pass
-    if not xbmc.Player().isPlayingVideo():
-        xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(pl)
-		
-def youtube_videos(name,url,iconimage):
-    find_url=url.find('?')+1
-    keep_url=url[:find_url]
-    
-    iconimage=""
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
-    response = urllib2.urlopen(req)
-    link=response.read()
-    response.close()
-
-    # Extract items from feed
-    pattern = ""
-    matches = plugintools.find_multiple_matches(link,"<entry>(.*?)</entry>")
-    
-    for entry in matches:
-        
-        # Not the better way to parse XML, but clean and easy
-        title = plugintools.find_single_match(entry,"<titl[^>]+>([^<]+)</title>").replace("&amp;","&")
-        plot = plugintools.find_single_match(entry,"<media\:descriptio[^>]+>([^<]+)</media\:description>")
-        thumbnail = plugintools.find_single_match(entry,"<media\:thumbnail url='([^']+)'")
-        video_id = plugintools.find_single_match(entry,"http\://www.youtube.com/watch\?v\=([^\&]+)\&").replace("&amp;","&")
-        play_url = "plugin://plugin.video.youtube/?path=/root/video&action=play_video&videoid="+video_id
-
-        plugintools.add_item( action="play" , title=title , plot=plot , url=play_url ,thumbnail=thumbnail , folder=True )
-    
-    # Calculates next page URL from actual URL
-    start_index = int( plugintools.find_single_match( link ,"start-index=(\d+)") )
-    max_results = int( plugintools.find_single_match( link ,"max-results=(\d+)") )
-    next_page_url = keep_url+"start-index=%d&max-results=%d" % ( start_index+max_results , max_results)
-
-    addDir(">> Next page",next_page_url,395,"",'','')
-
-		
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
         r = re.search("(?i)" + from_string + "([\S\s]+?)" + to_string, text).group(1)
@@ -1027,27 +825,7 @@ def wait_dl_only(time_to_wait, title):
     else:
         print 'Done waiting'
         return True
-		
-def create_all_strm_file(name, url, mode, dir_path, iconimage):
-    listname=url
-    try:
-        url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
-        link = open_url(url)
-        if not 'Link' in link:
-            list = read_from_file(cartoonlinks)
-            link = regex_from_to(list, name + '<<', '>>')
-    except:
-        list = read_from_file(cartoonlinks)
-        link = regex_from_to(list, name + '<<', '>>')
-    match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
-    for title,type,url,iconimage in match:
-        if listname=='picasa_disneycollection':
-            title=title[5:]
-        url=url.replace('\/', '/')
-        iconimage=iconimage.replace('\/', '/')
-        create_strm_file(title, url, '396', dir_path, iconimage)
-    xbmc.sleep(1000)
-    scan_library()
+
 		
 def create_strm_file(name, url, mode, dir_path, iconimage):
     strm_string = create_url(name, mode, url=url, iconimage=iconimage)
@@ -1159,12 +937,10 @@ def addLink(name,url,iconimage,description,status,download_link, p_id, start, p_
 
 
 def addDir(name,url,mode,iconimage,ch_fanart,description):
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&ch_fanart="+urllib.quote_plus(ch_fanart)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&ch_fanart="+urllib.quote_plus(ch_fanart)+"&description="+str(description)
         ok=True
         contextMenuItems = []
         contextMenuItems.append(('Hide Channel Group', 'XBMC.RunPlugin(%s?mode=10&url=%s)'% (sys.argv[0],str(name))))
-        if url == 'picasa_topmovie' or url == 'picasa_topcartoon' or url == 'picasa_disneycollection':
-            contextMenuItems.append(("Add ALL to XBMC Library",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=402&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))	
         liz=xbmcgui.ListItem(name, iconImage="DefaultFolder.png", thumbnailImage=iconimage)
         liz.setInfo( type="Video", infoLabels={ "Title": name, 'plot': description } )
         liz.addContextMenuItems(contextMenuItems, False)
@@ -1188,15 +964,10 @@ def addDirPlayable(name,url,mode,iconimage,ch_fanart, description, start, functi
             contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=410&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
         if function == 'favlist':
             contextMenuItems.append(("Remove from FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=416&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
-        if function == 'djr':
-            contextMenuItems.append(("Play All Videos",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=303&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),iconimage)))
         if function == 'ng':
             contextMenuItems.append(("Add Channel to Group",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=112&iconimage=%s)'%(sys.argv[0],urllib.quote(start), str(ch_fanart),str(description))))
             contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=410&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))
-        if ch_fanart == 'picasa_topmovie' or ch_fanart == 'picasa_topcartoon' or ch_fanart == 'picasa_disneycollection':
-            contextMenuItems.append(("Add to XBMC Library",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=401&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))
-            contextMenuItems.append(("Download",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=403&iconimage=%s)'%(sys.argv[0],urllib.quote(name), urllib.quote(url),urllib.quote(iconimage))))
-            contextMenuItems.append(("Add to FTV Favourites",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=411&iconimage=%s&ch_fanart=%s)'%(sys.argv[0],urllib.quote(name),urllib.quote(url),urllib.quote(iconimage),ch_fanart)))			
+	
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=False)
         return ok
@@ -1235,6 +1006,10 @@ try:
         ch_fanart=urllib.unquote_plus(params["ch_fanart"])
 except:
         pass
+try:
+        description=urllib.unquote_plus(params["description"])
+except:
+        pass
 
 
 if mode==None or url==None or len(url)<1:
@@ -1264,7 +1039,7 @@ elif mode == 10:
         add_to_list(url, HIDDEN_FILE)
 		
 elif mode==123:
-        group_channels(url, name,ch_fanart)
+        group_channels(url, name,ch_fanart,description)
 		
 elif mode==125:
         play_filmon(name, url, iconimage, ch_fanart)
@@ -1300,15 +1075,6 @@ elif mode == 137:
 elif mode == 139:
         download_rec(name, url, iconimage)
 
-elif mode == 141:
-        my_addons()
-
-elif mode == 145:
-        my_addons_audio()		
-
-elif mode == 143:
-        run_addon(name, url, iconimage)	
-
 elif mode == 199:
         on_demand()
 
@@ -1321,33 +1087,6 @@ elif mode == 202:
 elif mode == 203:
         play_od(name, url, iconimage)
 		
-elif mode == 399:
-        cartoons(name,url)
-		
-elif mode == 398:
-        cartoon_list(name,url)
-		
-elif mode == 397:
-        other_cartoons(name,url)
-		
-elif mode == 396:
-        play_cartoons(name,url,iconimage)
-		
-elif mode == 395:
-        youtube_videos(name,url,iconimage)
-		
-elif mode == 301:
-        disney_jr(url)	
-
-elif mode == 302:
-        disney_jr_links(name, url)
-		
-elif mode == 303:
-        disney_playlist(name, url, iconimage)
-
-elif mode == 310:
-        disney_play(name, url, iconimage)
-
 elif mode==401:
         create_strm_file(name, url, '396', MOVIE_DIR, iconimage)
 

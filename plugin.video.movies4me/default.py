@@ -173,9 +173,12 @@ def all_movies(chname,url,start):
     nItem = len(all_data) - 1
     count = 0
     for a in all_data:
-        title = regex_from_to(a, 't":"', '"')
-        year = title[len(title)-5:-1]
-        title1 = title[:-6].rstrip()
+        try:
+            title = regex_from_to(a, 't":"', '"')
+            year = title[len(title)-5:-1]
+            title1 = title[:-6].rstrip()
+        except:
+            pass
         try:
             iconimage = regex_from_to(a, 'href=<>', '<>').replace('\/', '/')
             file = regex_from_to(a, 'file=<>', '<>')

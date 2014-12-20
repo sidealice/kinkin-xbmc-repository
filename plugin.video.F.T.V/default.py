@@ -112,6 +112,7 @@ def CATEGORIES():
     hidden_links = read_from_file(HIDDEN_FILE)
     addDir('Non Geo','url',110,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'xml.png')), '', '')
     addDir('FilmOn Demand ','url',199,'http://www.filmon.com/tv/themes/filmontv/img/mobile/filmon-logo-stb.png', '', '')
+    addDir('Cartoons & More','url',399,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
     addDir('My Channels','url',122,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
     addDir('My Recordings','url',131,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'f_record.jpg')), '', '')
     addDir('Favourite Channels','url',415,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'my_channels.jpg')), '', '')
@@ -638,7 +639,165 @@ def play(name, url, iconimage):
         xbmcPlayer = xbmc.Player()
         xbmcPlayer.play(playlist)
 
+def cartoons(name,url):
+    addDir('Top Movies','picasa_topmovie',398,'https://lh4.googleusercontent.com/-xwlVx-Rv1qw/UrQN_iy5w0I/AAAAAAAABnY/l_wjhLjykuY/s630/marvel-rankings.jpg', '', '')
+    addDir('Disney','picasa_disneycollection',398,'https://lh6.googleusercontent.com/-srGy1JeuoxU/UmpVe7gEGBI/AAAAAAAABbA/m0LgdL3mAwQ/s640/WaltDisneyPicturesSpecialPoster.jpeg', '', '')
+    addDir('Disney Junior Videos','http://www.disney.co.uk/disney-junior/content/video.jsp',301,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg')), '', '')
+    addDir('IMDB','picasa_imdb',398,'https://lh5.googleusercontent.com/-U-eB6iRwwns/UxxNvZrXHFI/AAAAAAAACmA/8HAwCVDzuSg/s800/imdb_top_250_bg.jpg', '', '')
+    addDir('Disney Classic','http://gdata.youtube.com/feeds/api/users/UCa0h983kQj5OYa06gYhxgiw/uploads?start-index=1&max-results=50',395,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'mickey.gif')),'','')
+    addDir('Top Cartoons','picasa_topcartoon',398,'https://lh5.googleusercontent.com/-l6lQqrU7BW0/UrQqqA4AlqI/AAAAAAAAIyE/LqwNMn_RBHo/s800/Disney-Pixar-Wallpaper-for-Desktop1.jpg', '', '')
+    addDir('Other Cartoons','url',397,'https://lh6.googleusercontent.com/-jcF96PO3xPA/UpaegauaWNI/AAAAAAAABgY/FnNZ5kRj3fI/s800/the_simpsons.jpg', '', '')
 	
+def other_cartoons(name,url):
+    list = read_from_file(ct_list)
+    match = re.compile('"Name":"(.+?)","Action":"(.+?)","Type":"(.+?)","ImageVideo":(.+?),"Image":"(.+?)"').findall(list)
+    for name,action,type,iv,iconimage in match:
+        if action != 'picasa_topmovie' and action != 'picasa_disneycollection' and action != 'picasa_topimdb' and action != 'picasa_topcartoon':
+            url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % action
+            addDir(name,action,398,iconimage, '', '')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+
+def cartoon_list(name,url):
+    listname=url
+    try:
+        url = 'http://gappcenter.com/app/cartoon/mapi.php?action=getlistcontent&cate=%s&pageindex=0&pagesize=1000&os=newiosfull&version=2.1&deviceid=&token=&time=&device=iphone' % url
+        link = open_url(url)
+        if not 'Link' in link:
+            list = read_from_file(cartoonlinks)
+            link = regex_from_to(list, name + '<<', '>>')
+    except:
+        list = read_from_file(cartoonlinks)
+        link = regex_from_to(list, name + '<<', '>>')
+    match = re.compile('"Name":"(.+?)","Type":"(.+?)","Link":"(.+?)","Image":"(.+?)"').findall(link)
+    for title,type,url,iconimage in match:
+        if listname=='picasa_disneycollection':
+            title=title[5:]
+        url=url.replace('\/', '/')
+        iconimage=iconimage.replace('\/', '/')
+        addDirPlayable(title,url,396,iconimage,listname, '', '', '')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
+
+def play_cartoons(name,url,iconimage):
+    if 'auengine.com' in url:
+        link=open_url(url)
+        url=re.compile("url: '(.+?)'").findall(link)[0]
+        
+    if 'animeonhand.com' in url:
+        html=open_url(url)
+        url=re.compile("'file': '(.+?)'").findall(link)[0]
+  
+    handle = str(sys.argv[1])
+    listitem = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage, path=url)
+    if handle != "-1":	
+        listitem.setProperty("IsPlayable", "true")
+        xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
+    else:
+        xbmcPlayer = xbmc.Player()
+        xbmcPlayer.play(url,listitem)	
+        
+		
+def disney_jr(url):
+    link = open_url(url)#.replace('\n','')
+    categories = regex_get_all(link, '<li class="video_brand_promo">', '</li>')
+    for c in categories:
+        url = 'http://www.disney.co.uk' + regex_from_to(c, 'href="', '"')
+        name = regex_from_to(c, 'data-originpromo="', '"').replace('-',' ').upper()
+        thumb = 'http://www.disney.co.uk' + regex_from_to(c, 'data-hover="', '"')
+        if name == 'A POEM IS HOME IN THE FASHION':
+            thumb = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.T.V', 'art', 'disney_junior.jpg'))
+        addDir(name,url,302,thumb, '','')
+		
+def disney_jr_links(name, url):
+    link = open_url(url).replace('\t', '').replace('\n', '')
+    videos = regex_get_all(link, 'div class="promo" style', 'img src="/cms_res/disney-junior/images/promo')
+    for v in videos:
+        url = 'http://www.disney.co.uk' + regex_from_to(v, 'href="', '"')
+        name = regex_from_to(v, 'data-itemName="', '"').replace('-',' ').upper()
+        thumb = 'http://www.disney.co.uk' + regex_from_to(v, 'img src="', '"')
+        addDirPlayable(name,url,310,thumb,'', '', '', 'djr')
+	
+def disney_play(name, url, iconimage):
+    urlid = url.replace('http://www.disney.co.uk/disney-junior/content/video.jsp?v=','')
+    link = open_url(url)
+    stream = regex_from_to(link, urlid, 'progressive')
+    server = regex_from_to(stream,'server":"', '"')
+    strm = regex_from_to(stream, 'program":"', '"')
+    url = server + strm + ' swfVfy=1'
+    title = regex_from_to(stream, 'pageTitle":"', '"').replace('Disney Junior | Videos - ', '')
+    liz=xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+    liz.setInfo( type="Video", infoLabels={ "Title": name} )
+    liz.setProperty("IsPlayable","true")
+    pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+    pl.clear()
+    pl.add(url, liz)
+    xbmc.Player().play(pl)
+	
+def disney_playlist(name, url, iconimage):
+    dp = xbmcgui.DialogProgress()
+    dp.create("F.T.V",'Creating Playlist')
+    playlist = []
+    link = open_url(url)
+    stream = regex_get_all(link, 'analyticsAssetName', 'progressive')
+    nItem = len(stream)
+    for s in stream:
+        server = regex_from_to(s,'server":"', '"')
+        strm = regex_from_to(s, 'program":"', '"')
+        url = server + strm + ' swfVfy=1'
+        title = regex_from_to(s, 'pageTitle":"', '"').replace('Disney Junior | Videos - ', '')
+        liz=xbmcgui.ListItem(title, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+        liz.setInfo( type="Video", infoLabels={ "Title": title} )
+        liz.setProperty("IsPlayable","true")
+        pl = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+        pl.clear()
+        playlist.append((url, liz))
+        progress = len(playlist) / float(nItem) * 100  
+        dp.update(int(progress), 'Adding to Your Playlist',title)
+
+        if dp.iscanceled():
+            return
+    dp.close()
+    for blob ,liz in playlist:
+        try:
+            if blob:
+                pl.add(blob,liz)
+        except:
+            pass
+    if not xbmc.Player().isPlayingVideo():
+        xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(pl)
+		
+def youtube_videos(name,url,iconimage):
+    find_url=url.find('?')+1
+    keep_url=url[:find_url]
+    
+    iconimage=""
+    req = urllib2.Request(url)
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3')
+    response = urllib2.urlopen(req)
+    link=response.read()
+    response.close()
+
+    # Extract items from feed
+    pattern = ""
+    matches = plugintools.find_multiple_matches(link,"<entry>(.*?)</entry>")
+    
+    for entry in matches:
+        
+        # Not the better way to parse XML, but clean and easy
+        title = plugintools.find_single_match(entry,"<titl[^>]+>([^<]+)</title>").replace("&amp;","&")
+        plot = plugintools.find_single_match(entry,"<media\:descriptio[^>]+>([^<]+)</media\:description>")
+        thumbnail = plugintools.find_single_match(entry,"<media\:thumbnail url='([^']+)'")
+        video_id = plugintools.find_single_match(entry,"http\://www.youtube.com/watch\?v\=([^\&]+)\&").replace("&amp;","&")
+        play_url = "plugin://plugin.video.youtube/?path=/root/video&action=play_video&videoid="+video_id
+
+        plugintools.add_item( action="play" , title=title , plot=plot , url=play_url ,thumbnail=thumbnail , folder=True )
+    
+    # Calculates next page URL from actual URL
+    start_index = int( plugintools.find_single_match( link ,"start-index=(\d+)") )
+    max_results = int( plugintools.find_single_match( link ,"max-results=(\d+)") )
+    next_page_url = keep_url+"start-index=%d&max-results=%d" % ( start_index+max_results , max_results)
+
+    addDir(">> Next page",next_page_url,395,"",'','')
+		
 def regex_from_to(text, from_string, to_string, excluding=True):
     if excluding:
         r = re.search("(?i)" + from_string + "([\S\s]+?)" + to_string, text).group(1)
@@ -1086,6 +1245,33 @@ elif mode == 202:
 
 elif mode == 203:
         play_od(name, url, iconimage)
+		
+elif mode == 399:
+        cartoons(name,url)
+		
+elif mode == 398:
+        cartoon_list(name,url)
+		
+elif mode == 397:
+        other_cartoons(name,url)
+		
+elif mode == 396:
+        play_cartoons(name,url,iconimage)
+		
+elif mode == 395:
+        youtube_videos(name,url,iconimage)
+		
+elif mode == 301:
+        disney_jr(url)	
+
+elif mode == 302:
+        disney_jr_links(name, url)
+		
+elif mode == 303:
+        disney_playlist(name, url, iconimage)
+
+elif mode == 310:
+        disney_play(name, url, iconimage)
 		
 elif mode==401:
         create_strm_file(name, url, '396', MOVIE_DIR, iconimage)

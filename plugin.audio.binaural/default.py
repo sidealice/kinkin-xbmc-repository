@@ -537,9 +537,9 @@ def artists_menu(name, url, iconimage, page):
         addDir('Next Page >>',origurl,1050,art + 'newalbums.jpg',str(nextpage))
 		
 def charts():
-    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,art +'ukalbumchart.jpg','')
+    addDir('UK Album Chart','http://www.billboard.com/charts/united-kingdom-albums',102,art +'ukalbumchart.jpg','')
     addDir('UK Single Chart - Top 100','http://www.officialcharts.com/singles-chart/',102,art +'uksinglecharttop100.jpg','')
-    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,art +'billboard200.jpg','')
+    addDir('BillBoard 200','http://www.billboard.com/charts/billboard-200',102,art +'billboard200.jpg','')
     addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,art +'hot100singles.jpg','')
     addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,art +'countryalbums.jpg','')
     addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,art +'heatseekeralbums.jpg','')
@@ -570,6 +570,8 @@ def chart_lists(name, url):
             title = regex_from_to(list, '<h3>', '</h3>').replace('&#039;',"'")
             addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
     elif "billboard" in url:
+        link=link.replace('\n','').replace('\t','')
+        print link
         match = re.compile('"title" : "(.+?)"\r\n.+?"artist" : "(.+?)"\r\n.+?image" : "(.+?)"\r\n.+?"entityId" : ".+?"\r\n.+?"entityUrl" : "(.+?)"').findall(link)
         for title, artist, iconimage, url1 in match:
             text = "%s %s" % (artist, title)
@@ -627,22 +629,20 @@ def play_album(name, url, iconimage,mix,clear, artist):
         if 'Top Hits' not in name:
             link = GET_url(url).translate(trans_table)
             session = regex_from_to(link,'hiddenSessionToken" value="', '"')
-            all_tracks = regex_from_to(link, '<h2>Tracks</h2>', '</table>')
-            tracks = regex_get_all(all_tracks, '<tr>', '</tr>')
+            albumurl='http://www.itemvn.com' + regex_from_to(link, 'configURL=', '.xml') + '.xml'
+            link = open_url(albumurl).translate(trans_table)
+            tracks = regex_get_all(link, '<song>', '</song>')
         else:
             session = regex_from_to(tophitlink,'hiddenSessionToken" value="', '"')
             tracks = regex_get_all(tophitlink, '<span id="grdHits', '<td width=')
         nItem=len(tracks)
+        trn=0
         for t in tracks:
-            trn = regex_from_to(t, 'class="album_track">', '</span>').replace('.', '')
-            songinfo = regex_from_to(t,'class="song" ', 'a>')
-            songid = regex_from_to(songinfo, 's=', '"')
-            songname = regex_from_to(songinfo, '">', '<')
-            try:
-                dur = regex_from_to(t,'song_length">', '<')
-                dur = (int(dur.split(':')[0]) * 60) + int(dur.split(':')[1])
-            except:
-                dur = ""
+            trn+=1
+            songid = regex_from_to(t, '<fileName>', '</fileName>')
+            songname = regex_from_to(t, '<title>', '</title>')
+            dur = regex_from_to(t,'<length>', '</length>')
+            dur = int(dur)
             album = name.replace(stripartist, '')
             title = "%s. %s" % (trn, songname)
             stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
@@ -699,16 +699,17 @@ def play_album(name, url, iconimage,mix,clear, artist):
                 liz.setProperty('fanart_image', "")
             playlist.append((url, liz))
         else:
-            all_tracks = regex_from_to(link, '<h2>Tracks</h2>', '</table>')
-            tracks = regex_get_all(all_tracks, '<tr>', '</tr>')
+            albumurl='http://www.itemvn.com' + regex_from_to(link, 'configURL=', '.xml') + '.xml'
+            link = open_url(albumurl).translate(trans_table)
+            tracks = regex_get_all(link, '<song>', '</song>')
             nItem=len(tracks)
+            trn=0
             for t in tracks:
-                trn = regex_from_to(t, 'class="album_track">', '</span>').replace('.', '')
-                songinfo = regex_from_to(t,'class="song" ', 'a>')
-                songid = regex_from_to(songinfo, 's=', '"')
-                songname = regex_from_to(songinfo, '">', '<')
-                dur = regex_from_to(t,'song_length">', '<')
-                dur = (int(dur.split(':')[0]) * 60) + int(dur.split(':')[1])
+                trn+=1
+                songid = regex_from_to(t, '<fileName>', '</fileName>')
+                songname = regex_from_to(t, '<title>', '</title>')
+                dur = regex_from_to(t,'<length>', '</length>')
+                dur = int(dur)
                 album = name.replace(stripartist, '')
                 title = "%s. %s" % (trn, songname)
                 stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')

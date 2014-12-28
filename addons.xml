@@ -157,7 +157,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.F.T.V"
        name="F.T.V"
-       version="1.3.2a"
+       version="1.3.3"
        provider-name="kinkin, icon by azad720">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

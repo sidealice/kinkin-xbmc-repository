@@ -51,6 +51,7 @@ ct_list = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.F.
 base_url = 'http://www.filmon.com/'
 disneyjrurl = 'http://www.disney.co.uk/disney-junior/content/video.jsp?b='
 session_url = 'http://www.filmon.com/api/init/'
+trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
 
 
 
@@ -137,7 +138,8 @@ def group_channels(url, title,alias,channels):#1416096000
     name_lst = []
     session_id = xbmcgui.Window(10000).getProperty("session_id")
     url = "%s%s%s%s%s" % (base_url, 'api/group/', url, '?session_key=', session_id)
-    link = GET_URL(url)
+    link = GET_URL(url).translate(trans_table)#.encode("utf-8", 'ignore')#.replace('\u00a0','').replace('\u00ae','').replace('\u00e9','').replace('\u00e0','')
+    link=cleanlink(link)
     data=json.loads(link)
     channels=data['channels']
     for c in channels:
@@ -149,7 +151,7 @@ def group_channels(url, title,alias,channels):#1416096000
             title="%s (%s)" % (title,channel_id)
         thumb = 'http://static.filmon.com/couch/channels/%s/extra_big_logo.png' % channel_id
         if 'BBC Music Magazine' not in title:
-            addDirPlayable(title,str(channel_id),125,thumb,"","not available", "", "grp")
+            addDirPlayable(title,str(channel_id),125,thumb,"na",'description', "na", "grp")
         setView('episodes', 'episodes-view')
 
     # read from channel list
@@ -1060,6 +1062,11 @@ def scan_library():
 		
 link = open_url(session_url)
 session_key = regex_from_to(link, 'session_key":"', '"')
+
+
+def cleanlink(link):
+    data=link.replace('\u00a0',' ').replace('\u00ae','').replace('\u00e9','').replace('\u00e0','').replace('\u2013','').replace('\u00e7','').replace('\u00f1','')
+    return data
    
 
 def get_params():

@@ -540,21 +540,21 @@ def charts():
     addDir('UK Album Chart','http://www.billboard.com/charts/united-kingdom-albums',102,art +'ukalbumchart.jpg','')
     addDir('UK Single Chart - Top 100','http://www.officialcharts.com/singles-chart/',102,art +'uksinglecharttop100.jpg','')
     addDir('BillBoard 200','http://www.billboard.com/charts/billboard-200',102,art +'billboard200.jpg','')
-    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,art +'hot100singles.jpg','')
-    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,art +'countryalbums.jpg','')
-    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,art +'heatseekeralbums.jpg','')
-    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,art +'independentalbums.jpg','')
-    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,art +'cataloguealbums.jpg','')
-    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,art +'folkalbums.jpg','')
-    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,art +'bluesalbums.jpg','')
-    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,art +'tastemakeralbums.jpg','')
-    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,art +'rockalbums.jpg','')
-    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,art +'alternativealbums.jpg','')
-    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,art +'hardrockalbums.jpg','')
-    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,art +'digitalalbums.jpg','')
-    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,art +'randbalbums.jpg','')
-    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,art +'toprandbandhiphop.jpg','')
-    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,art +'danceandelectronic.jpg','')
+    addDir('Hot 100 Singles','http://www.billboard.com/charts/hot-100',102,art +'hot100singles.jpg','')
+    addDir('Country Albums','http://www.billboard.com/charts/country-albums',102,art +'countryalbums.jpg','')
+    addDir('HeatSeeker Albums','http://www.billboard.com/charts/heatseekers-albums',102,art +'heatseekeralbums.jpg','')
+    addDir('Independent Albums','http://www.billboard.com/charts/independent-albums',102,art +'independentalbums.jpg','')
+    addDir('Catalogue Albums','http://www.billboard.com/charts/catalog-albums',102,art +'cataloguealbums.jpg','')
+    addDir('Folk Albums','http://www.billboard.com/charts/folk-albums',102,art +'folkalbums.jpg','')
+    addDir('Blues Albums','http://www.billboard.com/charts/blues-albums',102,art +'bluesalbums.jpg','')
+    addDir('Tastemaker Albums','http://www.billboard.com/charts/tastemaker-albums',102,art +'tastemakeralbums.jpg','')
+    addDir('Rock Albums','http://www.billboard.com/charts/rock-albums',102,art +'rockalbums.jpg','')
+    addDir('Alternative Albums','http://www.billboard.com/charts/alternative-albums',102,art +'alternativealbums.jpg','')
+    addDir('Hard Rock Albums','http://www.billboard.com/charts/hard-rock-albums',102,art +'hardrockalbums.jpg','')
+    addDir('Digital Albums','http://www.billboard.com/charts/digital-albums',102,art +'digitalalbums.jpg','')
+    addDir('R&B Albums','http://www.billboard.com/charts/r-b-hip-hop-albums',102,art +'randbalbums.jpg','')
+    addDir('Top R&B/Hip-Hop Albums','http://www.billboard.com/charts/r-and-b-albums',102,art +'toprandbandhiphop.jpg','')
+    addDir('Dance Electronic Albums','http://www.billboard.com/charts/dance-electronic-albums',102,art +'danceandelectronic.jpg','')
 	
 def chart_lists(name, url):
     req = urllib2.Request(url)
@@ -571,7 +571,23 @@ def chart_lists(name, url):
             addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
     elif "billboard" in url:
         link=link.replace('\n','').replace('\t','')
-        print link
+        all_list=regex_get_all(link,'<span class="chart_position','</header>')
+        for a in all_list:
+            title=regex_from_to(a,'<h1>','</h1>').rstrip()
+            try:
+                artist=regex_from_to(a,' title="','">').strip()
+            except:
+                artist=regex_from_to(a,'<p class="chart_info">','</p>').strip()
+            try:
+                iconimage=regex_from_to(a,'Image" src="','"')
+            except:
+                iconimage='http://www.billboard.com/sites/all/themes/bb/images/default/no-album.png'
+            text = "%s %s" % (artist, title)
+            if not 'Single' in name and not 'Best Songs of 2014' in text:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',25,iconimage,'')
+            elif not 'Best Songs of 2014' in text:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
+'''
         match = re.compile('"title" : "(.+?)"\r\n.+?"artist" : "(.+?)"\r\n.+?image" : "(.+?)"\r\n.+?"entityId" : ".+?"\r\n.+?"entityUrl" : "(.+?)"').findall(link)
         for title, artist, iconimage, url1 in match:
             text = "%s %s" % (artist, title)
@@ -582,7 +598,8 @@ def chart_lists(name, url):
                 addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',25,iconimage,'')
             else:
                 addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
-		
+'''
+				
 def get_song_url(session,url,songid):
     origurl = url
     url = 'http://www.itemvn.com/wsp/service.asmx'

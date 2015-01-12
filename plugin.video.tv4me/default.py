@@ -334,7 +334,7 @@ def play(name, url, iconimage, showname):
                 max=quality
                 playlink="%s|Cookie=%s" % (url,urllib.quote(setcookie))	
     elif 'http://vk.com/video_ext.php?oid' in linkvk:
-        url = regex_from_to(linkvk, 'src="', '"').replace('&amp;', '&') + '&hd=1'
+        url = regex_from_to(linkvk, 'src="', '"').replace('https://p.wplay.me/red.php?u=','').replace('&amp;', '&') + '&hd=1'
         net.set_cookies(cookie_jar)
         link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
         net.save_cookies(cookie_jar)

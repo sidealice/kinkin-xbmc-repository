@@ -90,72 +90,34 @@ def get_file_age(file_path):
 	
 	
 def CATEGORIES(name):
-    addDir("Recent Movies", 'http://www.hdmoviezone.net/feeds/posts/default?alt=json&start-index=',1,iconart, '1','')
+    addDir("Featured Movies", 'http://www.hdmoviezone.net/',11,iconart, '1','')
+    addDir("Recent Movies", 'http://www.hdmoviezone.net/feed/?paged=',1,iconart, '1','')
     addDir("Movies by Genre", 'url',100,iconart, '','')
     addDir("Movies by Country", 'url',110,iconart, '','')
     addDir("Movies by Year", 'url',120,iconart, '','')
+    addDir("A-Z", 'url',130,iconart, '','')
     addDir("Search", 'url',140,iconart, '','')
     addDir("Favourite Movies", 'url',9,iconart, '','')
-	
+
 def genres():
-    addDir("Action", 'http://www.hdmoviezone.net/feeds/posts/default/-/Action?alt=json&start-index=',1,iconart, '1','')
-    addDir("Adventure", 'http://www.hdmoviezone.net/feeds/posts/default/-/Adventure?alt=json&start-index=',1,iconart, '1','')
-    addDir("Animation", 'http://www.hdmoviezone.net/feeds/posts/default/-/Animation?alt=json&start-index=',1,iconart, '1','')
-    addDir("Biography", 'http://www.hdmoviezone.net/feeds/posts/default/-/Biography?alt=json&start-index=',1,iconart, '1','')
-    addDir("Comedy", 'http://www.hdmoviezone.net/feeds/posts/default/-/Comedy?alt=json&start-index=',1,iconart, '1','')
-    addDir("Crime", 'http://www.hdmoviezone.net/feeds/posts/default/-/Crime?alt=json&start-index=',1,iconart, '1','')
-    addDir("Documentary", 'http://www.hdmoviezone.net/feeds/posts/default/-/Documentary?alt=json&start-index=',1,iconart, '1','')
-    addDir("Drama", 'http://www.hdmoviezone.net/feeds/posts/default/-/Drama?alt=json&start-index=',1,iconart, '1','')
-    addDir("Family", 'http://www.hdmoviezone.net/feeds/posts/default/-/Family?alt=json&start-index=',1,iconart, '1','')
-    addDir("Fantasy", 'http://www.hdmoviezone.net/feeds/posts/default/-/Fantasy?alt=json&start-index=',1,iconart, '1','')
-    addDir("History", 'http://www.hdmoviezone.net/feeds/posts/default/-/History?alt=json&start-index=',1,iconart, '1','')
-    addDir("Horror", 'http://www.hdmoviezone.net/feeds/posts/default/-/Horror?alt=json&start-index=',1,iconart, '1','')
-    addDir("Music", 'http://www.hdmoviezone.net/feeds/posts/default/-/Music?alt=json&start-index=',1,iconart, '1','')
-    addDir("Musical", 'http://www.hdmoviezone.net/feeds/posts/default/-/Musical?alt=json&start-index=',1,iconart, '1','')
-    addDir("Mystery", 'http://www.hdmoviezone.net/feeds/posts/default/-/Mystery?alt=json&start-index=',1,iconart, '1','')
-    addDir("Romance", 'http://www.hdmoviezone.net/feeds/posts/default/-/Romance?alt=json&start-index=',1,iconart, '1','')
-    addDir("Sci-Fi", 'http://www.hdmoviezone.net/feeds/posts/default/-/Sci-Fi?alt=json&start-index=',1,iconart, '1','')
-    addDir("Sport", 'http://www.hdmoviezone.net/feeds/posts/default/-/Sport?alt=json&start-index=',1,iconart, '1','')
-    addDir("Thriller", 'http://www.hdmoviezone.net/feeds/posts/default/-/Thriller?alt=json&start-index=',1,iconart, '1','')
-    addDir("War", 'http://www.hdmoviezone.net/feeds/posts/default/-/War?alt=json&start-index=',1,iconart, '1','')
+    header =  ['Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Sport', 'Thriller', 'War']
+    for h in header:
+        addDir(h, 'http://www.hdmoviezone.net/category/%s/feed/?paged=' % h,1,iconart, '1','')
 
 def countries():
-    addDir("USA", 'http://www.hdmoviezone.net/feeds/posts/default/-/USA?alt=json&start-index=',1,iconart, '1','')
-    addDir("UK", 'http://www.hdmoviezone.net/feeds/posts/default/-/UK?alt=json&start-index=',1,iconart, '1','')
-    addDir("Australia", 'http://www.hdmoviezone.net/feeds/posts/default/-/Australia?alt=json&start-index=',1,iconart, '1','')
-    addDir("Canada", 'http://www.hdmoviezone.net/feeds/posts/default/-/Canada?alt=json&start-index=',1,iconart, '1','')
-    addDir("China", 'http://www.hdmoviezone.net/feeds/posts/default/-/China?alt=json&start-index=',1,iconart, '1','')
-    addDir("Denmark", 'http://www.hdmoviezone.net/feeds/posts/default/-/Denmark?alt=json&start-index=',1,iconart, '1','')
-    addDir("Finland", 'http://www.hdmoviezone.net/feeds/posts/default/-/Finland?alt=json&start-index=',1,iconart, '1','')
-    addDir("France", 'http://www.hdmoviezone.net/feeds/posts/default/-/France?alt=json&start-index=',1,iconart, '1','')
-    addDir("Germany", 'http://www.hdmoviezone.net/feeds/posts/default/-/Germany?alt=json&start-index=',1,iconart, '1','')
-    addDir("Hong Kong", 'http://www.hdmoviezone.net/feeds/posts/default/-/HongKong?alt=json&start-index=',1,iconart, '1','')
-    addDir("India", 'http://www.hdmoviezone.net/feeds/posts/default/-/India?alt=json&start-index=',1,iconart, '1','')
-    addDir("Italy", 'http://www.hdmoviezone.net/feeds/posts/default/-/Italy?alt=json&start-index=',1,iconart, '1','')
-    addDir("Japan", 'http://www.hdmoviezone.net/feeds/posts/default/-/Japan?alt=json&start-index=',1,iconart, '1','')
-    addDir("South Korea", 'http://www.hdmoviezone.net/feeds/posts/default/-/South_Korea?alt=json&start-index=',1,iconart, '1','')
-    addDir("Spain", 'http://www.hdmoviezone.net/feeds/posts/default/-/Spain?alt=json&start-index=',1,iconart, '1','')
-    addDir("Sweden", 'http://www.hdmoviezone.net/feeds/posts/default/-/Sweden?alt=json&start-index=',1,iconart, '1','')
-    addDir("Thailand", 'http://www.hdmoviezone.net/feeds/posts/default/-/Thailand?alt=json&start-index=',1,iconart, '1','')
+    header =  ['USA', 'UK', 'Australia', 'Canada', 'China', 'Denmark', 'Finland', 'France', 'Germany', 'Hong Kong', 'India', 'Italy', 'Japan', 'South Korea', 'Spain', 'Sweden', 'Thailand']
+    for h in header:
+        addDir(h, 'http://www.hdmoviezone.net/category/%s/feed/?paged=' % h,1,iconart, '1','')
 	
 def years():
-    addDir("2014", 'http://www.hdmoviezone.net/feeds/posts/default/-/2014?alt=json&start-index=',1,iconart, '1','')
-    addDir("2013", 'http://www.hdmoviezone.net/feeds/posts/default/-/2013?alt=json&start-index=',1,iconart, '1','')
-    addDir("2012", 'http://www.hdmoviezone.net/feeds/posts/default/-/2012?alt=json&start-index=',1,iconart, '1','')
-    addDir("2011", 'http://www.hdmoviezone.net/feeds/posts/default/-/2011?alt=json&start-index=',1,iconart, '1','')
-    addDir("2010", 'http://www.hdmoviezone.net/feeds/posts/default/-/2010?alt=json&start-index=',1,iconart, '1','')
-    addDir("2009", 'http://www.hdmoviezone.net/feeds/posts/default/-/2009?alt=json&start-index=',1,iconart, '1','')
-    addDir("2008", 'http://www.hdmoviezone.net/feeds/posts/default/-/2008?alt=json&start-index=',1,iconart, '1','')
-    addDir("2007", 'http://www.hdmoviezone.net/feeds/posts/default/-/2007?alt=json&start-index=',1,iconart, '1','')
-    addDir("2006", 'http://www.hdmoviezone.net/feeds/posts/default/-/2006?alt=json&start-index=',1,iconart, '1','')
-    addDir("2005", 'http://www.hdmoviezone.net/feeds/posts/default/-/2005?alt=json&start-index=',1,iconart, '1','')
-    addDir("2004", 'http://www.hdmoviezone.net/feeds/posts/default/-/2004?alt=json&start-index=',1,iconart, '1','')
-    addDir("2003", 'http://www.hdmoviezone.net/feeds/posts/default/-/2003?alt=json&start-index=',1,iconart, '1','')
-    addDir("2002", 'http://www.hdmoviezone.net/feeds/posts/default/-/2002?alt=json&start-index=',1,iconart, '1','')
-    addDir("2001", 'http://www.hdmoviezone.net/feeds/posts/default/-/2001?alt=json&start-index=',1,iconart, '1','')
-    addDir("2000", 'http://www.hdmoviezone.net/feeds/posts/default/-/2000?alt=json&start-index=',1,iconart, '1','')
-    addDir("1999", 'http://www.hdmoviezone.net/feeds/posts/default/-/1999?alt=json&start-index=',1,iconart, '1','')
-
+    header =  ['2014', '2013', '2012', '2011', '2010', '2009', '2008', '2007', '2006', '2005', '2004', '2003', '2002', '2001', '2000', '1999']
+    for h in header:
+        addDir(h, 'http://www.hdmoviezone.net/category/%s/feed/?paged=' % h,1,iconart, '1','')
+		
+def a_z(url):#http://www.hdmoviezone.net/category/a/feed/?orderby=title&order=ASC&paged=2
+    header =  ['09', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
+    for h in header:
+        addDir(h, 'http://www.hdmoviezone.net/category/%s/feed/?orderby=title&order=ASC&paged=' % h.lower(),1,iconart, '1','')
 
 def all_movies(chname,url,start):
     dp = xbmcgui.DialogProgress()
@@ -163,32 +125,34 @@ def all_movies(chname,url,start):
     dp.update(0)
     origurl = url
     if chname != 'search':
-        url = "%s%s%s" % (url,start,'&max-results=50')
-        nextstart = int(start) + 50
-    link = open_url(url).replace('\\"', '<>').translate(trans_table).replace('\\"', '<>')
+        #url = "%s%s%s" % (url,start,'&max-results=50')
+        url = "%s%s" % (url.replace('/?paged=1',''),start)
+        nextstart = int(start) + 1
+    link = open_url(url).translate(trans_table)#.replace('\\"', '<>')#.replace('\\"', '<>')
+    #print link
     if chname == 'search':
         all_data = regex_get_all(link, ',"title":{"type":"text', ']')
     else:
-        all_data = regex_get_all(link, 'type":"text"', ']')
-    nItem = len(all_data) - 1
+        all_data = regex_get_all(link, '<item>', '</item>')
+    nItem = len(all_data)
     count = 0
     for a in all_data:
         try:
-            title = regex_from_to(a, 't":"', '"')
+            title = regex_from_to(a, '<title>', '</title>')
             year = title[len(title)-5:-1]
-            title1 = title[:-6].rstrip()
+            title1 = title[:-6].replace('&#8217',"'").rstrip()
         except:
             pass
         try:
-            iconimage = regex_from_to(a, 'href=<>', '<>').replace('\/', '/')
-            file = regex_from_to(a, 'file=<>', '<>')
+            iconimage = regex_from_to(a, 'mediainfo" image="', '"').replace('\/', '/')
+            file = regex_from_to(a, 'file="', '"')
         except:
             pass
         if 'HD Movie Zone - ' not in title:
             count = count + 1
             titlelist = str(count) + ' of ' + str(nItem) + ': ' + title
             progress = count / float(nItem) * 100               
-            dp.update(int(progress), 'Adding title',titlelist)
+            dp.update(int(progress), 'Adding title',titlelist)#;
             if dp.iscanceled():
                 return
             if ENABLE_META:
@@ -210,32 +174,26 @@ def all_movies(chname,url,start):
         addDir("Next Page >>", origurl,1,iconart, str(nextstart),'')
     setView('movies', 'movies-view')
 	
-def search():
-    keyboard = xbmc.Keyboard('', 'Search', False)
-    keyboard.doModal()
-    if keyboard.isConfirmed():
-        query = keyboard.getText()
-        if len(query) > 0:
-            url = 'http://www.hdmoviezone.net/feeds/posts/default?alt=json&q=%s' % urllib.quote(query)
-            search_movies(url)
-			
-def search_movies(url):
+def featured_movies(chname,url,start):
     dp = xbmcgui.DialogProgress()
     dp.create("Movies4ME",'Getting titles')
     dp.update(0)
-    origurl = url #title,d3,d1,file,d2,iconimage
-    link = open_url(url).translate(trans_table).replace('\\"', '<>')
-    match = re.compile('title=<>(.+?)<> (.+?)div class=(.+?)file=<>(.+?)<> height=(.+?)image=<>(.+?)<>').findall(link)
+    origurl = url
+    link = open_url(url).translate(trans_table).replace('\t', '').replace('\n', '')#.replace('\\"', '<>')
+    print link
+    if chname!='search':
+        link=regex_from_to(link,'<div id="popularcarousel">','<div id="primary"')
+    match=re.compile('<a href="(.+?)">(.+?)alt="(.+?)" border=(.+?)src="(.+?)"').findall(link)
     nItem = len(match)
     count = 0
-    for title,d3,d1,file,d2,iconimage in match:
+    for u,d1,title,d2,iconimage in match:
         year = title[len(title)-5:-1]
-        title1 = title[:-6].rstrip()
-        if 'Movies4ME - ' not in title and not title.startswith('tt'):
+        title1 = title[:-6].replace('&#8217',"'").rstrip()
+        if 'xxxxx' not in title:
             count = count + 1
             titlelist = str(count) + ' of ' + str(nItem) + ': ' + title
             progress = count / float(nItem) * 100               
-            dp.update(int(progress), 'Adding title',titlelist)
+            dp.update(int(progress), 'Adding title',titlelist)#;
             if dp.iscanceled():
                 return
             if ENABLE_META:
@@ -252,7 +210,58 @@ def search_movies(url):
                 infoLabels =None
                 iconimage=iconimage
                 name = title
-            addDirPlayable(title.replace('\u0026','&'),file,2,iconimage,title,infoLabels=infoLabels)
+            addDirPlayable(title.replace('\u0026','&').replace('&#8211;','-'),u,12,iconimage,title,infoLabels=infoLabels)#
+    setView('movies', 'movies-view')
+	
+def featured_file(name,url,iconimage):
+    link=open_url(url)
+    file = regex_from_to(link, 'file="','"')
+    play_channel(name,file,iconimage)
+	
+def search():
+    keyboard = xbmc.Keyboard('', 'Search', False)
+    keyboard.doModal()
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if len(query) > 0:
+            url = 'http://www.hdmoviezone.net/feed/?s=%s&paged=1' % urllib.quote(query)
+            search_movies('search',url,"1")
+			
+def search_movies(name,url,start):
+    dp = xbmcgui.DialogProgress()
+    dp.create("Movies4ME",'Getting titles')
+    dp.update(0)
+    origurl = url
+    link = open_url(url).translate(trans_table).replace('\t', '').replace('\n', '')#.replace('\\"', '<>')
+    link=regex_from_to(link,'<item>','</channel>')
+    match=re.compile('<title>(.+?)</title><link>h(.+?)</link>(.+?)<div file="(.+?)" height(.+?)image="(.+?)"').findall(link)
+    nItem = len(match)
+    count = 0
+    for title,url,d1,u,d2,iconimage in match:
+        year = title[len(title)-5:-1]
+        title1 = title[:-6].replace('&#8217',"'").rstrip()
+        if 'xxxxx' not in title:
+            count = count + 1
+            titlelist = str(count) + ' of ' + str(nItem) + ': ' + title
+            progress = count / float(nItem) * 100               
+            dp.update(int(progress), 'Adding title',titlelist)#;
+            if dp.iscanceled():
+                return
+            if ENABLE_META:
+                infoLabels = get_meta(title1.replace(' (Cam version)','').replace('\u0026','&'),'movie',year=year)
+                if infoLabels['title']=='':
+                    name=title
+                else:
+                    name=infoLabels['title'] + ' (' + str(infoLabels['year']) + ')'
+                if infoLabels['cover_url']=='':
+                    iconimage=iconimage
+                else:
+                    iconimage=infoLabels['cover_url']
+            else:
+                infoLabels =None
+                iconimage=iconimage
+                name = title
+            addDirPlayable(title.replace('\u0026','&').replace('&#8211;','-'),u,12,iconimage,title,infoLabels=infoLabels)#
     setView('movies', 'movies-view')
 	
 def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episode_title=None):
@@ -767,6 +776,12 @@ if mode==None or url==None or len(url)<1:
 		
 elif mode==1:
         all_movies(name,url,list)
+		
+elif mode==11:
+        featured_movies(name,url,list)
+	
+elif mode==12:
+        featured_file(name,url,iconimage)
         
 elif mode==2:
         play_channel(name,url,iconimage)

@@ -222,7 +222,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.movies4me"
        name="Movies4ME"
-       version="1.0.1a"
+       version="1.0.2"
        provider-name="kinkin, art by azad720">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

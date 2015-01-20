@@ -1005,28 +1005,27 @@ def download_song(url,name,songname,artist,album,iconimage):
     notification(artist + ' ' + songname, 'Single download finished', '3000', iconimage)
 
 def download_album(url,name,iconimage,artist):
+    stripartist = "%s - " % artist
     url = 'http://www.itemvn.com/album/?s=%s' % url
     dialog = xbmcgui.Dialog()
     playlist=[]
     notification(name, 'Download started', '3000', iconimage)
-    link = GET_url(url)
+    link = GET_url(url).translate(trans_table)
     session = regex_from_to(link,'hiddenSessionToken" value="', '"')
-    all_tracks = regex_from_to(link, '<h2>Tracks</h2>', '</table>')
-    tracks = regex_get_all(all_tracks, '<tr>', '</tr>')
+    albumurl='http://www.itemvn.com' + regex_from_to(link, 'configURL=', '.xml') + '.xml'
+    link = open_url(albumurl).translate(trans_table)
+    tracks = regex_get_all(link, '<song>', '</song>')
     nSong=len(tracks)
+    trn=0
     for t in tracks:
-        trn = regex_from_to(t, 'class="album_track">', '</span>').replace('.', '')
-        songinfo = regex_from_to(t,'class="song" ', 'a>')
-        songid = regex_from_to(songinfo, 's=', '"')
-        songname = regex_from_to(songinfo, '">', '<')
-        dur = regex_from_to(t,'song_length">', '<')
-        dur = (int(dur.split(':')[0]) * 60) + int(dur.split(':')[1])
-        album = name.split(' - ')[1]
-        artist = name.split(' - ')[0]
+        trn+=1
+        songid = regex_from_to(t, '<fileName>', '</fileName>')
+        songname = regex_from_to(t, '<title>', '</title>')
+        dur = regex_from_to(t,'<length>', '</length>')
+        dur = int(dur)
+        album = name.replace(stripartist, '')
         title = "%s. %s" % (trn, songname)
         url = get_song_url(session,url,songid)
-        playlist.append(songname)
-        title = "%s. %s" % (trn.replace('track',''), songname)
         artist_path = create_directory(MUSIC_DIR, artist)
         album_path = create_directory(artist_path, album)
         list_data = "%s<>%s<>%s<>%s<>%s%s" % (album_path,artist,album,trn,title,'.mp3')

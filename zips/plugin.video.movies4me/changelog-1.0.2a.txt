@@ -6,9 +6,6 @@ Fixed all lists
 Added A-Z
 Added Featured movies
 
-1.0.1a
-Fixed addon.xml error
-
 1.0.1
 Fixed movie listing script error
 

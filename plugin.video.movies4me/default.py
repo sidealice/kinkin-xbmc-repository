@@ -261,7 +261,7 @@ def search_movies(name,url,start):
                 infoLabels =None
                 iconimage=iconimage
                 name = title
-            addDirPlayable(title.replace('\u0026','&').replace('&#8211;','-'),u,12,iconimage,title,infoLabels=infoLabels)#
+            addDirPlayable(title.replace('\u0026','&').replace('&#8211;','-'),u,2,iconimage,title,infoLabels=infoLabels)#
     setView('movies', 'movies-view')
 	
 def get_meta(name,types=None,year=None,season=None,episode=None,imdb=None,episode_title=None):

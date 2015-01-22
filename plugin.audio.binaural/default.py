@@ -569,8 +569,20 @@ def chart_lists(name, url):
             artist = regex_from_to(list, '<h4>', '</h4>').replace('&#039;',"'")
             title = regex_from_to(list, '<h3>', '</h3>').replace('&#039;',"'")
             addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
-    elif "billboard" in url:
+    elif "billboard" in url and '<span class="chart_position' not in link:
         link=link.replace('\n','').replace('\t','')
+        match=re.compile('<span class="this-week">(.+?)</span><span class="last-week">(.+?)</span></div><div class="row-image"(.+?)<div class="row-title"><h2>(.+?)</h2><h3><a href="(.+?)" trackaction="Artist Name">(.+?)</a>').findall(link)
+        for pos,lw,iconimage,title,artisturl,artist in match:
+            text = "%s %s" % (artist, title)
+            try:
+                iconimage='http://' + regex_from_to(iconimage,'http://','.jpg') + '.jpg'
+            except:
+                iconimage='http://www.billboard.com/sites/all/themes/bb/images/default/no-album.png'
+            if not 'Single' in name and not 'Best Songs of 2014' in text:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',25,iconimage,'')
+            elif not 'Best Songs of 2014' in text:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
+    else:
         all_list=regex_get_all(link,'<span class="chart_position','</header>')
         for a in all_list:
             title=regex_from_to(a,'<h1>','</h1>').rstrip()

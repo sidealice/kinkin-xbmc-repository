@@ -626,6 +626,7 @@ def get_song_url(session,url,songid):
     xml = '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"> <soap:Body> <mps xmlns="http://www.itemvn.com/"> <t>%s</t> <s>%s</s> <p/> <d>%s</d> </mps> </soap:Body> </soap:Envelope>' % (session, songid, origurl)
     req = requests.post(url, data=xml, headers=header_dict).text
     songurl = regex_from_to(req, '<mpsResult>', '</mpsResult>')
+    print songurl
     return songurl
         
     	
@@ -640,11 +641,11 @@ def play_album(name, url, iconimage,mix,clear, artist):
         pass
     stripartist = "%s - " % artist
     if url.startswith("S_"):
-        url = 'http://www.itemvn.com/song/?s=%s' % url.replace('S_','')
+        xurl = 'http://www.itemvn.com/song/?s=%s' % url.replace('S_','')
     elif 'Top hits' in name:
-        url = urlorig
+        xurl = urlorig
     else:
-        url = 'http://www.itemvn.com/album/?s=%s' % url
+        xurl = 'http://www.itemvn.com/album/?s=%s' % url
     browse=False
     playlist=[]
     dialog = xbmcgui.Dialog()
@@ -656,7 +657,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
         dp.create("Bin@ural",'Adding Tracks')
         dp.update(0)
         if 'Top Hits' not in name:
-            link = GET_url(url).translate(trans_table)
+            link = GET_url(xurl).translate(trans_table)
             session = regex_from_to(link,'hiddenSessionToken" value="', '"')
             albumurl='http://www.itemvn.com' + regex_from_to(link, 'configURL=', '.xml') + '.xml'
             link = open_url(albumurl).translate(trans_table)
@@ -681,7 +682,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
             elif os.path.exists(stored_path1):
                 url = stored_path1
             else:
-                url = get_song_url(session,url,songid)
+                url = get_song_url(session,xurl,songid)
             addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'S_'+songid)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
@@ -702,7 +703,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
             dp.create("Bin@ural",'Creating Your Playlist')
             dp.update(0)
         pl = get_XBMCPlaylist(clear)
-        link = GET_url(url).translate(trans_table)
+        link = GET_url(xurl).translate(trans_table)
         session = regex_from_to(link,'hiddenSessionToken" value="', '"')
         if urlorig.startswith("S_"):
             songid = urlorig.replace('S_','')
@@ -717,7 +718,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
             elif os.path.exists(stored_path1):
                 url = stored_path1
             else:
-                url = get_song_url(session,url,songid)
+                url = get_song_url(session,xurl,songid)
             addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'S_'+songid)
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
             liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
@@ -748,7 +749,7 @@ def play_album(name, url, iconimage,mix,clear, artist):
                 elif os.path.exists(stored_path1):
                     url = stored_path1
                 else:
-                    url = get_song_url(session,url,songid)
+                    url = get_song_url(session,xurl,songid)
                 addDirAudio(title,url,10,iconimage,songname,artist,album,str(dur),'S_'+songid)
                 liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
                 liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
@@ -1018,11 +1019,11 @@ def download_song(url,name,songname,artist,album,iconimage):
 
 def download_album(url,name,iconimage,artist):
     stripartist = "%s - " % artist
-    url = 'http://www.itemvn.com/album/?s=%s' % url
+    xurl = 'http://www.itemvn.com/album/?s=%s' % url
     dialog = xbmcgui.Dialog()
     playlist=[]
     notification(name, 'Download started', '3000', iconimage)
-    link = GET_url(url).translate(trans_table)
+    link = GET_url(xurl).translate(trans_table)
     session = regex_from_to(link,'hiddenSessionToken" value="', '"')
     albumurl='http://www.itemvn.com' + regex_from_to(link, 'configURL=', '.xml') + '.xml'
     link = open_url(albumurl).translate(trans_table)
@@ -1035,9 +1036,9 @@ def download_album(url,name,iconimage,artist):
         songname = regex_from_to(t, '<title>', '</title>')
         dur = regex_from_to(t,'<length>', '</length>')
         dur = int(dur)
-        album = name.replace(stripartist, '')
-        title = "%s. %s" % (trn, songname)
-        url = get_song_url(session,url,songid)
+        album = name.replace(stripartist, '').replace('/', '')
+        title = "%s. %s" % (trn, songname.replace('/', ''))
+        url = get_song_url(session,xurl,songid)
         artist_path = create_directory(MUSIC_DIR, artist)
         album_path = create_directory(artist_path, album)
         list_data = "%s<>%s<>%s<>%s<>%s%s" % (album_path,artist,album,trn,title,'.mp3')

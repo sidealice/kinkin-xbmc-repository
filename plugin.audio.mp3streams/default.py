@@ -16,6 +16,7 @@ FAV_ALBUM = settings.favourites_file_album()
 FAV_SONG = settings.favourites_file_songs()
 PLAYLIST_FILE = settings.playlist_file()
 MUSIC_DIR = settings.music_dir()
+HIDE_FANART = settings.hide_fanart()
 QUEUE_SONGS = settings.default_queue()
 QUEUE_ALBUMS = settings.default_queue_album()
 DOWNLOAD_LIST = settings.download_list()
@@ -60,6 +61,7 @@ def get_cookie():
 
 	
 def CATEGORIES():
+    addDir('Browse Alternate Source','url',700,artgenre + 'alternate.jpg','')
     addDirAudio('[COLOR cyan]Using Gotham? Enable alternate source in settings (beta)[/COLOR]','url',500,'','','','','','')
     addDir('Artists','http://musicmp3.ru/artists.html',21,art + 'artists.jpg','')
     addDir('Top Albums','http://musicmp3.ru/genres.html',12,art + 'topalbums.jpg','')
@@ -78,24 +80,24 @@ def CATEGORIES():
 
 	
 def charts():
-    addDir('UK Album Chart','http://www1.billboard.com/charts/united-kingdom-albums',102,artbillboard +'ukalbumchart.jpg','')
+    addDir('UK Album Chart','http://www.billboard.com/charts/united-kingdom-albums',102,artbillboard +'ukalbumchart.jpg','')
     addDir('UK Single Chart - Top 100','http://www.officialcharts.com/singles-chart/',102,artbillboard +'uksinglecharttop100.jpg','')
-    addDir('BillBoard 200','http://www1.billboard.com/charts/billboard-200',102,artbillboard +'billboard200.jpg','')
-    addDir('Hot 100 Singles','http://www1.billboard.com/charts/hot-100',102,artbillboard +'hot100singles.jpg','')
-    addDir('Country Albums','http://www1.billboard.com/charts/country-albums',102,artbillboard +'countryalbums.jpg','')
-    addDir('HeatSeeker Albums','http://www1.billboard.com/charts/heatseekers-albums',102,artbillboard +'heatseekeralbums.jpg','')
-    addDir('Independent Albums','http://www1.billboard.com/charts/independent-albums',102,artbillboard +'independentalbums.jpg','')
-    addDir('Catalogue Albums','http://www1.billboard.com/charts/catalog-albums',102,artbillboard +'cataloguealbums.jpg','')
-    addDir('Folk Albums','http://www1.billboard.com/charts/folk-albums',102,artbillboard +'folkalbums.jpg','')
-    addDir('Blues Albums','http://www1.billboard.com/charts/blues-albums',102,artbillboard +'bluesalbums.jpg','')
-    addDir('Tastemaker Albums','http://www1.billboard.com/charts/tastemaker-albums',102,artbillboard +'tastemakeralbums.jpg','')
-    addDir('Rock Albums','http://www1.billboard.com/charts/rock-albums',102,artbillboard +'rockalbums.jpg','')
-    addDir('Alternative Albums','http://www1.billboard.com/charts/alternative-albums',102,artbillboard +'alternativealbums.jpg','')
-    addDir('Hard Rock Albums','http://www1.billboard.com/charts/hard-rock-albums',102,artbillboard +'hardrockalbums.jpg','')
-    addDir('Digital Albums','http://www1.billboard.com/charts/digital-albums',102,artbillboard +'digitalalbums.jpg','')
-    addDir('R&B Albums','http://www1.billboard.com/charts/r-b-hip-hop-albums',102,artbillboard +'randbalbums.jpg','')
-    addDir('Top R&B/Hip-Hop Albums','http://www1.billboard.com/charts/r-and-b-albums',102,artbillboard +'toprandbandhiphop.jpg','')
-    addDir('Dance Electronic Albums','http://www1.billboard.com/charts/dance-electronic-albums',102,artbillboard +'danceandelectronic.jpg','')
+    addDir('BillBoard 200','http://www.billboard.com/charts/billboard-200',102,artbillboard +'billboard200.jpg','')
+    addDir('Hot 100 Singles','http://www.billboard.com/charts/hot-100',102,artbillboard +'hot100singles.jpg','')
+    addDir('Country Albums','http://www.billboard.com/charts/country-albums',102,artbillboard +'countryalbums.jpg','')
+    addDir('HeatSeeker Albums','http://www.billboard.com/charts/heatseekers-albums',102,artbillboard +'heatseekeralbums.jpg','')
+    addDir('Independent Albums','http://www.billboard.com/charts/independent-albums',102,artbillboard +'independentalbums.jpg','')
+    addDir('Catalogue Albums','http://www.billboard.com/charts/catalog-albums',102,artbillboard +'cataloguealbums.jpg','')
+    addDir('Folk Albums','http://www.billboard.com/charts/folk-albums',102,artbillboard +'folkalbums.jpg','')
+    addDir('Blues Albums','http://www.billboard.com/charts/blues-albums',102,artbillboard +'bluesalbums.jpg','')
+    addDir('Tastemaker Albums','http://www.billboard.com/charts/tastemaker-albums',102,artbillboard +'tastemakeralbums.jpg','')
+    addDir('Rock Albums','http://www.billboard.com/charts/rock-albums',102,artbillboard +'rockalbums.jpg','')
+    addDir('Alternative Albums','http://www.billboard.com/charts/alternative-albums',102,artbillboard +'alternativealbums.jpg','')
+    addDir('Hard Rock Albums','http://www.billboard.com/charts/hard-rock-albums',102,artbillboard +'hardrockalbums.jpg','')
+    addDir('Digital Albums','http://www.billboard.com/charts/digital-albums',102,artbillboard +'digitalalbums.jpg','')
+    addDir('R&B Albums','http://www.billboard.com/charts/r-b-hip-hop-albums',102,artbillboard +'randbalbums.jpg','')
+    addDir('Top R&B/Hip-Hop Albums','http://www.billboard.com/charts/r-and-b-albums',102,artbillboard +'toprandbandhiphop.jpg','')
+    addDir('Dance Electronic Albums','http://www.billboard.com/charts/dance-electronic-albums',102,artbillboard +'danceandelectronic.jpg','')
 	
 def chart_lists(name, url):
     req = urllib2.Request(url)
@@ -110,16 +112,35 @@ def chart_lists(name, url):
             artist = regex_from_to(list, '<h4>', '</h4>').replace('&#039;',"'")
             title = regex_from_to(list, '<h3>', '</h3>').replace('&#039;',"'")
             addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
-    elif "billboard" in url:
-        match = re.compile('"title" : "(.+?)"\r\n.+?"artist" : "(.+?)"\r\n.+?image" : "(.+?)"\r\n.+?"entityId" : ".+?"\r\n.+?"entityUrl" : "(.+?)"').findall(link)
-        for title, artist, iconimage, url1 in match:
+    elif "billboard" in url and '<span class="chart_position' not in link:
+        link=link.replace('\n','').replace('\t','')
+        match=re.compile('<span class="this-week">(.+?)</span><span class="last-week">(.+?)</span></div><div class="row-image"(.+?)<div class="row-title"><h2>(.+?)</h2><h3><a href="(.+?)" trackaction="Artist Name">(.+?)</a>').findall(link)
+        for pos,lw,iconimage,title,artisturl,artist in match:
             text = "%s %s" % (artist, title)
-            url='http://www1.billboard.com'+url1+'#'+url1
-            if re.search('.gif',iconimage):
-                iconimage=""
-            if not 'Single' in name:
+            try:
+                iconimage='http://' + regex_from_to(iconimage,'http://','.jpg') + '.jpg'
+            except:
+                iconimage='http://www.billboard.com/sites/all/themes/bb/images/default/no-album.png'
+            if not 'Single' in name and not 'Best Songs of 2014' in text:
                 addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',25,iconimage,'')
-            else:
+            elif not 'Best Songs of 2014' in text:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
+    else:
+        all_list=regex_get_all(link,'<span class="chart_position','</header>')
+        for a in all_list:
+            title=regex_from_to(a,'<h1>','</h1>').rstrip()
+            try:
+                artist=regex_from_to(a,' title="','">').strip()
+            except:
+                artist=regex_from_to(a,'<p class="chart_info">','</p>').strip()
+            try:
+                iconimage=regex_from_to(a,'Image" src="','"')
+            except:
+                iconimage='http://www.billboard.com/sites/all/themes/bb/images/default/no-album.png'
+            text = "%s %s" % (artist, title)
+            if not 'Single' in name and not 'Best Songs of 2014' in text:
+                addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',25,iconimage,'')
+            elif not 'Best Songs of 2014' in text:
                 addDir(artist.replace('&amp;', '&') + ' - ' + title.replace('&amp;', '&'),'url',26,iconimage,'')
 	
 def artists(url):
@@ -295,7 +316,7 @@ def find_url(id):
                 if urlid == id:
                     return url
     else:
-        return 'http://listen.musicmp3.ru/6b5ee4f8422b6e8d/'
+        return 'http://listen.musicmp3.ru/1d6c13041066bed9/'
 			
 
 def play_album(name, url, iconimage,mix,clear):
@@ -309,6 +330,7 @@ def play_album(name, url, iconimage,mix,clear):
         link = GET_url(url)
         match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
+            trn = track.replace('track','')
             if GOTHAM_FIX:
                 try:
                     alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
@@ -319,13 +341,13 @@ def play_album(name, url, iconimage,mix,clear):
                     response = requests.get(url,allow_redirects=False)
                     url = response.headers['location']
                 except:
-                    url = 'http://files.musicmp3.ru/lofi/' + id
+                    url = find_url(trn).strip() + id
             else:
-                url = 'http://files.musicmp3.ru/lofi/' + id
+                url = 'http://files.musicmp3.ru/lofi/' + id #find_url(trn).strip() + id
+
             songname = songname.replace('&amp;', 'and')
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
-            trn = track.replace('track','')
             title = "%s. %s" % (track.replace('track',''), songname)
             addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
             liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
@@ -333,7 +355,8 @@ def play_album(name, url, iconimage,mix,clear):
             liz.setProperty('mimetype', 'audio/mpeg')
             liz.setProperty("IsPlayable","true")
             liz.setThumbnailImage(iconimage)
-            liz.setProperty('fanart_image', fanart)
+            if HIDE_FANART == False:
+                liz.setProperty('fanart_image', "")
             playlist.append((url, liz))
 				
     else:
@@ -346,6 +369,7 @@ def play_album(name, url, iconimage,mix,clear):
         match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
         nItem=len(match)
         for track,id,songurl,meta, d1,album,artist,songname,dur in match:
+            trn = track.replace('track','')
             if GOTHAM_FIX:
                 try:
                     alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
@@ -356,13 +380,12 @@ def play_album(name, url, iconimage,mix,clear):
                     response = requests.get(url,allow_redirects=False)
                     url = response.headers['location']
                 except:
-                    url = 'http://files.musicmp3.ru/lofi/' + id
+                    url = find_url(trn).strip() + id
             else:
-                url = 'http://files.musicmp3.ru/lofi/' + id
+                url = 'http://files.musicmp3.ru/lofi/' + id #find_url(trn).strip() + id
             songname = songname.replace('&amp;', 'and')
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
-            trn = track.replace('track','')
             title = "%s. %s" % (track.replace('track',''), songname)
             stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
             if os.path.exists(stored_path):
@@ -376,7 +399,8 @@ def play_album(name, url, iconimage,mix,clear):
             liz.setProperty('mimetype', 'audio/mpeg')
             liz.setProperty("IsPlayable","true")
             liz.setThumbnailImage(iconimage)
-            liz.setProperty('fanart_image', fanart)
+            if HIDE_FANART == True:
+                liz.setProperty('fanart_image', "")
             playlist.append((url, liz))
 			
             if mix != 'mix':
@@ -413,7 +437,8 @@ def play_song(url,name,songname,artist,album,iconimage,dur,clear):
     liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
     liz.setProperty('mimetype', 'audio/mpeg')
     liz.setThumbnailImage(iconimage)
-    liz.setProperty('fanart_image', fanart)
+    if HIDE_FANART == True:
+        liz.setProperty('fanart_image', "")
     playlist.append((url1, liz))
     for blob ,liz in playlist:
         try:
@@ -423,7 +448,7 @@ def play_song(url,name,songname,artist,album,iconimage,dur,clear):
             pass
     if clear or (not xbmc.Player().isPlayingAudio()):
         if XBMCPLAYER == 'paplayer':
-            xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)
+            xbmc.Player().play(pl)
         else:
             xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
 		
@@ -492,7 +517,7 @@ def download_album(url,name,iconimage):
         download_lock = create_file(MUSIC_DIR, "downloading.txt")
         local_filename = album_path + '/' + title + '.mp3'
         headers = {'Host': 'listen.musicmp3.ru','Range': 'bytes=0-','User-Agent': 'AppleWebKit/<WebKit Rev>', 'Accept': 'audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'}
-        r = requests.get(url, headers=headers, stream=True)
+        #r = requests.get(url, headers=headers, stream=True)
         #with open(local_filename, 'wb') as f:
             #for chunk in r.iter_content(chunk_size=1024): 
                 #if chunk:
@@ -656,6 +681,42 @@ class DownloadIconThread(Thread):
         path = str(self.path)
         data = self.data
         urllib.urlretrieve(data, path)
+		
+def myfreemp3(url):
+    addDir('Artists','url',701,art + 'artists.jpg','')
+    addDir('Charts','http://www.myfreemp3.eu/chart/',702,art + 'billboardcharts.jpg','')
+    addDir('Genres','http://www.myfreemp3.eu/genres/',703,art + 'genres.jpg','')
+    addDir('Search','url',704,art + 'searchsongs.jpg','')
+	
+def myfreemp3_artists(url):
+    alphabet =  ['0..9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
+    for a in alphabet:
+        addDir(a, 'http://www.myfreemp3.eu/artists/%s/' % a.lower(),705,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', a + '.png')), '')
+		
+def myfreemp3_artislist(url):
+    link = open_url(url)
+    match = re.compile('<li><a class="hash" href="(.+?)">(.+?)</a></li>').findall(link)
+    for url,title in match:
+        url = 'http://www.myfreemp3.eu' + url
+        addDir(title, url,706,iconart, '')
+		
+def myfreemp3_songs(name,url,iconimage):
+    playlist = []
+    link = open_url(url).replace("'",'"')
+    match = re.compile('<li id="(.+?)" class="track"><div onclick="player.playlist.playtrack(this);" class="controll_button playlist_button"> <div class="play"></div></div><a class="info" data-aid="(.+?)" data-current="(.+?)" data-duration="(.+?)">(.+?)</a><div class="add_panel"><div class="track_time">(.+?)</div><a class="bitrate butt bit"></a><a class="tip butt text" data-text="(.+?)"></a><a class="share butt"> </a> <!-- <a href="(.+?)" class="hash butt more_info"></a> --><a rel="nofollow" class="dw" href="(.+?)" onClick="window.open("(.+?)", "_blank")" >Download</a></div><div class="track_name"><a rel="nofollow" href="(.+?)" class="hash"><b class="artist">(.+?)</b></a><span class="name">(.+?)</span></div></li>').findall(link)
+    for id,uid,d1,dur,ftitle,ttime,text,share,d2,dllink,artisturl,artist,song in match:
+        url = 'http://myfreemp3.eu/play/%s_24662006e9/' % uid
+        addDirAudio(title.replace(' mp3', ''),url,10,iconimage,song,artist,'',dllink,'mfmp3')
+        liz=xbmcgui.ListItem(song, iconImage=iconimage, thumbnailImage=iconimage)
+        liz.setInfo('music', {'Title':song, 'Artist':artist, 'Album':album})
+        liz.setProperty('mimetype', 'audio/mpeg')
+        liz.setThumbnailImage(iconimage)
+        liz.setProperty('fanart_image', audio_fanart)
+        playlist.append((url, liz))
+    setView('music', 'song')
+
+def myfreemp3_charts(url):
+    print "A"
 	
 def favourite_artists():
     if os.path.isfile(FAV_ARTIST):
@@ -1072,7 +1133,8 @@ def addDirAudio(name,url,mode,iconimage,songname,artist,album,dur,type):
         liz=xbmcgui.ListItem(name + suffix, iconImage="DefaultAudio.png", thumbnailImage=iconimage)
         liz.addContextMenuItems(contextMenuItems, replaceItems=False)
         liz.setInfo( type="Audio", infoLabels={ "Title": name } )
-        liz.setProperty('fanart_image', fanart)
+        if HIDE_FANART == False:
+            liz.setProperty('fanart_image', fanart)
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz)
         return ok
         
@@ -1257,6 +1319,29 @@ elif mode == 333:
 	
 elif mode == 500:
     ADDON.openSettings()
+	
+elif mode == 700:
+    myfreemp3(url)
+	
+elif mode == 701:
+    myfreemp3_artists(url)
+	
+elif mode == 702:
+    myfreemp3_charts(url)
+	
+elif mode == 703:
+    myfreemp3_genres(url)
+	
+elif mode == 704:
+    myfreemp3_search(url)
+	
+elif mode == 705:
+    myfreemp3_artislist(url)
+	
+elif mode == 706:
+    myfreemp3_songs(name,url,iconimage)
+	
+
 	
 		
 

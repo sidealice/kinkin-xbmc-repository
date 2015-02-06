@@ -53,6 +53,12 @@ def default_queue():
     else:
         return False
 		
+def hide_fanart():
+    if ADDON.getSetting('hide_fanart') == "true":
+        return True
+    else:
+        return False
+		
 def default_queue_album():
     if ADDON.getSetting('default_queue_album') == "true":
         return True

@@ -14,6 +14,7 @@ import cookielib
 from t0mm0.common.net import Net
 from helpers import clean_file_name
 import requests
+import urlresolver
 from metahandler import metahandlers
 metainfo = metahandlers.MetaData()
 net = Net()
@@ -23,6 +24,7 @@ ADDON = settings.addon()
 ENABLE_SUBS = settings.enable_subscriptions()
 ENABLE_META = settings.enable_meta()
 TV_PATH = settings.tv_directory()
+AUTOPLAY = settings.autoplay()
 FAV = settings.favourites_file()
 SUB = settings.subscription_file()
 cookie_jar = settings.cookie_jar()
@@ -30,7 +32,7 @@ addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tv4me',  'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.tv4me', 'icon.png'))
 base_url = 'http://www.watch-tvseries.net/'
-
+trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
 
 def open_url(url):
     req = urllib2.Request(url)
@@ -113,6 +115,8 @@ def search_show(query):
     match = re.compile("<li><a href='(.+?)'>(.+?)</a></li>").findall(link)
     for url, title in match:
         if query.lower() in title.lower():
+            if not 'http://www.watch-tvseries.net' in url:
+                url='http://www.watch-tvseries.net' + url
             if ENABLE_META:
                 infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
                 if infoLabels['title']=='':
@@ -139,6 +143,8 @@ def shows(url):
     all_shows = regex_from_to(link,'Top TV Shows', '</div></div></div><div id=')
     match = re.compile('<a href="(.+?)">(.+?)</a>').findall(all_shows)
     for url, title in match:
+        if not 'http://www.watch-tvseries.net' in url:
+            url='http://www.watch-tvseries.net' + url
         if ENABLE_META:
             infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
             if infoLabels['title']=='':
@@ -164,6 +170,8 @@ def a_z_shows(name, url):
     link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
     match = re.compile("<li><a href='(.+?)'>(.+?)</a></li>").findall(link)
     for url, title in match:
+        if not 'http://www.watch-tvseries.net' in url:
+            url='http://www.watch-tvseries.net' + url
         tnum = title[:1].replace('9','#').replace('8','#').replace('7','#').replace('6','#').replace('5','#').replace('4','#').replace('3','#').replace('2','#').replace('1','#').replace('0','#')
         if title[:1] == name or tnum == name:
             if ENABLE_META:
@@ -202,6 +210,8 @@ def grouped_shows(url):
     link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
     match = re.compile("<li><a href='(.+?)'>(.+?)</a></li>").findall(link)
     for url, title in match:
+        if not 'http://www.watch-tvseries.net' in url:
+            url='http://www.watch-tvseries.net' + url
         if ENABLE_META:
             infoLabels = get_meta(title,'tvshow',year=None,season=None,episode=None,imdb=None)
             if infoLabels['title']=='':
@@ -226,6 +236,7 @@ def tv_show(name, url, iconimage):
     else:
         site = "ZZmeYY"
     net.set_cookies(cookie_jar)
+    #url='http://www.watch-tvseries.net' + url
     link = net.http_GET(url).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
     seasonlist = regex_get_all(link.replace('&', 'and'), '<div class="csseason', '</div> </div> <div class=')
@@ -281,7 +292,10 @@ def tv_show_episodes(name, list, iconimage, showname):
         else:
             infoLabels =None
             iconimage=iconart
-        addDirPlayable(name,url,5,iconimage, showname,infoLabels=infoLabels)
+        if AUTOPLAY:
+            addDirPlayable(name,url,5,iconimage, showname,infoLabels=infoLabels)
+        else:
+            addDir(name,url,20,iconimage, showname, showname,infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
 		
 def play(name, url, iconimage, showname):
@@ -290,7 +304,8 @@ def play(name, url, iconimage, showname):
     host = 'www.watch-tvseries.' + site
     vidlinks = "found"
     dp = xbmcgui.DialogProgress()
-    dp.create('Opening ' + name)
+    dp.create("Opening",showname + ' - ' + name)
+    dp.update(0)
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Host'] = host
@@ -298,111 +313,155 @@ def play(name, url, iconimage, showname):
     header_dict['Cache-Control'] = 'max-age=0'
     header_dict['Referer'] = hosturl
     header_dict['User-Agent'] = 'AppleWebKit/<WebKit Rev>'
-    link = net.http_GET(url, headers=header_dict).content.encode("utf-8").replace("'", '"')
+    link = net.http_GET(url, headers=header_dict).content.replace("'", '"')#.content.encode("utf-8").translate(trans_table)
     net.save_cookies(cookie_jar)
-    try:
-        key1 = regex_from_to(link, 'morurlvid', 'morevideo1').replace('("', '').replace('",$#', '')
-    except:
-        try:
-            key1 = regex_from_to(link, 'morurlvid', '",').replace('("', '')
-        except:
-            key1 = "notavailable"
-	
+    url1=[]
     if site == 'net':
-        key = re.compile('"http://www.watch-tvseries.net/"(.+?)"(.+?)"').findall(link)
+        key = re.compile('get[(]"http://www.watch-tvseries.net/"[+]updv[+]"(.+?)"').findall(link)
     else:
-        key = re.compile('"http://www.watch-tvseries.me/"(.+?)"(.+?)"').findall(link)
-    for a, url in key:
-        url1 = 'http://www.watch-tvseries.%s/play/plvids%s' % (site, url)
+        key = re.compile('get[(]"http://www.watch-tvseries.me/"[+]updv[+]"(.+?)"').findall(link)
+    for url in key:
+        url1.append('http://www.watch-tvseries.%s/play/plvids%s' % (site, url))
+    match=re.compile('morurlvid[(]"(.+?)"').findall(link)
+    nItem=len(match)
+    count=0
+    for kl in match:
+        count+=1
+        url = 'http://www.watch-tvseries.net/play/mvideo_' + kl
+        response = requests.get(url, allow_redirects=False)
+        url1.append(response.headers['location'])
+    nItm=len(url1)
+    count=0
+    for u in url1:
+        u=urllib.unquote(u.replace('https://p.wplay.me/red.php?u=',''))
+        try:
+            title = regex_from_to(u, 'http://', '/')
+        except:
+            try:
+                title = regex_from_to(u, 'https://', '/')
+            except:
+                title = u
+        title = title.replace('embed.','').replace('api.','').replace('www.','')
+        count+=1
+        titlelist = str(count) + ' of ' + str(nItem) + ': ' + title
+        progress = float(count) / float(nItem) * 100               
+        dp.update(int(progress), 'Adding link',"")
+        if dp.iscanceled():
+            return
+        if AUTOPLAY:
+            try:
+                dp = xbmcgui.DialogProgress()
+                dp.create("TV4ME: Trying Links",titlelist)
+                play_videos(name,u,iconimage,showname)
+                return
+            except:
+                pass
+        else:
+            addDirPlayable(title,u,19,iconimage,name+'<>'+showname)
+	
+def play_videos(name, url, iconimage, showname):
+    if '<>' in showname:
+        name=showname.split('<>')[0]
+        showname=showname.split('<>')[1]
+    hosturl = url
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Host'] = 'vk.com'
     header_dict['Referer'] = str(hosturl)
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.2; rv:24.0) Gecko/20100101 Firefox/24.0'
-    linkvk = net.http_GET(url1).content.encode("utf-8").rstrip()
-    if 'mail.ru' in linkvk:
-        url = regex_from_to(linkvk, 'src="', '"')
-        url = url.replace('.html','.json?ver=0.2.60').replace('embed/','')
-        max=0
-        link = requests.get(url).content
-        cookielink = requests.get(url)
-        setcookie = cookielink.headers['Set-Cookie']
-        match=re.compile('"key":"(.+?)","url":"(.+?)"').findall(link)
-        for q,url in match:
-            quality=int(q.replace('p',''))
-            if quality > max:
-                max=quality
-                playlink="%s|Cookie=%s" % (url,urllib.quote(setcookie))	
-    elif 'http://vk.com/video_ext.php?oid' in linkvk:
-        url = regex_from_to(linkvk, 'src="', '"').replace('https://p.wplay.me/red.php?u=','').replace('&amp;', '&') + '&hd=1'
-        net.set_cookies(cookie_jar)
-        link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
-        net.save_cookies(cookie_jar)
-        if 'url720":"' in link:
-            vidlinks = re.compile('url720":"(.+?)"').findall(link)
-        elif 'url480":"' in link:
-            vidlinks = re.compile('url480":"(.+?)"').findall(link)
-        elif 'url360":"' in link:
-            vidlinks = re.compile('url360":"(.+?)"').findall(link)
-        elif 'url240":"' in link:
-            vidlinks = re.compile('url240":"(.+?)"').findall(link)
-        else: 
-            vidlinks = "removed"
-        for playlink in vidlinks:
-            playlink = playlink.replace('\/', '/')
-			
-    elif 'http://www.youtube.com' in linkvk:
-        vidlink = regex_from_to(linkvk, 'src="http://www.youtube.com/embed/', 'wmode').replace('?', '')
-        vidlinks = "found"
-        playlink = ('plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vidlink)
-    if vidlinks == "removed" and key1 != "notavailable":
-        url = 'http://www.watch-tvseries.net/play/mvideo_' + key1
-        response = requests.get(url, allow_redirects=False)
-        url1 = response.headers['location']
-        if 'gorillavid.in' in url1:
-            link = requests.get(url1).text
+    if 'plvids' in url:
+        linkvk = net.http_GET(url).content.encode("utf-8").rstrip()
+        if 'mail.ru' in linkvk:
+            url = regex_from_to(linkvk, 'src="', '"')
+            url = url.replace('.html','.json?ver=0.2.60').replace('embed/','')
+            max=0
+            link = requests.get(url).content
+            cookielink = requests.get(url)
+            setcookie = cookielink.headers['Set-Cookie']
+            match=re.compile('"key":"(.+?)","url":"(.+?)"').findall(link)
+            for q,url in match:
+                quality=int(q.replace('p',''))
+                if quality > max:
+                    max=quality
+                    playlink="%s|Cookie=%s" % (url,urllib.quote(setcookie))	
+        elif 'http://vk.com/video_ext.php?oid' in linkvk:
+            url = regex_from_to(linkvk, 'src="', '"').replace('https://p.wplay.me/red.php?u=','').replace('&amp;', '&') + '&hd=1'
+            net.set_cookies(cookie_jar)
+            link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+            net.save_cookies(cookie_jar)
+            if 'url720":"' in link:
+                vidlinks = re.compile('url720":"(.+?)"').findall(link)
+            elif 'url480":"' in link:
+                vidlinks = re.compile('url480":"(.+?)"').findall(link)
+            elif 'url360":"' in link:
+                vidlinks = re.compile('url360":"(.+?)"').findall(link)
+            elif 'url240":"' in link:
+                vidlinks = re.compile('url240":"(.+?)"').findall(link)
+            else: 
+                vidlinks = "removed"
+            for playlink in vidlinks:
+                playlink = playlink.replace('\/', '/')
+        elif 'http://www.youtube.com' in linkvk:
+            vidlink = regex_from_to(linkvk, 'src="http://www.youtube.com/embed/', 'wmode').replace('?', '')
+            vidlinks = "found"
+            playlink = ('plugin://plugin.video.youtube/?action=play_video&videoid=%s' % vidlink)
+    else:			
+        if 'gorillavid.in' in url:
+            link = requests.get(url).text
             playlink = regex_from_to(link, 'file: "', '"')
-        if 'vidbull' in url1:
-            link = requests.get(url1).text.replace('|', '.')#.182.34.161.50
-            u1 = regex_from_to(link, '<img src="http://', '/')#key,u2
-            data = regex_from_to(link, '<div id="player_code">', '<br></div>')
-            u2 = regex_from_to(data, 'image.mp4.video.', '.setup.')
-            u2split = u2.split('.')
-            key = u2split[0]
-            u2 = u2split[1]
-            if 'vidbull' in u1:
-                u3 = u2split[2]
-                u4 = u2split[3]
-                u5 = u2split[4]
-                playlink = 'http://'+ u5 + '.7.' + u4 + '.' + u3 + ':' + u2 + '/d/' + key + '/video.mp4?start=0'
-            else:
-                playlink = 'http://'+ u1 + ':' + u2 + '/d/' + key + '/video.mp4?start=0'
-        if 'nowvideo' in url1:
+        elif 'nowvideo' in url:
             headers = {'Referer': hosturl, 'Host': 'embed.nowvideo.sx'}
-            link = requests.get(url1, headers=headers).text
+            link = requests.get(url, headers=headers).text
             key = regex_from_to(link, 'var fkzd="', '"').replace('.', '%2E').replace('-', '%2D')
             file = regex_from_to(link, 'flashvars.file="', '"')
             linkurl = 'http://www.nowvideo.sx/api/player.api.php?cid=1&cid3=undefined&key=%s&user=undefined&file=%s&numOfErrors=0&pass=undefined&cid2=undefined' % (key, file)
             link = open_url(linkurl)
             playlink = regex_from_to(link, 'url=', '&title')
-	
+        elif 'ishared' in url:
+            link = open_url(url).strip().replace('\n', '').replace('\t', '')
+            try:
+                playlink = regex_from_to(link, 'var zzzz = "', '"')
+            except:
+                findfile = regex_from_to(link, 'playlist:', 'type')
+                key = regex_from_to(findfile, 'file: ', ',')
+                playlink = regex_from_to(link, 'var ' + key + ' = "', '"')
+        elif 'vk.com' in url:
+            url = url.replace('https://p.wplay.me/red.php?u=','').replace('&amp;', '&') + '&hd=1'
+            net.set_cookies(cookie_jar)
+            link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
+            net.save_cookies(cookie_jar)
+            if 'url720":"' in link:
+                vidlinks = re.compile('url720":"(.+?)"').findall(link)
+            elif 'url480":"' in link:
+                vidlinks = re.compile('url480":"(.+?)"').findall(link)
+            elif 'url360":"' in link:
+                vidlinks = re.compile('url360":"(.+?)"').findall(link)
+            elif 'url240":"' in link:
+                vidlinks = re.compile('url240":"(.+?)"').findall(link)
+            else: 
+                vidlinks = "removed"
+            for playlink in vidlinks:
+                playlink = playlink.replace('\/', '/')
+        else:
+            validresolver = urlresolver.HostedMediaFile(url)
+            if validresolver:
+                playlink = urlresolver.resolve(url)
+            
+
+    
     playlist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
     playlist.clear()
     listitem = xbmcgui.ListItem(showname + ' ' + name, iconImage=iconimage, thumbnailImage=iconimage)
     playlist.add(playlink,listitem)
-    xbmcPlayer = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
+    xbmcPlayer = xbmc.Player()
 	
     handle = str(sys.argv[1])    
     if handle != "-1":
         listitem.setProperty("IsPlayable", "true")
         xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, listitem)
     else:
-        try:
-            xbmcPlayer.play(playlist)
-        except:
-            dialog = xbmcgui.Dialog()
-            dialog.ok("Playback failed", "")
-    dp.close()
+        xbmcPlayer.play(playlist)
+
 
 	
 def add_favourite(name, url, iconimage, dir, text):
@@ -830,6 +889,12 @@ elif mode == 17:
 		
 elif mode == 18:
         search_show(name)
+		
+elif mode==19:
+        play_videos(name, url, iconimage.replace('hhhh', 'http:'), showname)
+		
+elif mode==20:
+        play(name, url, iconimage.replace('hhhh', 'http:'), list)
 		
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
 

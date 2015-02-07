@@ -21,6 +21,12 @@ def enable_meta():
     else:
         return False
 		
+def autoplay():
+    if ADDON.getSetting('autoplay') == "true":
+        return True
+    else:
+        return False
+		
 def tv_directory():
     if ADDON.getSetting('tv_directory').startswith('special'):
         return create_directory(DATA_PATH, "tvshows")

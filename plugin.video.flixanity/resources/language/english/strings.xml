@@ -1,5 +1,6 @@
 <strings>
 	<!-- Settings -->
+    <string id="10000">Select Base Website</string>
     <string id="10001">FliXanity account</string>
     <string id="10002">  User Name</string>
     <string id="10003">  Password</string>

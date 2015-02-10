@@ -10,6 +10,13 @@ TVO_PATH = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.f
 def addon():
     return ADDON
 	
+def base_url():
+    quality = ADDON.getSetting('base_url')
+    if quality == '0':
+        return 'http://www.flixanity.com/'
+    else:
+        return 'http://www.cartoonhd.is/'
+	
 def enable_meta():
     if ADDON.getSetting('enable_meta') == "true":
         return True

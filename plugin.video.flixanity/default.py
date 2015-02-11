@@ -133,7 +133,7 @@ def login():
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Accept-Encoding'] = 'gzip, deflate'
     header_dict['Host'] = 'www.flixanity.com'
-    header_dict['Referer'] = 'http://www.flixanity.com/'
+    header_dict['Referer'] = base_url
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
     header_dict['Connection'] = 'keep-alive'#
 
@@ -141,7 +141,7 @@ def login():
     if MS_USER != '':
         form_data = ({'action': 'login', 'username': MS_USER, 'password': MS_PASSWORD})	
         net.set_cookies(cookie_jar)
-        loginlink = net.http_POST('http://www.flixanity.com/', form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
+        loginlink = net.http_POST(base_url, form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
         if 'Welcome Back %s' % MS_USER in loginlink:
             notification('FliXanity', 'Welcome Back %s' % MS_USER, '4000', iconart)
         net.save_cookies(cookie_jar)
@@ -325,10 +325,10 @@ def Main(name,url,page,pagin):
     url1 = url
     url = "%s/%s" % (url,page)
     nextpage = int(page) + 1
-    referer = 'http://www.flixanity.com/'
+    referer = base_url
     link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
     data = regex_from_to(link, '<section class="cardBox flip">', 'Privacy Policy')
-    match = re.compile('<div class=(.+?)<img class="img-preview spec-border"(.+?)src="(.+?)" alt="(.+?)<h3><a href="(.+?)">(.+?)</a></h3>').findall(data)
+    match = re.compile('<div class=(.+?)<img class="img-preview spec-border(.+?)src="(.+?)" alt="(.+?)<h3><a href="(.+?)">(.+?)</a></h3>').findall(data)
     if '<>' in pagin:
         nAllItem = len(match)
         nItem = 50
@@ -445,7 +445,7 @@ def tvseries_episodes(name, url, thumb, showname):
     all_episodes = regex_get_all(link, '<li class="episode ">', '</li>')
     for a in all_episodes:
         thumb = regex_from_to(a, 'show-thumbnail"  src="', '"')
-        titleurl = regex_from_to(a, '<a class="link"', '</a>')
+        titleurl = regex_from_to(a, 'class="link"', '</a>')
         title = regex_from_to(titleurl, 'title="', '"').replace('Season ', '').replace(', Episode ', 'x')
         url = regex_from_to(titleurl, 'href="', '"')
         spliturl = url.split('/')

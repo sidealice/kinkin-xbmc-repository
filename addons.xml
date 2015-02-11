@@ -177,7 +177,7 @@ Plus stream or download from over 70,000 live audio bootlegs from www.archive.or
 
 <addon id="plugin.video.flixanity"
        name="FliXanity"
-       version="0.8.9a"
+       version="0.9.0"
        provider-name="kinkin, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>

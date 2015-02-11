@@ -14,8 +14,10 @@ def base_url():
     quality = ADDON.getSetting('base_url')
     if quality == '0':
         return 'http://www.flixanity.com/'
-    else:
+    elif quality == '1':
         return 'http://www.cartoonhd.is/'
+    else:
+        return 'http://www.flixanity.tv/'
 	
 def enable_meta():
     if ADDON.getSetting('enable_meta') == "true":

@@ -54,7 +54,7 @@ def open_url(url,referer, cache_time=3600):
     header_dict['Accept-Encoding'] = 'gzip, deflate'
     header_dict['Host'] = 'www.flixanity.com'
     header_dict['Referer'] = referer
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0'
     header_dict['Connection'] = 'keep-alive'
     h = hashlib.md5(url).hexdigest()
     cache_file = os.path.join(CACHE_PATH, h)
@@ -72,7 +72,7 @@ def open_url(url,referer, cache_time=3600):
 		
 def check_url(url):
     req = urllib2.Request(url)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0')
+    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0')
     try:
         response = urllib2.urlopen(req)
         link=response.read()
@@ -89,7 +89,7 @@ def check_url(url):
 	
 def open_gurl(url, cache_time=3600):
     req = urllib2.Request(url)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0')
+    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0')
     h = hashlib.md5(url).hexdigest()
     cache_file = os.path.join(CACHE_PATH, h)
     age = get_file_age(cache_file)
@@ -116,6 +116,24 @@ def open_gurl(url, cache_time=3600):
                 print 'The server could not fulfill the request.'
                 print 'Error code: ', e.code
                 return "error"
+				
+def open_url_nocache(url):
+    req = urllib2.Request(url)
+    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0')
+    try:
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        return link
+    except urllib2.URLError as e:
+        if hasattr(e, 'reason'):
+            print 'We failed to reach a server. Reason: ' + e.reason
+            #print e.reason
+            return e.reason
+        elif hasattr(e, 'code'):
+            print 'The server could not fulfill the request.'
+            print 'Error code: ', e.code
+            return "error"
         
 	
 def get_file_age(file_path):
@@ -132,9 +150,9 @@ def login():
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Accept-Encoding'] = 'gzip, deflate'
-    header_dict['Host'] = 'www.flixanity.com'
+    header_dict['Host'] = 'www.flixanity.tv'
     header_dict['Referer'] = base_url
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0'
     header_dict['Connection'] = 'keep-alive'#
 
     ### Login ###
@@ -142,7 +160,7 @@ def login():
         form_data = ({'action': 'login', 'username': MS_USER, 'password': MS_PASSWORD})	
         net.set_cookies(cookie_jar)
         loginlink = net.http_POST(base_url, form_data=form_data, headers=header_dict).content.encode("utf-8").rstrip()
-        if 'Welcome Back %s' % MS_USER in loginlink:
+        if '<i class="fa fa-user"></i>%s' % MS_USER in loginlink:
             notification('FliXanity', 'Welcome Back %s' % MS_USER, '4000', iconart)
         net.save_cookies(cookie_jar)
 
@@ -327,6 +345,7 @@ def Main(name,url,page,pagin):
     nextpage = int(page) + 1
     referer = base_url
     link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
+    print link
     data = regex_from_to(link, '<section class="cardBox flip">', 'Privacy Policy')
     match = re.compile('<div class=(.+?)<img class="img-preview spec-border(.+?)src="(.+?)" alt="(.+?)<h3><a href="(.+?)">(.+?)</a></h3>').findall(data)
     if '<>' in pagin:
@@ -528,6 +547,9 @@ def search(name):
                 search_show(name,query)
 			
 def search_movie(name,query):
+    if 'flixanity' in base_url:
+        link = open_url_nocache(base_url).replace("'",'"')
+        token=regex_from_to(link,'var token = "','"')
     timestamp = int(round(time.time() * 1000))
     url = base_url+'ajax/search.php'
     header_dict = {}
@@ -535,7 +557,7 @@ def search_movie(name,query):
     header_dict['Accept-Encoding'] = 'gzip, deflate'
     header_dict['Host'] = base_url.replace('http:','').replace('/','')
     header_dict['Referer'] = base_url+'index.php?menu=search&query%s' % query
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+    header_dict['User-Agent'] = '	Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0'
     header_dict['Connection'] = 'keep-alive'#
     header_dict['X-Requested-With'] = 'XMLHttpRequest'
     header_dict['Pragma'] = 'no-cache'
@@ -544,7 +566,10 @@ def search_movie(name,query):
     form_dict['limit'] = '5'
     form_dict['q'] = query
     form_dict['timestamp'] = str(timestamp)
-    form_dict['verifiedCheck'] = ''
+    if 'flixanity' in base_url:
+        form_dict['verifiedCheck'] = token
+    else:
+        form_dict['verifiedCheck'] = ''
     link = net.http_POST(url, form_data=form_dict, headers=header_dict).content.encode("utf-8").replace('\/','/').rstrip()
     match=re.compile('"permalink":"(.+?)","image":"(.+?)","title":"(.+?)","meta":"(.+?)"').findall(link)
     for url,thumb,title,type in match:
@@ -576,6 +601,9 @@ def search_movie(name,query):
             setView('movies', 'movies-view')
 		
 def search_show(name,query):
+    if 'flixanity' in base_url:
+        link = open_url_nocache(base_url).replace("'",'"')
+        token=regex_from_to(link,'var token = "','"')
     timestamp = int(round(time.time() * 1000))
     url = base_url+'ajax/search.php'
     header_dict = {}
@@ -583,7 +611,7 @@ def search_show(name,query):
     header_dict['Accept-Encoding'] = 'gzip, deflate'
     header_dict['Host'] = base_url.replace('http:','').replace('/','')
     header_dict['Referer'] = base_url+'index.php?menu=search&query%s' % query
-    header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:29.0) Gecko/20100101 Firefox/29.0'
+    header_dict['User-Agent'] = '	Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0'
     header_dict['Connection'] = 'keep-alive'#
     header_dict['X-Requested-With'] = 'XMLHttpRequest'
     header_dict['Pragma'] = 'no-cache'
@@ -592,7 +620,10 @@ def search_show(name,query):
     form_dict['limit'] = '5'
     form_dict['q'] = query
     form_dict['timestamp'] = str(timestamp)
-    form_dict['verifiedCheck'] = ''
+    if 'flixanity' in base_url:
+        form_dict['verifiedCheck'] = token
+    else:
+        form_dict['verifiedCheck'] = ''
 
     link = net.http_POST(url, form_data=form_dict, headers=header_dict).content.encode("utf-8").replace('\t', '').replace('\u00e0', 'a').replace('\/','/').rstrip()
     match=re.compile('"permalink":"(.+?)","image":"(.+?)","title":"(.+?)","meta":"(.+?)"').findall(link)
@@ -628,25 +659,19 @@ def links(name,url,iconimage,showname):
     dp.update(0)
     dialog = xbmcgui.Dialog()
     link = open_gurl(url)
-    link = link.replace('IFRAME SRC', 'iframe src')#<iframe src="
-    embeds = regex_from_to(link, 'var embeds', '</script>')
-    links = regex_get_all(embeds, ' src="', '"')
-    nItem = len(links)
-    count = 0
-    for l in links:
+    link = link.replace('IFRAME SRC', 'iframe src').replace('</IFRAME>','</iframe>')#<iframe src="
+    embeds=regex_from_to(link,'var embeds','</script>')
+    if 'flixanity' in url:
+        match=re.compile('<option value="(.+?)" data-type="(.+?)">(.+?)</option>').findall(link)
+    else:
+        match=re.compile('id="selector(.+?)"><span><img src="(.+?)"> (.+?)</span></a>').findall(link)
+    nItem = len(match)
+    count=0
+    for id,dt,title in match:
+        title=title.replace('Adobe Flash Required -  ','')
         count = count + 1
-        url = l.replace(base_url+'jwplayer/gkplugins/player.php?', '').replace(' src=','').replace('"','')
-        if 'googlevideo' in url:
-            title = 'googlevideo'
-        else:
-            try:
-                title = regex_from_to(url, 'http://', '/')
-            except:
-                try:
-                    title = regex_from_to(url, 'https://', '/')
-                except:
-                    title = url
-        title = title.replace('embed.','').replace('api.','').replace('www.','')
+        embed = regex_from_to(embeds, id, '</iframe>')
+        url = regex_from_to(embed, ' src="', '"').replace(base_url+'jwplayer/gkplugins/player.php?', '').replace(' src=','').replace('"','')
         urllist.append(url)
         titlelist = str(count) + ' of ' + str(nItem) + ': ' + title
         progress = len(urllist) / float(nItem) * 100               

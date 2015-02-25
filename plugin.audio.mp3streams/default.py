@@ -498,10 +498,10 @@ def play_album(name, url, iconimage,mix,clear):
 def play_song(url, name, songname, artist, album, iconimage, dur, clear):
     import playerMP3
     try:
-        track = name[:name.find('.')]
+        track = int(name[:name.find('.')])
     except:
         track = 0
-    url, liz = playerMP3.getListItem(songname, artist, album, int(track), iconimage, dur, url, fanart, 'true', GOTHAM_FIX_2)
+    url, liz = playerMP3.getListItem(songname, artist, album, track, iconimage, dur, url, fanart, 'true', GOTHAM_FIX_2)
     title=name
     if FOLDERSTRUCTURE=="0":
         stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')

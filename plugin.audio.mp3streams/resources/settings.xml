@@ -1,7 +1,7 @@
 <settings>
 	<category label="Settings">
         <setting id="gotham_fix_2" type="bool"      label="10007" default="true"/>
-        <setting id="pre-cache"    type="labelenum" label="10008" default="" values="250K|500K|750K|1000K" enable="eq(-1,true)"/>
+        <setting id="pre-cache" type="labelenum" label="10008" default="250K" values="250K|500K|750K|1000K" enable="eq(-1,true)"/>
         <setting id="keep_downloads" type="bool" label="10010" default="false" enable="eq(-2,true)"/>
         <setting id="custom_directory" type="bool" label="10000" default="false" />
         <setting id="music_dir" type="folder" label="10001" default="set" enable="!eq(-1,false)"/>

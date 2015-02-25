@@ -24,7 +24,7 @@
 
 <addon id="plugin.audio.mp3streams"
        name="MP3 Streams"
-       version="1.1.0"
+       version="1.1.1"
        provider-name="kinkin, spoyser, art by Marquerite">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
@@ -32,10 +32,14 @@
         <import addon="script.module.mutagen"/>
         <import addon="script.module.requests" version="1.1.0"/>
     </requires>
+
     <extension point="xbmc.python.pluginsource"
                	library="default.py">
         <provides>audio</provides>
     </extension>
+
+	<extension point="xbmc.service" library="playerMP3.py" start="startup" />
+
     <extension point="xbmc.addon.metadata">
         <platform>all</platform>
         <summary>A music streaming collection</summary>

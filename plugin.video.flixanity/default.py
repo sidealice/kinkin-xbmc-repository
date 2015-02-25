@@ -189,78 +189,78 @@ def CATEGORIES(name):
             login()
         except:
             pass
-    addDir("Movies", 'url',101,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '','')
-    addDir("TV Shows", 'url',102,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'tvshows.png')), '','')
-    addDir("Favourite Movies", 'url',19,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'favouritemovies.png')), '','')
-    addDir("Favourite TV Shows", 'url',12,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'favouritetvshows.png')), '','')
-    addDir("TV Subscriptions", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'tvshowsubscriptions.png')), '','')
+    addDir("Movies", 'url',101,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '','','')
+    addDir("TV Shows", 'url',102,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'tvshows.png')), '','','')
+    addDir("Favourite Movies", 'url',19,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'favouritemovies.png')), '','','')
+    addDir("Favourite TV Shows", 'url',12,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'favouritetvshows.png')), '','','')
+    addDir("TV Subscriptions", 'url',16,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'tvshowsubscriptions.png')), '','','')
 		 
 def movie_menu():
-    addDir("Box Office Movies", base_url+'featuredmovies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'boxoffice.png')), '1','a')
-    addDir("HD Movies", base_url+'hdmovies',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a')
-    addDir("New Movies", base_url+'new-movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'newmovies.png')), '1','a')
-    addDir("Alphabetical", base_url+'movies/abc',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'a-z.png')), '1','a')
-    addDir("IMDB Rating", base_url+'movies/imdb_rating',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'imdbrating.png')), '1','a')
-    addDir("Popular Movies", base_url+'movies/favorites',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'popular.png')), '1','a')
-    addDir("All Movies", base_url+'movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'all.png')), '1','a')
-    addDir("Movie Genres", 'url',4,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'genres.png')), '1','')
-    addDir("Search Movies", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'search.png')), '1','')
+    addDir("Box Office Movies", base_url+'featuredmovies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'boxoffice.png')), '1','a','')
+    addDir("HD Movies", base_url+'hdmovies',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a','')
+    addDir("New Movies", base_url+'new-movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'newmovies.png')), '1','a','')
+    addDir("Alphabetical", base_url+'movies/abc',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'a-z.png')), '1','a','')
+    addDir("IMDB Rating", base_url+'movies/imdb_rating',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'imdbrating.png')), '1','a','')
+    addDir("Popular Movies", base_url+'movies/favorites',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'popular.png')), '1','a','')
+    addDir("All Movies", base_url+'movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'all.png')), '1','a','')
+    addDir("Movie Genres", 'url',4,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'genres.png')), '1','','')
+    addDir("Search Movies", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'search.png')), '1','','')
     if MS_ACCOUNT:
-        addDir("Movie Picks 4 U", base_url+'recommend-movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'toppicks.png')), '1','')
+        addDir("Movie Picks 4 U", base_url+'recommend-movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'toppicks.png')), '1','','')
 
 def movie_genre_menu(url):
-    addDir("Adventure", base_url+'movie-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'adventure.png')), '1','a')
-    addDir("Animation", base_url+'movie-tags/animation',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'animation.png')), '1','a')
-    addDir("Biography", base_url+'movie-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'biography.png')), '1','a')
-    addDir("Comedy", base_url+'movie-tags/comedy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'comedy.png')), '1','a')
-    addDir("Crime", base_url+'movie-tags/crime',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'crime.png')), '1','a')
-    addDir("Documentary", base_url+'movie-tags/documentary',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'documentary.png')), '1','a')
-    addDir("Drama", base_url+'movie-tags/drama',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'drama.png')), '1','a')
-    addDir("Family", base_url+'movie-tags/family',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'family.png')), '1','a')
-    addDir("Fantasy", base_url+'movie-tags/fantasy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'fantasy.png')), '1','a')
-    addDir("Horror", base_url+'movie-tags/horror',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'horror.png')), '1','a')
-    addDir("Music", base_url+'movie-tags/music',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'music.png')), '1','a')
-    addDir("Musical", base_url+'movie-tags/musical',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'musical.png')), '1','a')
-    addDir("Romance", base_url+'movie-tags/romance',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'romance.png')), '1','a')
-    addDir("Sci-Fi", base_url+'movie-tags/sci-fi',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'scifi.png')), '1','a')
-    addDir("Sport", base_url+'movie-tags/sport',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'sport.png')), '1','a')
-    addDir("Thriller", base_url+'movie-tags/thriller',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'thriller.png')), '1','a')
-    addDir("War", base_url+'movie-tags/war',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'war.png')), '1','a')
-    addDir("Western", base_url+'movie-tags/western',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'western.png')), '1','a')
-    addDir("WWE/WWF", base_url+'movie-tags/wwf-wwe',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'wwewwf.png')), '1','a')	
+    addDir("Adventure", base_url+'movie-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'adventure.png')), '1','a','')
+    addDir("Animation", base_url+'movie-tags/animation',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'animation.png')), '1','a','')
+    addDir("Biography", base_url+'movie-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'biography.png')), '1','a','')
+    addDir("Comedy", base_url+'movie-tags/comedy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'comedy.png')), '1','a','')
+    addDir("Crime", base_url+'movie-tags/crime',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'crime.png')), '1','a','')
+    addDir("Documentary", base_url+'movie-tags/documentary',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'documentary.png')), '1','a','')
+    addDir("Drama", base_url+'movie-tags/drama',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'drama.png')), '1','a','')
+    addDir("Family", base_url+'movie-tags/family',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'family.png')), '1','a','')
+    addDir("Fantasy", base_url+'movie-tags/fantasy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'fantasy.png')), '1','a','')
+    addDir("Horror", base_url+'movie-tags/horror',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'horror.png')), '1','a','')
+    addDir("Music", base_url+'movie-tags/music',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'music.png')), '1','a','')
+    addDir("Musical", base_url+'movie-tags/musical',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'musical.png')), '1','a','')
+    addDir("Romance", base_url+'movie-tags/romance',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'romance.png')), '1','a','')
+    addDir("Sci-Fi", base_url+'movie-tags/sci-fi',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'scifi.png')), '1','a','')
+    addDir("Sport", base_url+'movie-tags/sport',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'sport.png')), '1','a','')
+    addDir("Thriller", base_url+'movie-tags/thriller',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'thriller.png')), '1','a','')
+    addDir("War", base_url+'movie-tags/war',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'war.png')), '1','a','')
+    addDir("Western", base_url+'movie-tags/western',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'western.png')), '1','a','')
+    addDir("WWE/WWF", base_url+'movie-tags/wwf-wwe',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'wwewwf.png')), '1','a','')	
 
 def tvseries_menu():
-    addDir("Newest Episodes", base_url+'new-shows',5,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'newepisodes.png')), '1','n')
-    addDir("Newest Shows", base_url+'tv-shows/date',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'newtvshows.png')), '1','a')
-    addDir("Alphabetical", 'url',108,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'a-z.png')), '1','alpha')
-    addDir("IMDB Rating", base_url+'tv-shows/imdb_rating',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'imdbrating.png')), '1','a')
-    addDir("All TV Shows", base_url+'tv-shows',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'all.png')), '1','a')
-    addDir("TV Show Genres", 'url',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'genres.png')), '1','a')
-    addDir("Search TV Shows", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'search.png')), '1','n') 
-    addDir("TV Schedule", base_url+'tvschedule',109,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'tvshows.png')), '1','n')
+    addDir("Newest Episodes", base_url+'new-shows',5,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'newepisodes.png')), '1','n','')
+    addDir("Newest Shows", base_url+'tv-shows/date',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'newtvshows.png')), '1','a','')
+    addDir("Alphabetical", 'url',108,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'a-z.png')), '1','alpha','')
+    addDir("IMDB Rating", base_url+'tv-shows/imdb_rating',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'imdbrating.png')), '1','a','')
+    addDir("All TV Shows", base_url+'tv-shows',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'all.png')), '1','a','')
+    addDir("TV Show Genres", 'url',7,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'genres.png')), '1','a','')
+    addDir("Search TV Shows", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'search.png')), '1','n','') 
+    addDir("TV Schedule", base_url+'tvschedule',109,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'tvshows.png')), '1','n','')
 
 def tvshow_genre_menu(url):
-    addDir("Adventure", base_url+'tv-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'adventure.png')), '1','a')
-    addDir("Animation", base_url+'tv-tags/animation',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'animation.png')), '1','a')
-    addDir("Comedy", base_url+'tv-tags/comedy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'comedy.png')), '1','a')
-    addDir("Crime", base_url+'tv-tags/crime',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'crime.png')), '1','a')
-    addDir("Documentary", base_url+'tv-tags/documentary',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'documentary.png')), '1','a')
-    addDir("Drama", base_url+'tv-tags/drama',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'drama.png')), '1','a')
-    addDir("Family", base_url+'tv-tags/family',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'family.png')), '1','a')
-    addDir("Fantasy", base_url+'tv-tags/fantasy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'fantasy.png')), '1','a')
-    addDir("Food TV", base_url+'tv-tags/foodtv',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'foodtv.png')), '1','a')
-    addDir("Horror", base_url+'tv-tags/horror',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'horror.png')), '1','a')
-    addDir("Kids", base_url+'tv-tags/kids',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'kids.png')), '1','a')
-    addDir("Music", base_url+'tv-tags/music',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'music.png')), '1','a')
-    addDir("Mystery", base_url+'tv-tags/mystery',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'mystery.png')), '1','a')
-    addDir("Top Picks", base_url+'tv-tags/our-top-picks',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'toppicks.png')), '1','a')
-    addDir("Reality TV", base_url+'tv-tags/reality-tv',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'realitytv.png')), '1','a')
-    addDir("Romance", base_url+'tv-tags/romance',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'romance.png')), '1','a')
-    addDir("Sci-Fi", base_url+'tv-tags/sci-fi',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'scifi.png')), '1','a')
-    addDir("Sport", base_url+'tv-tags/sport',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'sport.png')), '1','a')
-    addDir("Talk Shows", base_url+'tv-tags/talk-show',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'talkshows.png')), '1','a')
-    addDir("Thriller", base_url+'tv-tags/thriller',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'thriller.png')), '1','a')
-    addDir("War", base_url+'tv-tags/war',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'war.png')), '1','a')
+    addDir("Adventure", base_url+'tv-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'adventure.png')), '1','a','')
+    addDir("Animation", base_url+'tv-tags/animation',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'animation.png')), '1','a','')
+    addDir("Comedy", base_url+'tv-tags/comedy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'comedy.png')), '1','a','')
+    addDir("Crime", base_url+'tv-tags/crime',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'crime.png')), '1','a','')
+    addDir("Documentary", base_url+'tv-tags/documentary',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'documentary.png')), '1','a','')
+    addDir("Drama", base_url+'tv-tags/drama',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'drama.png')), '1','a','')
+    addDir("Family", base_url+'tv-tags/family',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'family.png')), '1','a','')
+    addDir("Fantasy", base_url+'tv-tags/fantasy',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'fantasy.png')), '1','a','')
+    addDir("Food TV", base_url+'tv-tags/foodtv',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'foodtv.png')), '1','a','')
+    addDir("Horror", base_url+'tv-tags/horror',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'horror.png')), '1','a','')
+    addDir("Kids", base_url+'tv-tags/kids',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'kids.png')), '1','a','')
+    addDir("Music", base_url+'tv-tags/music',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'music.png')), '1','a','')
+    addDir("Mystery", base_url+'tv-tags/mystery',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'mystery.png')), '1','a','')
+    addDir("Top Picks", base_url+'tv-tags/our-top-picks',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'toppicks.png')), '1','a','')
+    addDir("Reality TV", base_url+'tv-tags/reality-tv',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'realitytv.png')), '1','a','')
+    addDir("Romance", base_url+'tv-tags/romance',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'romance.png')), '1','a','')
+    addDir("Sci-Fi", base_url+'tv-tags/sci-fi',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'scifi.png')), '1','a','')
+    addDir("Sport", base_url+'tv-tags/sport',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'sport.png')), '1','a','')
+    addDir("Talk Shows", base_url+'tv-tags/talk-show',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'talkshows.png')), '1','a','')
+    addDir("Thriller", base_url+'tv-tags/thriller',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'thriller.png')), '1','a','')
+    addDir("War", base_url+'tv-tags/war',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'war.png')), '1','a','')
 
 def tvschedule(url):
     url = base_url+'tvschedule/20140711'
@@ -299,9 +299,9 @@ def tvschedule(url):
                 name = showname + ' - ' + title
             try:
                 if AUTOPLAY:
-                    addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
+                    addDirPlayable(name, url,2,iconimage, showname,'tvshow',infoLabels=infoLabels)
                 else:
-                    addDir(name, url,2,iconimage, showname,showname,infoLabels=infoLabels)
+                    addDir(name, url,2,iconimage, showname,showname,'tvshow',infoLabels=infoLabels)
             except:
                 pass
     setView('episodes', 'episodes-view')
@@ -310,16 +310,16 @@ def tvschedule(url):
 def a_to_z(url):
     alphabet =  ['#', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U','V', 'W', 'X', 'Y', 'Z']
     for a in alphabet:
-        addDir(a, base_url+'tv-shows/abc',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'a-z.png')), '1','alpha')
+        addDir(a, base_url+'tv-shows/abc',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'a-z.png')), '1','alpha','')
 		
 def Main_sort(name,url,list,showname):
     if 'tv' not in url:
-        addDir("Year", url + '/year',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a')
-    addDir("ABC", url + '/abc',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a')
-    addDir("Newest", url + '/date',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a')
-    addDir("IMDB Rating", url + '/imdb_rating',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a')
+        addDir("Year", url + '/year',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a','')
+    addDir("ABC", url + '/abc',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a','')
+    addDir("Newest", url + '/date',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a','')
+    addDir("IMDB Rating", url + '/imdb_rating',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a','')
     if 'hdmovies' in url:
-        addDir("Popular", url + '/favorites',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a')
+        addDir("Popular", url + '/favorites',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'movies.png')), '1','a','')
 	
 def Main(name,url,page,pagin):
     HD = ''
@@ -345,7 +345,6 @@ def Main(name,url,page,pagin):
     nextpage = int(page) + 1
     referer = base_url
     link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
-    print link
     data = regex_from_to(link, '<section class="cardBox flip">', 'Privacy Policy')
     match = re.compile('<div class=(.+?)<img class="img-preview spec-border(.+?)src="(.+?)" alt="(.+?)<h3><a href="(.+?)">(.+?)</a></h3>').findall(data)
     if '<>' in pagin:
@@ -399,9 +398,9 @@ def Main(name,url,page,pagin):
                     year = ''
                 name2 = "%s%s [COLOR cyan]%s[/COLOR]" % (name.replace('\u00e0', 'a'), year, HD)
                 if AUTOPLAY:
-                    addDirPlayable(name2, url,2,iconimage, name,infoLabels=infoLabels)
+                    addDirPlayable(name2, url,2,iconimage, name,'movie',infoLabels=infoLabels)
                 else:
-                    addDir(name2, url,2,iconimage, title,name,infoLabels=infoLabels)
+                    addDir(name2, url,2,iconimage, title,name,'movie',infoLabels=infoLabels)
                 setView('movies', 'movies-view')
             else:
                 if ENABLE_META:
@@ -423,12 +422,12 @@ def Main(name,url,page,pagin):
                     iconimage=thumb
                     year = ''
                 name2 = "%s%s [COLOR cyan]%s[/COLOR]" % (name.replace('\u00e0', 'a'), year, HD)
-                addDir(name2, url,103,iconimage, showname,title,infoLabels=infoLabels)
+                addDir(name2, url,103,iconimage, showname,title,'tvshow',infoLabels=infoLabels)
                 setView('tvshows', 'tvshows-view')
     if not '<>' in pagin:#'Box Office' not in nm and 'New Movies' not in nm and 'New Episodes' not in nm and not 'shows' in url1 and not 'tv-tags' in url1
-        addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'a')
+        addDir("Next Page >>", url1,1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'new.png')), nextpage,'a','')
     elif '<>' in pagin and nextmin < nAllItem:
-        addDir('Next page (' + nextlist.replace('<>','-') + ')', nexturl,1,'', '1',nextlist)
+        addDir('Next page (' + nextlist.replace('<>','-') + ')', nexturl,1,'', '1',nextlist,'')
 	
 def tvseries_seasons(name,url,thumb,showname):
     showname = name[:name.find('(')]
@@ -452,7 +451,7 @@ def tvseries_seasons(name,url,thumb,showname):
         else:
             infoLabels =None
             iconimage=thumb
-        addDir(title, url,104,iconimage, showname, showname,infoLabels=infoLabels)
+        addDir(title, url,104,iconimage, showname, showname,'',infoLabels=infoLabels)
     setView('seasons', 'seasons-view')
 		
 def tvseries_episodes(name, url, thumb, showname):
@@ -460,7 +459,7 @@ def tvseries_episodes(name, url, thumb, showname):
     nm = name
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
-    link = open_gurl(url).translate(trans_table).replace(u"\u2018", "'").replace(u"\u2019", "'")
+    link = open_gurl(url).translate(trans_table).encode('ascii', 'ignore').encode("utf8","ignore")#.replace(u"\u2018", "'").replace(u"\u2019", "'")#.translate(trans_table).replace("'", '"').replace(u"\u2018", "'").replace(u"\u2019", "'").replace(u'\u2019','')
     all_episodes = regex_get_all(link, '<li class="episode ">', '</li>')
     for a in all_episodes:
         thumb = regex_from_to(a, 'show-thumbnail"  src="', '"')
@@ -486,9 +485,9 @@ def tvseries_episodes(name, url, thumb, showname):
             iconimage=thumb
         #name = name.translate(trans_table)
         if AUTOPLAY:
-            addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
+            addDirPlayable(name, url,2,iconimage, showname,'',infoLabels=infoLabels)
         else:
-            addDir(name, url,2,iconimage, showname, showname,infoLabels=infoLabels)
+            addDir(name, url,2,iconimage, showname, showname,'',infoLabels=infoLabels)
     setView('episodes', 'episodes-view')
     if ENABLE_META:
         xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_EPISODE)
@@ -527,9 +526,9 @@ def new_episodes(name, url, thumb):
                 name = showname + ' - ' + title
             try:
                 if AUTOPLAY:
-                    addDirPlayable(name, url,2,iconimage, showname,infoLabels=infoLabels)
+                    addDirPlayable(name, url,2,iconimage, showname,'',infoLabels=infoLabels)
                 else:
-                    addDir(name, url,2,iconimage, showname, showname,infoLabels=infoLabels)
+                    addDir(name, url,2,iconimage, showname, showname,'',infoLabels=infoLabels)
             except:
                 pass
     setView('episodes', 'episodes-view')
@@ -595,9 +594,9 @@ def search_movie(name,query):
                 name = title
             name = "%s%s" % (name.replace('\u00e0', 'a'), year)
             if AUTOPLAY:
-                addDirPlayable(name, url,2,iconimage, name,infoLabels=infoLabels)
+                addDirPlayable(name, url,2,iconimage, name,'movie',infoLabels=infoLabels)
             else:
-                addDir(name, url,2,iconimage, '',name,infoLabels=infoLabels)
+                addDir(name, url,2,iconimage, '',name,'movie',infoLabels=infoLabels)
             setView('movies', 'movies-view')
 		
 def search_show(name,query):
@@ -649,7 +648,7 @@ def search_show(name,query):
                 name = title
                 year = ''
             name = "%s%s" % (name.replace('\u00e0', 'a'), year)
-            addDir(name.encode('utf-8'), url,103,iconimage, showname,name.encode('utf-8'),infoLabels=infoLabels)
+            addDir(name.encode('utf-8'), url,103,iconimage, showname,name.encode('utf-8'),'tvshow',infoLabels=infoLabels)
     setView('tvshows', 'tvshows-view')
 		
 def links(name,url,iconimage,showname):
@@ -690,7 +689,7 @@ def links(name,url,iconimage,showname):
         
         else:
             #if not 'googlevideo' in url or ('googlevideo' in url and check_url(url)):
-            addDirPlayable(title,url,3,iconimage,name)
+            addDirPlayable(title,url,3,iconimage,name,'')
 			
 def stream_links(name,url,iconimage,showname):
 
@@ -1074,7 +1073,7 @@ def favourites():
                     infoLabels =None
                     iconimage=thumb
                     name = title
-                addDir(name, url,103,iconimage, showname,name,infoLabels=infoLabels)
+                addDir(name, url,103,iconimage, showname,name,'',infoLabels=infoLabels)
                 setView('episodes', 'episodes-view')
 				
 def favourite_movies():
@@ -1102,9 +1101,9 @@ def favourite_movies():
                     iconimage=thumb
                     name = title
                 if AUTOPLAY:
-                    addDirPlayable(name, url,2,iconimage, name,infoLabels=infoLabels)
+                    addDirPlayable(name, url,2,iconimage, name,'movie',infoLabels=infoLabels)
                 else:
-                    addDir(name, url,2,iconimage, name,name,infoLabels=infoLabels)
+                    addDir(name, url,2,iconimage, name,name,'movie',infoLabels=infoLabels)
                 setView('movies', 'movies-view')
 
 				
@@ -1133,10 +1132,14 @@ def subscriptions():
                     infoLabels =None
                     iconimage=thumb
                     name = title
-                addDir(name, url,103,iconimage, showname,name,infoLabels=infoLabels)
+                addDir(name, url,103,iconimage, showname,name,'tvshow',infoLabels=infoLabels)
                 setView('episodes', 'episodes-view')
 
 def add_favourite(name, url, iconimage, dir, text):
+    try:
+        name=name[:name.find(' [')]
+    except:
+        name=name
     list_data = "%s<>%s<>%s" % (name, url, iconimage)
     add_to_list(list_data, dir)
     notification(text, "[COLOR lime]" + name + "[/COLOR]", '3000', iconimage)
@@ -1149,6 +1152,10 @@ def remove_from_favourites(name, url, list_data, dir, text):
     notification(name, "[COLOR orange]" + text + "[/COLOR]", '5000', thumb)
 
 def add_to_library(name, url, iconimage):
+    try:
+        name=name[:name.find(' [')]
+    except:
+        name=name
     create_strm_file(name, url, "21", MOVIE_PATH, iconimage, name)
     notification(name.upper(), "[COLOR lime]Added to Library[/COLOR]", '3000', iconimage)
     if xbmc.getCondVisibility('Library.IsScanningVideo') == False:           
@@ -1163,14 +1170,15 @@ def create_tv_show_strm_files(name, url, iconimage, ntf):
     list_data = "%s<>%s<>%s" % (name,url,iconimage)
     tv_show_path = create_directory(TV_PATH, name)
     link = open_gurl(url)
-    all_episodes = regex_get_all(link, '<li class="episodes">', '<span class="item-overlay">')
-    data = regex_from_to(link, 'id="season-list"', '</ul>')
-    match = re.compile("<a href='(.+?)'>(.+?)</a>").findall(data)
+    all_episodes = regex_get_all(link, '<li class="episode ">', '</li>')
+    data = regex_from_to(link, '<select name="sortSeason', '</select')
+    match = re.compile('value="(.+?)" >(.+?)</option>').findall(data)
     for url,season in match:
         seasonnum = season.replace("Season ", "")
         season_path = create_directory(tv_show_path, str(seasonnum))
         for a in all_episodes:
-            titleurl = regex_from_to(a, '<a class="link"', '</a>')
+            titleurl = regex_from_to(a, 'class="link"', '</a>')
+            title = regex_from_to(titleurl, 'title="', '"').replace('Season ', '').replace(', Episode ', 'x')
             url = regex_from_to(titleurl, 'href="', '"')
             spliturl = url.split('/')
             episode = spliturl[8]
@@ -1414,15 +1422,19 @@ def get_params():
         return param
 
 
-def addDir(name,url,mode,iconimage,list,showname,infoLabels=None):
+def addDir(name,url,mode,iconimage,list,showname,type,infoLabels=None):
         suffix = ""
         suffix2 = ""
-        list1 = "%s<>%s<>%s" % (name.lower(),url,iconimage)
-        list2 = "%s<>%s<>%s" % (name,url,iconimage)
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&showname="+urllib.quote_plus(showname)
+        try:
+            nameclean=name[:name.find(' [')]
+        except:
+            nameclean=name
+        list1 = "%s<>%s<>%s" % (nameclean.lower(),url,iconimage)
+        list2 = "%s<>%s<>%s" % (nameclean,url,iconimage)
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+str(list)+"&showname="+urllib.quote_plus(showname)+"&type="+urllib.quote_plus(type)
         ok=True
         contextMenuItems = []
-        if showname == "movies":
+        if type == "movie":
             contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
             contextMenuItems.append(("[COLOR cyan]View Trailer[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=27&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=20&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
@@ -1434,7 +1446,7 @@ def addDir(name,url,mode,iconimage,list,showname,infoLabels=None):
                 contextMenuItems.append(("[COLOR orange]Remove from Favourite Movies[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=9&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, str(list1))))
         if name == "TV Subscriptions":
             contextMenuItems.append(("[COLOR cyan]Refresh Subscriptions[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=17&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, urllib.quote(iconimage))))
-        if list == "sh":
+        if type == "tvshow":
             contextMenuItems.append(('TV Show Information', 'XBMC.Action(Info)'))
             if find_list(list1, FAV) < 0:
                 suffix = ""
@@ -1458,14 +1470,18 @@ def addDir(name,url,mode,iconimage,list,showname,infoLabels=None):
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
 		
-def addDirPlayable(name,url,mode,iconimage,list,infoLabels=None):
-        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+urllib.quote_plus(list)
-        list1 = "%s<>%s<>%s" % (name.lower(),url,iconimage)
-        list2 = "%s<>%s<>%s" % (name,url,iconimage)
+def addDirPlayable(name,url,mode,iconimage,list,type,infoLabels=None):
+        u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)+"&iconimage="+urllib.quote_plus(iconimage)+"&list="+urllib.quote_plus(list)+"&type="+urllib.quote_plus(type)
+        try:
+            nameclean=name[:name.find(' [')]
+        except:
+            nameclean=name
+        list1 = "%s<>%s<>%s" % (nameclean.lower(),url,iconimage)
+        list2 = "%s<>%s<>%s" % (nameclean,url,iconimage)
         ok=True
         contextMenuItems = []
         contextMenuItems.append(("[COLOR lime]Download[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=25&iconimage=%s)'%(sys.argv[0], urllib.quote(list), urllib.quote(url), urllib.quote(iconimage))))
-        if showname == "movies":
+        if type == "movie":
             contextMenuItems.append(('Movie Information', 'XBMC.Action(Info)'))
             contextMenuItems.append(("[COLOR cyan]View Trailer[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=27&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
             contextMenuItems.append(("[COLOR lime]Add to XBMC Library[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=20&iconimage=%s)'%(sys.argv[0], urllib.quote(name), urllib.quote(url), urllib.quote(iconimage))))
@@ -1475,7 +1491,7 @@ def addDirPlayable(name,url,mode,iconimage,list,infoLabels=None):
             else:
                 suffix = ' [COLOR lime]+[/COLOR]'
                 contextMenuItems.append(("[COLOR orange]Remove from Favourite Movies[/COLOR]",'XBMC.RunPlugin(%s?name=%s&url=%s&mode=9&iconimage=%s)'%(sys.argv[0], urllib.quote(name), url, str(list1))))
-        if showname == "sh":
+        if type == "tvshow":
             contextMenuItems.append(('TV Show Information', 'XBMC.Action(Info)'))
             if find_list(list1, FAV) < 0:
                 suffix = ""
@@ -1507,6 +1523,7 @@ name=None
 mode=None
 iconimage=None
 showname=None
+type=None
 
 
 
@@ -1536,6 +1553,10 @@ except:
         pass
 try:
         showname=urllib.unquote_plus(params["showname"])
+except:
+        pass
+try:
+        type=urllib.unquote_plus(params["type"])
 except:
         pass
 

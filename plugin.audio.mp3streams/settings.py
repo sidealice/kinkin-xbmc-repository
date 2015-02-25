@@ -13,12 +13,8 @@ def addon():
 def artist_icons():
     return create_directory(DATA_PATH, "artist_icons")
 	
-def default_player():
-    option = ADDON.getSetting('default_player')
-    if option == '0':
-        return 'paplayer'
-    elif option == '1':
-        return 'dvdplayer'
+def folder_structure():
+    return ADDON.getSetting('folder_structure')
 	
 def favourites_file_artist():
     return create_file(DATA_PATH, "favourites_artist.list")
@@ -37,6 +33,12 @@ def playlist_file():
 	
 def custom_directory():
     if ADDON.getSetting('custom_directory') == "true":
+        return True
+    else:
+        return False
+		
+def keep_downloads():
+    if ADDON.getSetting('keep_downloads') == "true":
         return True
     else:
         return False

@@ -10,6 +10,7 @@ cookie_jar = settings.cookie_jar()
 net = Net()
 ADDON = settings.addon()
 GOTHAM_FIX = settings.gotham_fix()
+KEEP_DOWNLOADS = settings.keep_downloads()
 ARTIST_ART = settings.artist_icons()
 FAV_ARTIST = settings.favourites_file_artist()
 FAV_ALBUM = settings.favourites_file_album()
@@ -20,7 +21,7 @@ HIDE_FANART = settings.hide_fanart()
 QUEUE_SONGS = settings.default_queue()
 QUEUE_ALBUMS = settings.default_queue_album()
 DOWNLOAD_LIST = settings.download_list()
-XBMCPLAYER = settings.default_player()
+FOLDERSTRUCTURE = settings.folder_structure()
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'fanart.jpg'))
 art = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/'
 artgenre = 'http://kinkin-xbmc-repository.googlecode.com/svn/trunk/zips/plugin.audio.mp3streams/art/genre/'
@@ -30,6 +31,15 @@ audio_fanart = ""
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams',  'icon.png'))
 download_lock = os.path.join(MUSIC_DIR,  'downloading.txt')
 
+
+GOTHAM_FIX_2 = ADDON.getSetting('gotham_fix_2') == 'true'
+if GOTHAM_FIX_2:
+    GOTHAM_FIX = False
+
+
+def newPlay(pl, clear):
+    if clear or (not xbmc.Player().isPlayingAudio()):
+        xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
 
 def open_url(url):
     req = urllib2.Request(url)
@@ -41,11 +51,18 @@ def open_url(url):
 	
 def GET_url(url):
     header_dict = {}
-    header_dict['Accept'] = 'audio/webm,audio/ogg,udio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'
-    header_dict['User-Agent'] = '	AppleWebKit/<WebKit Rev>'
-    header_dict['Host'] = 'musicmp3.ru'
-    header_dict['Referer'] = 'http://musicmp3.ru/'
-    header_dict['Connection'] = 'keep-alive'
+    if 'musicmp3' in url:
+        header_dict['Accept'] = 'audio/webm,audio/ogg,udio/wav,audio/*;q=0.9,application/ogg;q=0.7,video/*;q=0.6,*/*;q=0.5'
+        header_dict['User-Agent'] = 'AppleWebKit/<WebKit Rev>'
+        header_dict['Host'] = 'musicmp3.ru'
+        header_dict['Referer'] = 'http://musicmp3.ru/'
+        header_dict['Connection'] = 'keep-alive'
+    if 'goldenmp3' in url:
+        header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0'
+        header_dict['Host'] = 'www.goldenmp3.ru'
+        header_dict['Referer'] = 'http://www.goldenmp3.ru/compilations/events/albums'
+        header_dict['Connection'] = 'keep-alive'
     net.set_cookies(cookie_jar)
     link = net.http_GET(url, headers=header_dict).content.encode("utf-8").rstrip()
     net.save_cookies(cookie_jar)
@@ -61,11 +78,10 @@ def get_cookie():
 
 	
 def CATEGORIES():
-    addDir('Browse Alternate Source','url',700,artgenre + 'alternate.jpg','')
-    addDirAudio('[COLOR cyan]Using Gotham? Enable alternate source in settings (beta)[/COLOR]','url',500,'','','','','','')
     addDir('Artists','http://musicmp3.ru/artists.html',21,art + 'artists.jpg','')
     addDir('Top Albums','http://musicmp3.ru/genres.html',12,art + 'topalbums.jpg','')
     addDir('New Albums','http://musicmp3.ru/new_albums.html',12,art + 'newalbums.jpg','')
+    addDir('Compilations','url',400,'','')
     addDir('Billboard Charts','url',101,art + 'billboardcharts.jpg','')
     addDir('Search Artists','url',24,art + 'searchartists.jpg','')
     addDir('Search Albums','url',24,art + 'searchalbums.jpg','')
@@ -77,6 +93,7 @@ def CATEGORIES():
     addDirAudio('Instant Mix Favourite Albums (Shuffle and Play)','url',89,art + 'mixfavouritealbums.jpg','','','','','')
     addDirAudio('Clear Playlist','url',100,art + 'clearplaylist.jpg','','','','','')
     addDirAudio('Add ID3 Tags','url',300,art + 'addid3tags.jpg','','','','','')
+    addDir('Browse Alternate Source','url',700,artgenre + 'alternate.jpg','')
 
 	
 def charts():
@@ -212,6 +229,28 @@ def genre_sub_dir2(name, url,icon):
     for url, title in sub_dir:
         addDir(title.replace('&amp;', 'and'),'http://musicmp3.ru' + url + '?page=1',15,icon,'')
 		
+def compilations_menu():
+    addDir('Best Compilations','http://www.goldenmp3.ru/albums_showcase.html?section=compilations&type=albums&page=',401,art + 'topalbums.jpg','1')
+    addDir('New Compilations','http://www.goldenmp3.ru/albums_showcase.html?section=compilations&sort=new&type=albums&page=',401,art + 'newalbums.jpg','1')
+    addDir('Major Hits','http://www.goldenmp3.ru/albums_showcase.html?gnr_id=806&section=compilations&type=albums&page=',401,art + 'newalbums.jpg','1')
+    addDir('Nightclub Hits','http://www.goldenmp3.ru/albums_showcase.html?gnr_id=822&section=compilations&type=albums&page=',401,art + 'newalbums.jpg','1')
+    addDir('Chillout Hits','http://www.goldenmp3.ru/albums_showcase.html?gnr_id=848&section=compilations&type=albums&page=',401,art + 'newalbums.jpg','1')
+    addDir('Tributes and Covers','http://www.goldenmp3.ru/albums_showcase.html?gnr_id=872&section=compilations&type=albums&page=',401,art + 'newalbums.jpg','1')
+    addDir('Events','http://www.goldenmp3.ru/compilations/events/albums',401,art + 'newalbums.jpg','n')
+	
+def compilations_list(name,url,iconimage,page):
+    if page != 'n':
+        nextpage=int(page)+1
+        nxtpgurl="%s%s" % (url,nextpage)
+        url="%s%s" % (url,page)
+    link = open_url(url)
+    match=re.compile('<a href="(.+?)"><img alt="(.+?)" src="(.+?)" /></a><a class="(.+?)" href="(.+?)">(.+?)</a><span class="(.+?)">(.+?)</span><span class="f_year">(.+?)</span><span class="ga_price">(.+?)</span></div>').findall(link)
+    for url,d1,iconimage,cl,url2,title,cl,artist,year,prc in match:
+        url='http://www.goldenmp3.ru'+url
+        addDir(title.replace('&amp;', 'and'),url,5,iconimage,'albums')
+    addDir('>> Next page',nxtpgurl,401,xbmc.translatePath(os.path.join('special://home/addons/plugin.audio.mp3streams', 'art', 'nextpage.jpg')),str(nextpage))
+    setView('movies', 'album')
+		
 def search(name, url):
     keyboard = xbmc.Keyboard('', name, False)
     keyboard.doModal()
@@ -320,17 +359,48 @@ def find_url(id):
 			
 
 def play_album(name, url, iconimage,mix,clear):
+    origurl=url
+    if 'musicmp3' in origurl:
+        std = 'id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="(.+?)__service song__service--ringtone'
+    else:
+        std = 'prop="tracks" itemscope="(.+?)" itemtype="http://schema.org/MusicRecording"><td><a class="play" href="#" rel="(.+?)" title="Listen the song in low quality">(.+?)</td>(.+?)<div (.+?)="title_td_wrap">(.+?).<span (.+?)="name">(.+?)</span>&ensp;[(](.+?)[)]&ensp;<span class="artist">&ndash;&ensp;by (.+?)</span><div class="jp-seek-bar"><div class="jp-play-bar"></div>'
+
+    alt = std.replace('rel="(.+?)', '')
+
     browse=False
     playlist=[]
     dialog = xbmcgui.Dialog()
     if mode != 6 and mix != 'mix' and mix != 'queue':
         if dialog.yesno("MP3 Streams", 'Browse songs or play full album?', '', '', 'Play Now','Browse'):
             browse=True
+
+    match = []  
+    link  = GET_url(url)        
+    if 'musicmp3' in origurl:            
+        link = link.split('<tr class="song" ')
+    else:
+        link = link.split('<tr item')
+    
+    for song in link:            
+        if 'rel=' in song:    
+            items = re.compile(std).findall(song)
+            for item in items:
+                match.append(item)
+        else:            
+            items = re.compile(alt).findall(song)
+            for item in items:
+                item = (item[0], '', item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8])                
+                match.append(item)
+                
+    nItem = len(match)
+
     if browse == True:
-        link = GET_url(url)
-        match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
-        for track,id,songurl,meta, d1,album,artist,songname,dur in match:
-            trn = track.replace('track','')
+        for track,id,songurl,meta, d1,album,artist,songname,dur,artist1 in match:
+            if 'musicmp3' in origurl:
+                trn = track.replace('track','')
+            else:
+                trn = album.replace('.&ensp','')
+
             if GOTHAM_FIX:
                 try:
                     alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
@@ -346,111 +416,113 @@ def play_album(name, url, iconimage,mix,clear):
                 url = 'http://files.musicmp3.ru/lofi/' + id #find_url(trn).strip() + id
 
             songname = songname.replace('&amp;', 'and')
-            artist = artist.replace('&amp;', 'and')
-            album = album.replace('&amp;', 'and')
-            title = "%s. %s" % (track.replace('track',''), songname)
-            addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
-            liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
-            liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur })
-            liz.setProperty('mimetype', 'audio/mpeg')
-            liz.setProperty("IsPlayable","true")
-            liz.setThumbnailImage(iconimage)
-            if HIDE_FANART == False:
-                liz.setProperty('fanart_image', "")
-            playlist.append((url, liz))
-				
-    else:
-        if mix != 'mix':
-            dp = xbmcgui.DialogProgress()
-            dp.create("MP3 Streams",'Creating Your Playlist')
-            dp.update(0)
-        pl = get_XBMCPlaylist(clear)
-        link = GET_url(url)
-        match = re.compile('<tr class="song" id="(.+?)" itemprop="tracks" itemscope="itemscope" itemtype="http://schema.org/MusicRecording"><td class="song__play_button"><a class="player__play_btn js_play_btn" href="#" rel="(.+?)" title="Play track" /></td><td class="song__name"><div class="title_td_wrap"><meta content="(.+?)" itemprop="url" /><meta content="(.+?)" itemprop="duration"(.+?)<meta content="(.+?)" itemprop="inAlbum" /><meta content="(.+?)" itemprop="byArtist" /><span itemprop="name">(.+?)</span><div class="jp-seek-bar" data-time="(.+?)"><div class="jp-play-bar"></div></div></div></td><td class="song__service song__service--ringtone').findall(link)
-        nItem=len(match)
-        for track,id,songurl,meta, d1,album,artist,songname,dur in match:
-            trn = track.replace('track','')
-            if GOTHAM_FIX:
-                try:
-                    alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
-                    alturl = alturl.replace(' ', '+').lower()
-                    link = open_url(alturl)
-                    data = regex_from_to(link, 'data-aid=', '"').replace('"','').replace('\\','')
-                    url = 'http://myfreemp3.eu/play/%s_24662006e9/' % data
-                    response = requests.get(url,allow_redirects=False)
-                    url = response.headers['location']
-                except:
-                    url = find_url(trn).strip() + id
+            if 'musicmp3' in origurl:
+                artist = artist.replace('&amp;', 'and')
+                album = album.replace('&amp;', 'and')
+                title = "%s. %s" % (track.replace('track',''), songname)
             else:
-                url = 'http://files.musicmp3.ru/lofi/' + id #find_url(trn).strip() + id
-            songname = songname.replace('&amp;', 'and')
+                artist = artist1.replace('&amp;', 'and')
+                album = name.replace('&amp;', 'and')
+                title = "%s. %s" % (trn, songname)
+                dur=str((int(dur.split(':')[0])*60) + int(dur.split(':')[1]))
+            addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')            
+        return
+				
+    import playerMP3
+
+    if mix != 'mix':
+        dp = xbmcgui.DialogProgress()
+        dp.create("MP3 Streams",'Creating Your Playlist')
+        dp.update(0)
+
+    for track,id,songurl,meta, d1,album,artist,songname,dur,artist1 in match:
+        if 'musicmp3' in origurl:
+            trn = track.replace('track','')
+        else:
+            trn = album.replace('.&ensp','')
+        if GOTHAM_FIX:
+            try:
+                alturl = 'http://www.myfreemp3.eu/music/%s+%s' % (artist.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '), songname.replace('&amp; ', '').replace('& ', '').replace(' and ', ' '))
+                alturl = alturl.replace(' ', '+').lower()
+                link = open_url(alturl)
+                data = regex_from_to(link, 'data-aid=', '"').replace('"','').replace('\\','')
+                url = 'http://myfreemp3.eu/play/%s_24662006e9/' % data
+                response = requests.get(url,allow_redirects=False)
+                url = response.headers['location']
+            except:
+                url = find_url(trn).strip() + id
+        else:
+            url = 'http://files.musicmp3.ru/lofi/' + id #find_url(trn).strip() + id
+
+        songname = songname.replace('&amp;', 'and')
+        if 'musicmp3' in origurl:
             artist = artist.replace('&amp;', 'and')
             album = album.replace('&amp;', 'and')
             title = "%s. %s" % (track.replace('track',''), songname)
-            stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
-            if os.path.exists(stored_path):
-                url = stored_path
-            #else:
-                #url = find_url(trn).strip() + id
-                #url = 'http://files.musicmp3.ru/lofi/' + id
-            addDirAudio(title,url,10,iconimage,songname,artist,album,dur,'')
-            liz=xbmcgui.ListItem(songname, iconImage=iconimage, thumbnailImage=iconimage)
-            liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
-            liz.setProperty('mimetype', 'audio/mpeg')
-            liz.setProperty("IsPlayable","true")
-            liz.setThumbnailImage(iconimage)
-            if HIDE_FANART == True:
-                liz.setProperty('fanart_image', "")
-            playlist.append((url, liz))
-			
-            if mix != 'mix':
-                progress = len(playlist) / float(nItem) * 100               
-                dp.update(int(progress), 'Adding to Your Playlist',title)
-                if dp.iscanceled():
-                    return
+        else:
+            artist = artist1.replace('&amp;', 'and')
+            album = name.replace('&amp;', 'and')
+            title = "%s. %s" % (trn, songname)
+            dur=str((int(dur.split(':')[0])*60) + int(dur.split(':')[1]))
+
+        addDirAudio(title, url, 10, iconimage, songname, artist, album, dur, '')
+
+        url, liz = playerMP3.getListItem(songname, artist, album, trn, iconimage, dur, url, fanart, 'true', GOTHAM_FIX_2)
+
+        if FOLDERSTRUCTURE=="0":
+            stored_path = os.path.join(MUSIC_DIR,  artist, album, songname + '.mp3')
+        else:
+            stored_path = os.path.join(MUSIC_DIR,  artist + ' - ' + album, songname + '.mp3')
+        if os.path.exists(stored_path):
+            url = stored_path
+            
+        playlist.append((url, liz))
+
+        if mix != 'mix':
+            progress = len(playlist) / float(nItem) * 100               
+            dp.update(int(progress), 'Adding to Your Playlist',title)
+            if dp.iscanceled():
+                return
 
   
-        for blob ,liz in playlist:
-            try:
-                if blob:
-                    pl.add(blob,liz)
-            except:
-                pass
-        if clear or (not xbmc.Player().isPlayingAudio()):
-            if XBMCPLAYER == 'paplayer':
-                xbmc.Player(xbmc.PLAYER_CORE_PAPLAYER).play(pl)
-            else:
-                xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
-			
-			
-def play_song(url,name,songname,artist,album,iconimage,dur,clear):
-    stored_path = os.path.join(MUSIC_DIR,  artist, album, name + '.mp3')
-    dialog = xbmcgui.Dialog()
-    show_name=name
-    playlist=[]
     pl = get_XBMCPlaylist(clear)
-    if os.path.exists(stored_path):
-        url1 = stored_path
+    for url ,liz in playlist:
+        pl.add(url,liz)
+        #if pl.size() > 3:
+        #    break
+
+    dp.close()
+    newPlay(pl, clear)  
+			
+			
+def play_song(url, name, songname, artist, album, iconimage, dur, clear):
+    import playerMP3
+    try:
+        track = name[:name.find('.')]
+    except:
+        track = 0
+    url, liz = playerMP3.getListItem(songname, artist, album, int(track), iconimage, dur, url, fanart, 'true', GOTHAM_FIX_2)
+    title=name
+    if FOLDERSTRUCTURE=="0":
+        stored_path = os.path.join(MUSIC_DIR,  artist, album, title + '.mp3')
     else:
-        url1=str(url)
-    liz=xbmcgui.ListItem(show_name, iconImage=iconimage, thumbnailImage=iconimage)
-    liz.setInfo('music', {'Title':songname, 'Artist':artist, 'Album':album, 'duration':dur})
-    liz.setProperty('mimetype', 'audio/mpeg')
-    liz.setThumbnailImage(iconimage)
-    if HIDE_FANART == True:
-        liz.setProperty('fanart_image', "")
-    playlist.append((url1, liz))
-    for blob ,liz in playlist:
-        try:
-            if blob:
-                pl.add(blob,liz)
-        except:
-            pass
-    if clear or (not xbmc.Player().isPlayingAudio()):
-        if XBMCPLAYER == 'paplayer':
-            xbmc.Player().play(pl)
-        else:
-            xbmc.Player(xbmc.PLAYER_CORE_DVDPLAYER).play(pl)
+        stored_path = os.path.join(MUSIC_DIR,  artist + ' - ' + album, title + '.mp3')
+
+    if os.path.exists(stored_path):
+        url = stored_path
+
+    pl = get_XBMCPlaylist(clear)
+    pl.add(url, liz)
+
+    #playlist.append((newurl, liz))
+    #for blob ,liz in playlist:
+    #    try:
+    #        if blob:
+    #            pl.add(blob,liz)
+    #    except:
+    #        pass
+
+    newPlay(pl, clear)
 		
 def download_song(url,name,songname,artist,album,iconimage):
     track = songname[:songname.find('.')]
@@ -556,7 +628,7 @@ class Getid3Thread(Thread):
                     album = splitlist[2]
                     track = splitlist[3]
                     trackname = splitlist[4]
-                    tracktitle = trackname[trackname.find('. ')+2:]
+                    tracktitle = trackname
                     if os.path.exists(filename):
                         audio = MP3(filename, ID3=EasyID3)
                         audio["title"] = tracktitle
@@ -716,7 +788,7 @@ def myfreemp3_songs(name,url,iconimage):
     setView('music', 'song')
 
 def myfreemp3_charts(url):
-    print "A"
+    pass
 	
 def favourite_artists():
     if os.path.isfile(FAV_ARTIST):
@@ -1185,7 +1257,6 @@ try:
 except:
         pass
 
-
 if mode==None or url==None or len(url)<1:
     CATEGORIES()
     #get_cookie()
@@ -1317,6 +1388,12 @@ elif mode == 300:
 elif mode == 333:
     clear_lock()
 	
+elif mode == 400:
+   compilations_menu()
+   
+elif mode == 401:
+   compilations_list(name,url,iconimage,type)
+	
 elif mode == 500:
     ADDON.openSettings()
 	
@@ -1340,9 +1417,9 @@ elif mode == 705:
 	
 elif mode == 706:
     myfreemp3_songs(name,url,iconimage)
-	
 
+elif mode == 999:
+    import playerMP3
+    playerMP3.play(sys, params)
 	
-		
-
 xbmcplugin.endOfDirectory(int(sys.argv[1]))

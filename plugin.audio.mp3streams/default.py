@@ -279,6 +279,7 @@ def search_artists(query):
 def search_albums(query):
     url = 'http://musicmp3.ru/search.html?text=%s&all=albums' % urllib.quote_plus(query.replace(' - ', ' ').replace('-', ' '))
     link = GET_url(url)
+    link = link.replace('<span class="album_report__artist">Various Artists</span>', '<a class="album_report__artist" href="/artist_various-artist.html">Various Artist</a>')
     all_albums = re.compile('<a class="album_report__link" href="(.+?)"><img class="album_report__image" src="(.+?)" /><span class="album_report__name">(.+?)</span></a>(.+?)album_report__artist" href="(.+?)">(.+?)</a>, <span class="album_report__date">(.+?)</span>').findall(link)
     for url1,thumb,album,plot,artisturl,artist,year in all_albums:
         title = "%s - %s (%s)" % (artist, album, year)

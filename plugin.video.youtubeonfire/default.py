@@ -50,7 +50,7 @@ cookie_jar = settings.cookie_jar()
 addon_path = os.path.join(xbmc.translatePath('special://home/addons'), '')
 fanart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'fanart.jpg'))
 iconart = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'icon.png'))
-movie_url = 'http://www.movietube.co/'
+movie_url = 'http://www.movietube.cz/'
 posturl = 'http://www.youtubeonfire.com/index.php'
 ytplayerfixed = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtubeonfire', 'helpers', 'YouTubePlayer.py'))
 ytplayercopyto = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.youtube', ''))
@@ -86,7 +86,7 @@ def POST_URL(url,a,c,p):#, form_data
     elif 'watch33' in url:
         header_dict['Host'] = 'watch33.tv'
     else:
-        header_dict['Host'] = 'www.youtubeonfire.com'
+        header_dict['Host'] = 'movietube.cz'
     header_dict['Connection'] = 'keep-alive'
     header_dict['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
     if 'mvtube' in url:
@@ -106,7 +106,7 @@ def POST_URL(url,a,c,p):#, form_data
     elif 'knowledge' in url:
         header_dict['Referer'] = 'http://knowledgetube.co/search.php'
     elif 'movietube' in url:
-        header_dict['Referer'] = 'http://www.movietube.co/search.php'
+        header_dict['Referer'] = 'http://www.movietube.cz/search.php'
     else:
        header_dict['Referer'] = 'http://www.youtubeonfire.com/watch.php?v=' + regex_from_to(str(p),'KeyWord":"', '"')
     #header_dict['Content-Length'] = '113'
@@ -121,7 +121,7 @@ def POST_URL(url,a,c,p):#, form_data
 def GET_URL(url):
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    header_dict['Host'] = 'www.movietube.co'
+    header_dict['Host'] = 'www.movietube.cz'
     header_dict['Referer'] = 'http://www.youtubeonfire.com/'
     header_dict['User-Agent'] = '	Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
     net.set_cookies(cookie_jar)
@@ -215,10 +215,10 @@ def CATEGORIES(name):
 
 
 def movie_directory(name):
-    addDir("Featured", 'http://www.movietube.co/index.php',7,art + 'movies/' + 'featured.png', '1<><><>Score','qq')
-    addDir("Newly Added", 'http://www.movietube.co/index.php',7,art + 'movies/' + 'newlyadded.png', '1<><><>addTime','qq')
-    addDir("Newly Released", 'http://www.movietube.co/index.php',7,art + 'movies/' + 'newlyreleased.png', '1<><><>ReleaseDate','qq')
-    addDir("Top Rated", 'http://www.movietube.co/index.php',7,art + 'movies/' + 'toprated.png', '1<><><>TomatoFresh','qq')
+    addDir("Featured", 'http://www.movietube.cz/index.php',7,art + 'movies/' + 'featured.png', '1<><><>Score<>','qq')
+    addDir("Newly Added", 'http://www.movietube.cz/index.php',7,art + 'movies/' + 'newlyadded.png', '1<><><>addTime<>','qq')
+    addDir("Newly Released", 'http://www.movietube.cz/index.php',7,art + 'movies/' + 'newlyreleased.png', '1<><><>ReleaseDate<>','qq')
+    addDir("Top Rated", 'http://www.movietube.cz/index.php',7,art + 'movies/' + 'toprated.png', '1<><><>TomatoFresh<>','qq')
     addDir("Movies by Genre", 'url',101,art + 'movies/' + 'moviesbygenre.png', '1<>','qq')
     addDir("Movies by Quality/Rating", 'url',102,art + 'movies/' + 'moviesbyrating.png', '1<>','qq')
     addDir("Movies by Year", 'http://www.youtubeonfire.com/search.php',103,art + 'movies/' + 'moviesbyyear.png', '1<>','qq')
@@ -226,37 +226,43 @@ def movie_directory(name):
     addDir("Favourites", 'url',105,art + 'movies/' + 'favourites.png', '','')
 	
 def movie_directory_1(name):
-    addDir("All Movies", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'allmovies.png', '1<><><>','qq')
-    addDir("Action", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'action.png', '1<>Action<><>','qq')
-    addDir("Adventure", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'adventure.png', '1<>Adventure<><>','qq')
-    addDir("Animation", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'animation.png', '1<>Animation<><>','qq')
-    addDir("Biography", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'biography.png', '1<>Biography<><>','qq')
-    addDir("Comedy", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'comedy.png', '1<>Comedy<><>','qq')
-    addDir("Crime", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'crime.png', '1<>Crime<><>','qq')
-    addDir("Documentary", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'documentary.png', '1<>Documentary<><>','qq')
-    addDir("Drama", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'drama.png', '1<>Drama<><>','qq')
-    addDir("Family", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'family.png', '1<>Family<><>','qq')
-    addDir("Fantasy", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'fantasy.png', '1<>Fantasy<><>','qq')
-    addDir("History", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'history.png', '1<>History<><>','qq')
-    addDir("Horror", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'horror.png', '1<>Horror<><>','qq')
-    addDir("Mystery", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'mystery.png', '1<>Mystery<><>','qq')
-    addDir("Romance", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'romance.png', '1<>Romance<><>','qq')
-    addDir("Sci-Fi", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'sci-fi.png', '1<>Sci-Fi<><>','qq')
-    addDir("War", 'http://www.movietube.co/index.php',7,art + 'moviesbygenre/' + 'war.png', '1<>War<><>','qq')
+    addDir("All Movies", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'allmovies.png', '1<><><><>','qq')
+    addDir("Action", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'action.png', '1<>Action<><><>','qq')
+    addDir("Adventure", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'adventure.png', '1<>Adventure<><><>','qq')
+    addDir("Animation", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'animation.png', '1<>Animation<><><>','qq')
+    addDir("Biography", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'biography.png', '1<>Biography<><><>','qq')
+    addDir("Comedy", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'comedy.png', '1<>Comedy<><><>','qq')
+    addDir("Crime", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'crime.png', '1<>Crime<><><>','qq')
+    addDir("Documentary", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'documentary.png', '1<>Documentary<><><>','qq')
+    addDir("Drama", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'drama.png', '1<>Drama<><><>','qq')
+    addDir("Family", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'family.png', '1<>Family<><><>','qq')
+    addDir("Fantasy", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'fantasy.png', '1<>Fantasy<><><>','qq')
+    addDir("History", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'history.png', '1<>History<><><>','qq')
+    addDir("Horror", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'horror.png', '1<>Horror<><><>','qq')
+    addDir("Mystery", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'mystery.png', '1<>Mystery<><><>','qq')
+    addDir("Romance", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'romance.png', '1<>Romance<><><>','qq')
+    addDir("Sci-Fi", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'sci-fi.png', '1<>Sci-Fi<><><>','qq')
+    addDir("War", 'http://www.movietube.cz/index.php',7,art + 'moviesbygenre/' + 'war.png', '1<>War<><><>','qq')
     
 	
 def movie_directory_2(name):
-    addDir("1080P", 'http://www.movietube.co/index.php',7,art + 'moviesbyrating/' + '1080p.png', '1<>1080<><>','qq')
-    addDir("720P", 'http://www.movietube.co/index.php',7,art + 'moviesbyrating/' + '720p.png', '1<>720<><>','qq')
-    addDir("G/PG-13", 'http://www.movietube.co/index.php',7,art + 'moviesbyrating/' + 'gpg13.png', '1<>PG<><>','qq')
-    addDir("R-Rated", 'http://www.movietube.co/index.php',7,art + 'moviesbyrating/' + 'r-rated.png', '1<>R-Rated<><>','qq')
+    addDir("HD", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + '1080p.png', '1<><><><>720P','qq')
+    addDir("MP4", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + '720p.png', '1<><><><>MP4','qq')
+    addDir("GoogleDrive", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + '720p.png', '1<><><><>GoogleDirve','qq')
+    addDir("VideoMega", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + '720p.png', '1<><><><>VideoMega','qq')
+    addDir("YouTube", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + '720p.png', '1<><><><>YouTube','qq')
+    addDir("VK Video", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + '720p.png', '1<><><><>VKVideo','qq')
+    addDir("Rating G", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + 'gpg13.png', '1<><><><>RatingG','qq')
+    addDir("Rating PG", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + 'gpg13.png', '1<><><><>RatingPG','qq')
+    addDir("Rating PG-13", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + 'gpg13.png', '1<><><><>RatingPG13','qq')
+    addDir("Rating R18", 'http://www.movietube.cz/index.php',7,art + 'moviesbyrating/' + 'r-rated.png', '1<><><><>RatingR18','qq')
 	
 def movie_directory_3(name,url):
     req = GET_URL(url)
     years = regex_from_to(req, '<input type="hidden"  id="Year"', '</ul>')
     match = re.compile('data="(.+?)">(.+?)</a>').findall(years)
     for year, name in match:
-        addDir(name, 'http://www.movietube.co/index.php',7,art + 'moviesbyyear/' + year + '.png', '1<><>'+year+'<>','qq')
+        addDir(name, 'http://www.movietube.cz/index.php',7,art + 'moviesbyyear/' + year + '.png', '1<><>'+year+'<><>','qq')
 		
 def favourites_movies():
     if os.path.isfile(FAV):
@@ -300,7 +306,7 @@ def search_movie():
             search_moviefile(query)
 			
 def search_moviefile(query):
-    url = 'http://www.youtubeonfire.com/index.php'
+    url = 'http://www.movietube.cz/index.php'
     form_dict = {}
     form_dict['a'] = 'retrieve'
     form_dict['c'] = 'result'
@@ -311,7 +317,7 @@ def search_moviefile(query):
     header_dict['Accept-Encoding'] = 'gzip, deflate'
     header_dict['Host'] = 'www.youtubeonfire.com'
     header_dict['Connection'] = 'keep-alive'
-    header_dict['Referer'] = 'http://www.youtubeonfire.com/'
+    header_dict['Referer'] = 'http://www.movietube.cz/'
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:27.0) Gecko/20100101 Firefox/27.0'
     net.set_cookies(cookie_jar)
     req = net.http_POST(url, form_data=form_dict, headers=header_dict).content.rstrip()
@@ -321,7 +327,7 @@ def search_moviefile(query):
         all_td = regex_get_all(a,  '<td', '</td>')
         vurl = regex_from_to(all_td[0], 'v=', '"')
         url = '{"KeyWord":"' + vurl + '"}'
-        hosturl = 'http://www.movietube.co/watch.php?v=' + vurl
+        hosturl = 'http://www.movietube.cz/watch.php?v=' + vurl
         thumb = regex_from_to(all_td[0], 'img src="', '"')
         title = regex_from_to(all_td[1], 'target="_blank">', '</a>').replace('&nbsp', '').replace('<img', '')
         mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
@@ -361,13 +367,14 @@ def movies(name,url,page,token):
         sort = SORT
     else:
         sort = splitpage[3]
+    vidsource = splitpage[4]
     
-    if token == 'qq':
+    if token == 'qq':#{"Page":"1","NextToken":"","Genere":"","Year":"","VideoSource":"","Sortby":"Score"}
         token = ''
-        p = '{"Page":"%s","NextToken":"%s","VideoYoutubeType":"%s","Genere":"%s","Year":"%s","SubTitle":"%s","Sortby":"%s"}' % (page,token,LANGUAGE,genre,year,SUBTITLE,sort)
+        p = '{"Page":"%s","NextToken":"%s","Genere":"%s","Year":"%s","VideoSource":"%s","Sortby":"%s"}' % (page,token,genre,year,vidsource,sort)#,SUBTITLE
     else:
         line = token.split('\n')
-        p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","VideoYoutubeType":"%s","Genere":"%s","Year":"%s","SubTitle":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],LANGUAGE,genre,year,SUBTITLE,sort)
+        p = '{"Page":"%s","NextToken":"%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s\\n%s","Genere":"%s","Year":"%s","VideoSource":"%s","Sortby":"%s"}' % (page,line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],genre,year,vidsource,sort)#,SUBTITLE
     a = 'retrieve'
     c = 'song'
 
@@ -378,7 +385,7 @@ def movies(name,url,page,token):
         all_td = regex_get_all(a,  '<td', '</td>')
         vurl = regex_from_to(all_td[0], 'v=', '"')
         url = '{"KeyWord":"' + vurl + '"}'
-        hosturl = 'http://www.movietube.co/watch.php?v=' + vurl
+        hosturl = 'http://www.movietube.cz/watch.php?v=' + vurl
         thumb = regex_from_to(all_td[0], 'img src="', '"')
         title = regex_from_to(all_td[1], 'target="_blank">', '</a>').replace('&nbsp', '').replace('<img', '')
         mpaa = regex_from_to(all_td[1], 'light class="text">', ' ').replace('&nbsp', '').replace('<img', '')
@@ -408,7 +415,7 @@ def movies(name,url,page,token):
 
     nextpage=int(page)+1
     nextpage = "%s<>%s<>%s<>%s" % (nextpage,genre,year,sort)
-    addDir("Next Page", 'http://www.movietube.co/index.php',7,art +  'nextpage.png', nextpage,token)
+    addDir("Next Page", 'http://www.movietube.cz/index.php',7,art +  'nextpage.png', nextpage,token)
     setView('movies', 'movies-view')
         
 
@@ -434,7 +441,7 @@ def movie_quality(name,url,iconimage,list):
     c = 'result'
     p = url 
     req = POST_URL(posturl,a,c,p)
-    req=urllib.unquote(req)
+    req=urllib.unquote(req).replace('source+data-res','source data-res').replace('+src=',' src=')
 
     #PARENTAL CONTROL
     now = time.strftime("%H")
@@ -459,7 +466,7 @@ def movie_quality(name,url,iconimage,list):
                 url = regex_from_to(link, 'src="', '"')
                 infoLabels =None
                 list = "%s<>%s<>%s" % (list,url,name)
-                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
+                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR] genvideos.com',url,5,iconimage, list,infoLabels=infoLabels)
         if 'src="//www.youtube.com/embed' in req:
             vlink = regex_get_all(req, 'src="//www.youtube.com/embed/', '"')
             for link in vlink:
@@ -467,24 +474,24 @@ def movie_quality(name,url,iconimage,list):
                 url = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + link
                 infoLabels =None
                 list = "%s<>%s<>%s" % (list,url,name)
-                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
+                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR] youtube',url,5,iconimage, list,infoLabels=infoLabels)
         if 'streamin.to' in req:
             url = regex_from_to(req, 'src="', '"')
             infoLabels =None
             list = "%s<>%s<>%s" % (list,url,name)
-            addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
+            addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR] streamin.to',url,5,iconimage, list,infoLabels=infoLabels)
         if 'docs.google.com' in req:
             url = regex_from_to(req, 'src="', '"')
             infoLabels =None
             list = "%s<>%s<>%s" % (list,url,name)
-            addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)
+            addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR] docs.google',url,5,iconimage, list,infoLabels=infoLabels)
         else:
             match = re.compile('<source data-res="(.+?)" src="(.+?)"').findall(req)
             for quality, url in match:
                 quality = quality + 'p'
                 infoLabels =None
                 list = "%s<>%s<>%s" % (list,url,name)
-                addDirPlayable(name + '[COLOR lime] ['+ q + '] [/COLOR]',url,5,iconimage, list,infoLabels=infoLabels)                
+                addDirPlayable(name + '[COLOR lime] ['+ quality + '] [/COLOR] googlevideo',url,5,iconimage, list,infoLabels=infoLabels)                
     else:
         dialog.ok("You cannot play this video","PIN incorrect")
         		
@@ -593,7 +600,6 @@ def play_movie(name,url,iconimage,hosturl):
         else:
             header_dict['Host'] = 'm.genvideos.com'
         response = requests.get(url,headers=header_dict,allow_redirects=False)
-        print response
         url1 = response.headers['location']
     elif 'googlevideo' in url:
         header_dict = {}
@@ -629,7 +635,7 @@ def strm_movie_quality(name,url,iconimage,list):
         url = splitlist[0]
         name = splitlist[1]
         download = splitlist[2]
-    hosturl = 'http://www.movietube.co/watch.php?v=' + url
+    hosturl = 'http://www.movietube.cz/watch.php?v=' + url
     dialog = xbmcgui.Dialog()
     menu_texts = []
     menu_data = []

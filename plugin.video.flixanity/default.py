@@ -52,7 +52,7 @@ def open_url(url,referer, cache_time=3600):
     header_dict = {}
     header_dict['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     header_dict['Accept-Encoding'] = 'gzip, deflate'
-    header_dict['Host'] = 'www.flixanity.com'
+    header_dict['Host'] = base_url.replace('/','')
     header_dict['Referer'] = referer
     header_dict['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:35.0) Gecko/20100101 Firefox/35.0'
     header_dict['Connection'] = 'keep-alive'
@@ -206,7 +206,7 @@ def movie_menu():
     addDir("Movie Genres", 'url',4,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'genres.png')), '1','','')
     addDir("Search Movies", 'url',6,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'search.png')), '1','','')
     if MS_ACCOUNT:
-        addDir("Movie Picks 4 U", base_url+'recommend-movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'toppicks.png')), '1','','')
+        addDir("Recommended Movies", base_url+'recommend-movies',1,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'toppicks.png')), '1','a','')
 
 def movie_genre_menu(url):
     addDir("Adventure", base_url+'movie-tags/adventure',29,xbmc.translatePath(os.path.join('special://home/addons/plugin.video.flixanity', 'art', 'adventure.png')), '1','a','')
@@ -344,7 +344,10 @@ def Main(name,url,page,pagin):
     url = "%s/%s" % (url,page)
     nextpage = int(page) + 1
     referer = base_url
-    link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
+    if 'Recommended' in name:
+        link = open_url(url,referer).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
+    else:
+        link = open_gurl(url).replace('\n', '').replace('\t', '').replace('\u00e0', 'a')
     data = regex_from_to(link, '<section class="cardBox flip">', 'Privacy Policy')
     match = re.compile('<div class=(.+?)<img class="img-preview spec-border(.+?)src="(.+?)" alt="(.+?)<h3><a href="(.+?)">(.+?)</a></h3>').findall(data)
     if '<>' in pagin:
@@ -435,7 +438,7 @@ def tvseries_seasons(name,url,thumb,showname):
     url1 = url
     link = open_gurl(url)
     data = regex_from_to(link, '<select name="sortSeason', '</select')
-    match = re.compile('value="(.+?)" >(.+?)</option>').findall(data)
+    match = re.compile('value="(.+?)" selected>(.+?)</option>').findall(data)
     for url, title in match:
         if ENABLE_META:
             season = title.replace('Season ', '')
@@ -459,16 +462,20 @@ def tvseries_episodes(name, url, thumb, showname):
     nm = name
     thumb = thumb + '&w=200&h=300&zc=1'
     url1 = url
-    link = open_gurl(url).translate(trans_table).encode('ascii', 'ignore').encode("utf8","ignore")#.replace(u"\u2018", "'").replace(u"\u2019", "'")#.translate(trans_table).replace("'", '"').replace(u"\u2018", "'").replace(u"\u2019", "'").replace(u'\u2019','')
+    link = open_gurl(url).translate(trans_table).encode('ascii', 'ignore').encode("utf8","ignore")
     all_episodes = regex_get_all(link, '<li class="episode ">', '</li>')
     for a in all_episodes:
-        thumb = regex_from_to(a, 'show-thumbnail"  src="', '"')
-        titleurl = regex_from_to(a, 'class="link"', '</a>')
+        try:
+            thumb = regex_from_to(a, 'show-thumbnail"  src="', '"')
+        except:
+            thumb = regex_from_to(a, 'show-thumbnail" src="', '"')
+        titleurl = regex_from_to(a, '<article class="episode-info">', '</a>')
         title = regex_from_to(titleurl, 'title="', '"').replace('Season ', '').replace(', Episode ', 'x')
         url = regex_from_to(titleurl, 'href="', '"')
         spliturl = url.split('/')
         episode = spliturl[8]
         season = spliturl[6]
+        print showname,season,episode
         name = title
         if ENABLE_META:
             infoLabels=get_meta(showname,'episode',year=None,season=season,episode=episode)

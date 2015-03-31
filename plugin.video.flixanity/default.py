@@ -368,8 +368,11 @@ def Main(name,url,page,pagin):
         name = title
         count = count + 1
         if (pagin == 'alpha' and cap == nm) or (pagin != 'alpha' and (count >= int(minpage) and count <= int(maxpage))):
-            id = regex_from_to(thumb, 'thumbs/', '.jpg')
-            thumb = base_url+'templates/trakt/timthumb.php?src=http://www.flixanity.com/thumbs/%s.jpg&w=200&h=300&zc=1' % id
+            try:
+                id = regex_from_to(thumb, 'thumbs/', '.jpg')
+                thumb = base_url+'templates/trakt/timthumb.php?src=http://www.flixanity.com/thumbs/%s.jpg&w=200&h=300&zc=1' % id
+            except:
+                thumb=thumb
             if '<>' in pagin:
                 titlelist = str(count - int(minpage)) + ' of ' + str(nItem) + ' (' + str(nAllItem) + ' total): ' + title
             elif pagin == 'alpha':
@@ -438,10 +441,10 @@ def tvseries_seasons(name,url,thumb,showname):
     url1 = url
     link = open_gurl(url)
     data = regex_from_to(link, '<select name="sortSeason', '</select')
-    match = re.compile('value="(.+?)" selected>(.+?)</option>').findall(data)
-    for url, title in match:
+    match = re.compile('value="(.+?)"(.+?)Season (.+?)</option>').findall(data)
+    for url, d1, season in match:
         if ENABLE_META:
-            season = title.replace('Season ', '')
+            title = 'Season ' + season
             infoLabels=get_meta(showname,'tvshow',year=None,season=season,episode=None)
             if infoLabels['title']=='':
                 name=title
@@ -456,6 +459,7 @@ def tvseries_seasons(name,url,thumb,showname):
             iconimage=thumb
         addDir(title, url,104,iconimage, showname, showname,'',infoLabels=infoLabels)
     setView('seasons', 'seasons-view')
+    xbmcplugin.addSortMethod(int(sys.argv[1]), xbmcplugin.SORT_METHOD_LABEL)
 		
 def tvseries_episodes(name, url, thumb, showname):
     trans_table = ''.join( [chr(i) for i in range(128)] + [' '] * 128 )
@@ -666,7 +670,10 @@ def links(name,url,iconimage,showname):
     dialog = xbmcgui.Dialog()
     link = open_gurl(url)
     link = link.replace('IFRAME SRC', 'iframe src').replace('</IFRAME>','</iframe>')#<iframe src="
-    embeds=regex_from_to(link,'var embeds','</script>')
+    try:
+        embeds=regex_from_to(link,'var embeds','</script>')
+    except:
+        return
     if 'flixanity' in url:
         match=re.compile('<option value="(.+?)" data-type="(.+?)">(.+?)</option>').findall(link)
     else:

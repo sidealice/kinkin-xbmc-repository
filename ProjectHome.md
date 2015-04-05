@@ -1,0 +1,1 @@
+xbmc addons supported by kinkin
